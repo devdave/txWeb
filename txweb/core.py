@@ -1,5 +1,5 @@
 #Module level
-from .util import OneTimeResource
+from util import OneTimeResource
 #Twisted level
 from twisted.web import server
 
@@ -41,7 +41,9 @@ class Site(server.Site):
             root = getattr(root, element, None)
             request.prepath.append(element)
             
-            if root is None:                
+            if root is None:
+                if request.path.endswith("/"):
+                    action = self.checkAction(parent, "index")
                 break
             
             if self.checkAction(root, "__default__"):

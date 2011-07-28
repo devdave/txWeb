@@ -1,3 +1,3 @@
 
 from .util import expose
-from .site import Site
+from .core import Site
