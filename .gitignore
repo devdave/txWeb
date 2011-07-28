@@ -1,3 +1,6 @@
 *.pyc
 .komodotools
 *.komodoproject
+build/
+dist/
+MANIFEST
