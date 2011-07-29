@@ -60,8 +60,15 @@ class Site(server.Site):
             request.prepath.append(element)
             
             if root is None:
+                """
+                    if root has nulled out, check to see if the last element in the path was a controller
+                    AND if so check for an index attribute that is callable or resource 
+                """
                 if request.path.endswith("/"):
-                    action = self.checkAction(parent, "index") or defaultAction
+                    if hasattr(parent, "index") and isAction(getattr(parent, "index")):
+                        action = getattr(parent, "index")
+                    else:
+                        action = defaultAction
                 break
             
             if hasattr(root, "__default__") and isAction(getattr(root, "__default__")):
@@ -82,7 +89,11 @@ class Site(server.Site):
             
                 
         else:
-            if action is None:
+            """
+                According to coverage, tests never hit this entire block
+                TODO next push eliminate
+            """
+            if action is None: 
                 if root is not None and self.checkAction(root, "index"):
                     action = self.checkAction(root, "index")
                 

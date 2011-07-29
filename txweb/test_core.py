@@ -1,10 +1,15 @@
-
+#pragma: no cover
+from os.path import dirname, abspath, join
 import nose
+
 from core import Site
 from util import expose
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
+from twisted.web.static import File
+from twisted.web.server import NOT_DONE_YET
+
 
 class NearPage(object): #pragma: no cover
     @expose
@@ -51,10 +56,29 @@ class Root(object):#pragma: no cover
     #Using 418 as nothing should ever use it
     deadend = ErrorPage(418, "I'm a teapot!", "This node is not the node you're looking for!")
     
+relPath = lambda filename : abspath(join(dirname(__file__), filename))
+
+class RootWithStaticIndex(object):
+    index = File(relPath("LICENSE.txt"))
     
 
 root = Root()
 site = Site(root)
+
+def test_site_routRequest_HandlesIndexAsResource():
+    staticSite = Site(RootWithStaticIndex())
+    request = DummyRequest([])
+    request.path = "/"
+    action = staticSite.routeRequest(request)
+    assert action.render(request) == NOT_DONE_YET
+    with open(relPath("LICENSE.txt")) as testFile:
+        expected = testFile.read()
+        assert len(request.written) ==  1, "Expected written log to be equal to one"
+        actualSize = len(request.written[0])
+        expectedSize = len(expected)
+        actual = request.written[0]
+        assert expectedSize == actualSize, "Expected size doesn't match actual"
+        assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
     request = DummyRequest([])
