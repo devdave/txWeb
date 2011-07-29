@@ -1,7 +1,9 @@
 #Module level
 from util import OneTimeResource
 #Twisted level
-from twisted.web import server
+from twisted.web import server, resource
+from twisted.web.resource import ErrorPage, ForbiddenResource, NoResource
+
 
 class Site(server.Site):
     """
@@ -24,15 +26,31 @@ class Site(server.Site):
         
                     
     def routeRequest(self, request):
+        """
+            Traverses the root controller and returns the first callable or Resource that
+            matches the provided request.path
+            :param request is a twisted.web.request object
+            
+            ex. Given a path like '/foo/test/x' it would match a OO graph of root.foo.test.x or the first callable
+                element
+            
+            
+            
+        """
+        
         action = None
         response = None
         
         root = parent = self.resource
-        defaultAction = self.checkAction(root, "__default__")
+        defaultAction = self.checkAction(root, "__default__") or NoResource()
         
         path = request.path.strip("/").split("/")
         
-         
+        isExposed  = lambda entity : getattr(entity, "exposed", False)
+        isResource = lambda entity : callable(getattr(entity, "render", None))
+        #TODO safe to assume if it's a resource that it should be exposed
+        isAction = lambda entity : ( isExposed(entity) and callable(entity) ) or ( isResource(entity) )
+        
         
         for i in range(len(path)):
             element = path[i]
@@ -43,23 +61,23 @@ class Site(server.Site):
             
             if root is None:
                 if request.path.endswith("/"):
-                    action = self.checkAction(parent, "index")
+                    action = self.checkAction(parent, "index") or defaultAction
                 break
             
-            if self.checkAction(root, "__default__"):
+            if hasattr(root, "__default__") and isAction(getattr(root, "__default__")):
                 #Check for a catchall default action
-                defaultAction = self.checkAction(root, "__default__")
+                defaultAction = getattr(root, "__default__")
                 
                 
             if element.startswith("_"):
                 #500 simplistic security check
-                action = lambda request: "500 URI segments cannot start with an underscore"
+                return ErrorPage(500, "Illegal characters", "URI segments cannot start with an underscore")
                 break
-                
-            if callable(root) and hasattr(root, "exposed") and root.exposed == True:
+            
+            if isAction(root):
                 action = root
-                request.postpath = path[i:] 
-                break
+                request.postpath = path[i:]
+                break;
             
             
                 
@@ -68,16 +86,13 @@ class Site(server.Site):
                 if root is not None and self.checkAction(root, "index"):
                     action = self.checkAction(root, "index")
                 
-                
-        #action = OneTimeResource(action) if action is not None else OneTimeResource(lambda request:"500 Routing error :(")
+        
         if action is None:
-            if defaultAction:
-                action = defaultAction
-            else:            
-                action = lambda request:"404 :("
+            action = defaultAction or NoResource()
+           
                 
-        return OneTimeResource(action)         
-
+        return action if hasattr(action, "render") else OneTimeResource(action)
+       
                 
                 
         
