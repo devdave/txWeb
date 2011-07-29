@@ -4,6 +4,7 @@ from core import Site
 from util import expose
 
 from twisted.web.test.test_web import DummyRequest
+from twisted.web.resource import ErrorPage
 
 class NearPage(object): #pragma: no cover
     @expose
@@ -47,9 +48,20 @@ class Root(object):#pragma: no cover
     near = NearPage()
     sub = SubPage()
     
+    #Using 418 as nothing should ever use it
+    deadend = ErrorPage(418, "I'm a teapot!", "This node is not the node you're looking for!")
+    
+    
 
 root = Root()
 site = Site(root)
+
+def test_site_routeRequest_HandlesErrorPageResource():
+    request = DummyRequest([])
+    request.path = "/deadend"
+    action = site.routeRequest(request)
+    assert action.code == 418, "Expecting tea pot, but got %s" % action.code
+    assert isinstance(action, ErrorPage)
 
 def test_site_routeRequestCorrectly():
     u2m = {}
@@ -64,14 +76,15 @@ def test_site_routeRequestCorrectly():
         request = DummyRequest([])
         request.path = path
         action = site.routeRequest(request)
-        assert action.func == method, "Expecting %s but got %s for URL %s" %(method, action, path)    
+        assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)    
 
 def test_prevents_underscores():
     request = DummyRequest([])
     request.path = "/sub/__dict__/"
     action = site.routeRequest(request)
     response = action.render(request)
-    assert response == "500 URI segments cannot start with an underscore"
+    assert response.index("500 - Illegal characters") > 0 , "Missing expected error message"
+  
     
 def test_handles_defaults_correctly():
     u2m = {}
@@ -82,7 +95,7 @@ def test_handles_defaults_correctly():
         request = DummyRequest([])
         request.path = path
         action = site.routeRequest(request)
-        assert action.func == method, "Expecting %s but got %s for URL %s" %(method, action, path)
+        assert getattr(action , "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
         
 
 if __name__ == '__main__':#pragma: no cover
