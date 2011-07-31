@@ -22,6 +22,6 @@ class OneTimeResource(resource.Resource):
         
     def render(self, request):
         #Here would be a fantastic place for a pre-filter
-        return self.func(request)
+        return self.func(request) #pragma: no cover
         #ditto here for a post filter
     
