@@ -2,13 +2,14 @@
 from os.path import dirname, abspath, join
 import nose
 
-from core import Site
-from util import expose
+from txweb.core import Site
+from txweb.util import expose
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
 from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
+from twisted.web.static import DirectoryLister
 
 
 class NearPage(object): #pragma: no cover
@@ -56,21 +57,77 @@ class Root(object):#pragma: no cover
     #Using 418 as nothing should ever use it
     deadend = ErrorPage(418, "I'm a teapot!", "This node is not the node you're looking for!")
     
-relPath = lambda filename : abspath(join(dirname(__file__), filename))
+relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
 class RootWithStaticIndex(object):
     index = File(relPath("LICENSE.txt"))
     
+class RootWithStaticDirectory(object):
+    
+    files = File(relPath("tests/test_data/"))
+    
+    
 
 root = Root()
 site = Site(root)
+
+
+
+
+def test_site_routeRequest_HandlesDirectoryListing():
+    
+    staticDir = Site(RootWithStaticDirectory())
+    request = DummyRequest([])
+    
+    #Hack to fill in a missing method
+    request.isSecure = lambda : False
+    request.redirect = lambda : False
+    
+    request.path = "/files/"
+    action = staticDir.routeRequest(request)
+    response = action.render(request)
+    assert isinstance(action, DirectoryLister)
+
+def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
+    staticDir = Site(RootWithStaticDirectory())
+    request = DummyRequest([])
+    
+    #Hack to fill in a missing method
+    request.isSecure = lambda : False
+    request.redirect = lambda : False
+    
+    request.path = "/files/a.txt"
+    action = staticDir.routeRequest(request)
+    response = action.render(request)
+    assert not isinstance(action, DirectoryLister)
+    assert response == NOT_DONE_YET
+    assert request.written[0].count("a") > 0
+    
+def test_site_routeRequest_CorrectlyHandlesSubDirectories():
+    staticDir = Site(RootWithStaticDirectory())
+    request = DummyRequest([])
+    
+    #Hack to fill in a missing method
+    request.isSecure = lambda : False
+    request.redirect = lambda : False
+    
+    request.path = "/files/subdir/b.txt"
+    action = staticDir.routeRequest(request)
+    response = action.render(request)
+    assert not isinstance(action, DirectoryLister)
+    assert response == NOT_DONE_YET
+    assert request.written[0].count("b") > 0
+    
+    
+
 
 def test_site_routRequest_HandlesIndexAsResource():
     staticSite = Site(RootWithStaticIndex())
     request = DummyRequest([])
     request.path = "/"
     action = staticSite.routeRequest(request)
-    assert action.render(request) == NOT_DONE_YET
+    response = action.render(request)
+    assert response == NOT_DONE_YET
     with open(relPath("LICENSE.txt")) as testFile:
         expected = testFile.read()
         assert len(request.written) ==  1, "Expected written log to be equal to one"

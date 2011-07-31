@@ -4,6 +4,7 @@ from util import OneTimeResource
 from twisted.web import server, resource
 from twisted.web.resource import ErrorPage, ForbiddenResource, NoResource
 
+import copy
 
 class Site(server.Site):
     """
@@ -11,18 +12,6 @@ class Site(server.Site):
         resource resolution logic @ the getResourceFor point
         
     """
-    def checkAction(self, controller, name):
-        """
-            On success, returns a bound method from the provided controller instance
-            else it return None
-        """
-        action = None
-        if hasattr(controller, name):
-                action = getattr(controller, name)
-                if not callable(action) or not hasattr(action, "exposed"):
-                    action = None
-        
-        return action
         
                     
     def routeRequest(self, request):
@@ -38,18 +27,28 @@ class Site(server.Site):
             
         """
         
-        action = None
-        response = None
-        
-        root = parent = self.resource
-        defaultAction = self.checkAction(root, "__default__") or NoResource()
-        
-        path = request.path.strip("/").split("/")
-        
         isExposed  = lambda entity : getattr(entity, "exposed", False)
         isResource = lambda entity : callable(getattr(entity, "render", None))
         #TODO safe to assume if it's a resource that it should be exposed
         isAction = lambda entity : ( isExposed(entity) and callable(entity) ) or ( isResource(entity) )
+            
+            
+        
+        action = None
+        response = None
+        
+        root = parent = self.resource
+        defaultAction = getattr(root, "__default__", None ) or NoResource()
+        
+        endedWithSlash = request.path[-1] == "/"
+        
+        path = request.path
+        if path.startswith("/"):
+            path = path[1:]
+            
+        path = path.split("/")
+        
+        
         
         
         for i in range(len(path)):
@@ -66,9 +65,7 @@ class Site(server.Site):
                 """
                 if request.path.endswith("/"):
                     if hasattr(parent, "index") and isAction(getattr(parent, "index")):
-                        action = getattr(parent, "index")
-                    else:
-                        action = defaultAction
+                        action = getattr(parent, "index")                    
                 break
             
             if hasattr(root, "__default__") and isAction(getattr(root, "__default__")):
@@ -79,33 +76,34 @@ class Site(server.Site):
             if element.startswith("_"):
                 #500 simplistic security check
                 return ErrorPage(500, "Illegal characters", "URI segments cannot start with an underscore")
-                break
+                break #pragma: no cover
             
             if isAction(root):
                 action = root
-                request.postpath = path[i:]
-                break;
-            
-            
+                request.postpath = path[i+1:]
+                if isResource(root):
+                    if len( path[i+1:] ) > 0:
+                        childPath = request.postpath[:]
+                        while childPath:
+                            sub = childPath.pop(0)
+                            action = action.getChild(sub, request)
                 
-        else:
-            """
-                According to coverage, tests never hit this entire block
-                TODO next push eliminate
-            """
-            if action is None: 
-                if root is not None and self.checkAction(root, "index"):
-                    action = self.checkAction(root, "index")
+                break
+            
+            
+       
                 
         
         if action is None:
             action = defaultAction or NoResource()
            
                 
-        return action if hasattr(action, "render") else OneTimeResource(action)
+        return action if isResource(action) else OneTimeResource(action)
        
                 
                 
         
-    def getResourceFor(self, request):
+    def getResourceFor(self, request): #pragma: no cover
+        request.site = self
+        request.sitepath = copy.copy(request.prepath)
         return self.routeRequest(request)
