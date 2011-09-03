@@ -106,4 +106,13 @@ class Site(server.Site):
     def getResourceFor(self, request): #pragma: no cover
         request.site = self
         request.sitepath = copy.copy(request.prepath)
-        return self.routeRequest(request)
+        resource = self.routeRequest(request)
+        self.prefilter(request, resource)
+        return resource
+        
+        
+    def prefilter(self, request, resource):
+        pass
+    
+    def postfilter(self, response):
+        pass    
