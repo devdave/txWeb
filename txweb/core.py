@@ -157,12 +157,16 @@ class Site(server.Site):
                 
         
         if action is None:
+            if endedWithSlash and hasattr(root, "index"):
+                action = getattr(root, "index")
+                
             #handles calls to child object attributes where they're at root.foo and url == "/foo" but should be "/foo/"
-            if not endedWithSlash and element in dir(parent) and element[0] != "_" and isinstance(getattr(parent, element), object):                
-                action = util.Redirect("%s/" % request.path)
-            else:
-                action = defaultAction or NoResource()
+            elif not endedWithSlash and element in dir(parent) and element[0] != "_" and isinstance(getattr(parent, element), object):                
+                action = util.Redirect("%s/" % request.path)            
         
+        if action is None:
+            action = defaultAction or NoResource()
+            
         #Last step is to see what was found, if the target was a resource, we're done
         if isResource(action):
             return action
@@ -171,6 +175,7 @@ class Site(server.Site):
             return OneTimeResource(action, parent)
         else:
             #This isn't ideal but could be a result of Root having a __call__ method
+            #Coverage in WebMud & PyProxy SSR both show this is never reached - placed on TODO as an Exception
             return OneTimeResource(action)
         
        

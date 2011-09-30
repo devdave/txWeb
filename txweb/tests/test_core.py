@@ -12,6 +12,7 @@ from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 
+relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
 class NearPage(object): #pragma: no cover
     @expose
@@ -58,7 +59,7 @@ class Root(object):#pragma: no cover
     #Using 418 as nothing should ever use it
     deadend = ErrorPage(418, "I'm a teapot!", "This node is not the node you're looking for!")
     
-relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
+
 
 class RootWithStaticIndex(object):
     index = File(relPath("LICENSE.txt"))
