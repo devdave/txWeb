@@ -4,6 +4,7 @@ import nose
 
 from txweb.core import Site
 from txweb.util import expose
+from txweb.util.testing import TestRequest
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
@@ -77,26 +78,16 @@ site = Site(root)
 def test_site_routeRequest_HandlesDirectoryListing():
     
     staticDir = Site(RootWithStaticDirectory())
-    request = DummyRequest([])
+    request = TestRequest([], "/files/")
     
-    #Hack to fill in a missing method
-    request.isSecure = lambda : False
-    request.redirect = lambda : False
-    
-    request.path = "/files/"
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert isinstance(action, DirectoryLister)
 
 def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     staticDir = Site(RootWithStaticDirectory())
-    request = DummyRequest([])
+    request = TestRequest([], "/files/a.txt")
     
-    #Hack to fill in a missing method
-    request.isSecure = lambda : False
-    request.redirect = lambda : False
-    
-    request.path = "/files/a.txt"
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
@@ -105,13 +96,10 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = Site(RootWithStaticDirectory())
-    request = DummyRequest([])
     
-    #Hack to fill in a missing method
-    request.isSecure = lambda : False
-    request.redirect = lambda : False
+    request = TestRequest([], "/files/subdir/b.txt")
     
-    request.path = "/files/subdir/b.txt"
+    
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
@@ -123,8 +111,9 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 
 def test_site_routRequest_HandlesIndexAsResource():
     staticSite = Site(RootWithStaticIndex())
-    request = DummyRequest([])
-    request.path = "/"
+    
+    request = TestRequest([], "/")
+    
     action = staticSite.routeRequest(request)
     response = action.render(request)
     assert response == NOT_DONE_YET
@@ -138,8 +127,9 @@ def test_site_routRequest_HandlesIndexAsResource():
         assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
-    request = DummyRequest([])
-    request.path = "/deadend"
+    
+    request = TestRequest([], "/deadend")
+    
     action = site.routeRequest(request)
     assert action.code == 418, "Expecting tea pot, but got %s" % action.code
     assert isinstance(action, ErrorPage)
@@ -154,14 +144,13 @@ def test_site_routeRequestCorrectly():
     u2m['/sub/far/is_here'] = root.sub.far.is_here
     
     for path, method in u2m.items():
-        request = DummyRequest([])
-        request.path = path
+        request = TestRequest([], path)        
         action = site.routeRequest(request)
         assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)    
 
 def test_prevents_underscores():
-    request = DummyRequest([])
-    request.path = "/sub/__dict__/"
+    request = TestRequest([], "/sub/__dict__/")
+    
     action = site.routeRequest(request)
     response = action.render(request)
     assert response.index("500 - Illegal characters") > 0 , "Missing expected error message"
