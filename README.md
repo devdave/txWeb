@@ -5,13 +5,13 @@ Twisted Web extension
    
 Philosophy & goals
 ---------------
-    The primary goal is to avoid re-inventing the wheel as much as possible when it comes to what Twisted.web has to offer.  That said I was a big fan
-    of Pylons and then still a devoted fan of CherryPy, but when dealing with asyncronous problems or when you need to connect http to some other protocol,
-    twisted is the only game in town.
-    
-    As far as design/features go, txWeb is designed with the idea of progressive enhancement in mind.  All you need to use txWeb in a project is
-    core.Site and a graph of simple user defined objects, decorated with .expose = True on the appropriate methods.  Sesssion/Input/ HTTP action are
-    left to the user to decide what is or isn't valid.
+The primary goal is to avoid re-inventing the wheel as much as possible when it comes to what Twisted.web has to offer.  That said I was a big fan
+of Pylons and then still a devoted fan of CherryPy, but when dealing with asyncronous problems or when you need to connect http to some other protocol,
+twisted is the only game in town.
+
+As far as design/features go, txWeb is designed with the idea of progressive enhancement in mind.  All you need to use txWeb in a project is
+core.Site and a graph of simple user defined objects, decorated with .expose = True on the appropriate methods.  Sesssion/Input/ HTTP action are
+left to the user to decide what is or isn't valid.
     
 
 Basic usage
