@@ -1,6 +1,6 @@
 from distutils.core import setup
 setup(name="txweb"
-      , version='0.5.2011.10.2'
+      , version='0.7.2011.11.12'
       , author = "David W."
       , author_email = "txwebpypi@ominian.net"
       , url = "https://github.com/devdave/txWeb"
