@@ -1,5 +1,7 @@
 
 from twisted.web import resource
+from twisted.internet import defer
+from twisted.web.server import NOT_DONE_YET
 
 def expose(target):
     """
@@ -16,6 +18,7 @@ class OneTimeResource(resource.Resource):
         of receiving and sending HTTP traffic.
         
         func is a callable and exposed property in the Root OO tree
+        :parent is an optional param that is usually the parent instance of Func and allows for pre/post filter methods
     """
     def __init__(self, func, parent = None):
         self.func = func
@@ -32,6 +35,10 @@ class OneTimeResource(resource.Resource):
                     raise e
         
         response = self.func(request) #pragma: no cover
+        #If the response is a Deferred, tell the stack to stop pre-emptive cleanup as the show's not over yet
+        if isinstance(response, defer.Deferred):
+            response = NOT_DONE_YET
+        
         if self.parent is not None:
             if hasattr(self.parent, "_postfilter"):
                 try:
