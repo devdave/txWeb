@@ -1,4 +1,6 @@
-
+"""
+    Deprecated in favor of SmartController and ActionMethondDecorator
+"""
 
 from functools import wraps
 from twisted.web import (server, resource )
