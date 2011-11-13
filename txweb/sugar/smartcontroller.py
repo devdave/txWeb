@@ -65,7 +65,7 @@ class ActionMethodDecorator(object):
                     kwargs[name] = request.args.get(name[2:], [default])[0]
                     
                 elif name.startswith("al_"):
-                    kwargs[name] = request.args.get(name[2:], [default])[0]
+                    kwargs[name] = request.args.get(name[2:], [default])
                 elif name.startswith("c_"):
                     #composite input
                     compositePrefix = name[2:]
