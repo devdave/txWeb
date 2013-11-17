@@ -1,0 +1,17 @@
+setup.py
+txweb/LICENSE.txt
+txweb/__init__.py
+txweb/core.py
+txweb.egg-info/PKG-INFO
+txweb.egg-info/SOURCES.txt
+txweb.egg-info/dependency_links.txt
+txweb.egg-info/top_level.txt
+txweb/sugar/__init__.py
+txweb/sugar/smartcontroller.py
+txweb/tests/test_data/a.txt
+txweb/tests/test_data/c.txt
+txweb/tests/test_data/subdir/b.txt
+txweb/util/__init__.py
+txweb/util/arghelper.py
+txweb/util/basic.py
+txweb/util/testing.py

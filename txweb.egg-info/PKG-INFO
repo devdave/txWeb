@@ -1,0 +1,13 @@
+Metadata-Version: 1.1
+Name: txweb
+Version: 0.7.2011.11.12
+Summary: An alternative routing system for use with twisted.web
+Home-page: https://github.com/devdave/txWeb
+Author: David W.
+Author-email: txwebpypi@ominian.net
+License: MIT License
+Description: UNKNOWN
+Keywords: twisted web alternative routing
+Platform: UNKNOWN
+Requires: decorator
+Requires: twisted
