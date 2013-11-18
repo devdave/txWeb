@@ -1,4 +1,5 @@
 from txweb import Site, expose
+from twisted.web.static import File
 from twisted.internet import reactor, defer
 from twisted.web.server import NOT_DONE_YET
 
@@ -18,11 +19,7 @@ class ZeHub(object):
         self.server_s.publish(msg)
 
     def on_msg(self, callBack, time_out = None):
-
-
         print "Waiting for msg"
-
-
         client = ZmqSubConnection(self.zf, self.client)
         client.subscribe("")
         self.clients.append(client)
@@ -34,10 +31,10 @@ class ZeHub(object):
             self.clients.pop(c_index)
             client.shutdown()
 
+
         def on_msg(*args, **kwargs):
-            print args
             try:
-                callBack(args)
+                callBack("".join(args[:-1]))
             finally:
                 cleanup()
 
@@ -59,14 +56,12 @@ class WebRoot(object):
     def __init__(self, hub):
         self.hub = hub
 
-    @expose
-    def index(self, request):
-        return "Hello world! %s" % time.time()
+    index = File("./index.html")
 
     @expose
     def say(self, request):
         ts = time.time()
-        msg = "said %s" % ts
+        msg = "%s: %s" %( ts, request.args.get("msg", ["..."])[0])
         self.hub.send(msg)
         return msg
 
@@ -78,7 +73,6 @@ class WebRoot(object):
             request.finish()
 
         self.hub.on_msg(on_event)
-        from dbgp.client import brk; brk("192.168.1.2", 9090)
         return NOT_DONE_YET
 
 
