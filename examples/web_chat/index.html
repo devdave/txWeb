@@ -20,6 +20,9 @@
                     alert("We had a problem? ")
                     console.dir(response);
                 }
+                ,cache: false
+                //appends a _=timeString cache buster so that they both are called
+                //concurrently on different instances of the same Chrome suite.
             })
         }
 
