@@ -1,7 +1,9 @@
 
 import time
 
-from txweb import Site, expose
+from txweb import CSite as Site
+from txweb import expose
+
 from twisted.web.static import File
 from twisted.internet import reactor, defer
 from twisted.web.server import NOT_DONE_YET

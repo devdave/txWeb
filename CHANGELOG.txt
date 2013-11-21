@@ -1,0 +1,39 @@
+
+2013-11-21
+ * New Compiled site/CSite
+
+    For a mass-scale environment, having to constantly walk/map the URL to object
+     graph has shown to be a major time sink.  So I am throwing in with almost
+     every other web framework I know of and precomputing all assets ahead of time
+     and using regex's for matching.
+
+    Pros: less constant repeated work is done
+    Cons: regex maddness
+
+ TODO: Duplicate FilePath that cuts out the busy loop in CSite.routeRequest for resources.
+        It seems more ideal that given a path to say "Is this safe and is it correct?" then to walk
+        down a tree of resources.
+        given FilePath("/path/2/files") and request.path "/path/2/files/1/2/3/4/5/6/7/9/10/etc"
+        if that was an actual path, it would need to grab a new FilePath resource for EACH directory
+        and then ultimately the "etc" file.  It seems wasteful to do that.
+        Granted in semi-pro environments, static file assets would be managed by nginx or a CDN so not
+        critical.
+
+ TODO: With precomputed routes in CSite, this would allow for a few things:
+
+    class Root(object):
+
+        @expose("(?P<name>[^/]+)/something")
+        def take_names(request, name):
+            return "Hey %s!" % name
+
+
+ TODO:  add optionals expose(sub_path = None, valid_verbs = None)
+
+        sub_path as mentioned
+
+        valid_verbs would be either a list of either strings, enums, or some implied
+        constant like POST, GET, HEAD, PUT, TRACE.  I'd really like to abuse the hell
+        out of TRACE but it's not required for this.
+
+ TODOS: Finish the sessions example and start on autobahn

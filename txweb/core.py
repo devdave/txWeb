@@ -74,7 +74,7 @@ class CSite(server.Site):
                 if isExposed(obj):
                     graph[re.compile("^%s$" % node_body)] = obj
                 elif isResource(obj):
-                    graph[re.compile("^%s.*" % node_body)] = obj
+                    graph[re.compile("^%s/?(.*)" % node_body)] = obj
 
             elif obj:
                 graph.update(self._compute_path(obj, "%s/%s" % (path, name,)))
@@ -85,8 +85,10 @@ class CSite(server.Site):
     def routeRequest(self, request):
 
         action = None
+        url_match = None
         for url_regex, candidate in self.object_graph.items():
-            if url_regex.match(request.path):
+            url_match = url_regex.match(request.path)
+            if url_match:
                 action = candidate
                 break
 
@@ -95,8 +97,17 @@ class CSite(server.Site):
             return NoResource()
         else:
             #Last step is to see what was found, if the target was a resource, we're done
+            #For now, assuming only ^url/2/resource(.*)$ regexs are used for resources!
+
             if isResource(action):
+                url_groups = url_match.groups()
+                if url_groups:
+                    childPath = url_match.groups()[0].split("/")
+                    while childPath:
+                        action = action.getChild(childPath.pop(0), request)
+
                 return action
+
             else:
                 return OneTimeResource(action)
 

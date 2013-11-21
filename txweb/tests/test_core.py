@@ -18,7 +18,7 @@ class NearPage(object): #pragma: no cover
     @expose
     def test(self, request):
         return True
-        
+
 class FarPage(object): #pragma: no cover
     @expose
     def is_here(self, request):
@@ -28,7 +28,7 @@ class SubPage(object): #pragma: no cover
     @expose
     def foo(self, request):
         return True
-    
+
     @expose
     def bar(self, request): #pragma: no cover
         return True
@@ -36,39 +36,39 @@ class SubPage(object): #pragma: no cover
     @expose
     def __default__(self, request): #pragma: no cover
         return True
-        
+
     far = FarPage()
 
 class Root(object):#pragma: no cover
-    
+
     @expose
     def index(self, request):
         return True
-    
+
     @expose
     def spaced_named(self, request):
         return True
-        
+
     @expose
     def __default__(self, request):
         return True
-        
+
     near = NearPage()
     sub = SubPage()
-    
+
     #Using 418 as nothing should ever use it
     deadend = ErrorPage(418, "I'm a teapot!", "This node is not the node you're looking for!")
-    
+
 
 
 class RootWithStaticIndex(object):
     index = File(relPath("LICENSE.txt"))
-    
+
 class RootWithStaticDirectory(object):
-    
+
     files = File(relPath("tests/test_data/"))
-    
-    
+
+
 
 root = Root()
 site = Site(root)
@@ -77,10 +77,10 @@ site = Site(root)
 
 
 def test_site_routeRequest_HandlesDirectoryListing():
-    
+
     staticDir = Site(RootWithStaticDirectory())
     request = TestRequest([], "/files/")
-    
+
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert isinstance(action, DirectoryLister)
@@ -88,33 +88,32 @@ def test_site_routeRequest_HandlesDirectoryListing():
 def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     staticDir = Site(RootWithStaticDirectory())
     request = TestRequest([], "/files/a.txt")
-    
+
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
     assert request.written[0].count("a") > 0
-    
+
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = Site(RootWithStaticDirectory())
-    
+
     request = TestRequest([], "/files/subdir/b.txt")
-    
-    
+
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
     assert request.written[0].count("b") > 0
-    
-    
+
+
 
 
 def test_site_routRequest_HandlesIndexAsResource():
     staticSite = Site(RootWithStaticIndex())
-    
+
     request = TestRequest([], "/")
-    
+
     action = staticSite.routeRequest(request)
     response = action.render(request)
     assert response == NOT_DONE_YET
@@ -128,9 +127,9 @@ def test_site_routRequest_HandlesIndexAsResource():
         assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
-    
+
     request = TestRequest([], "/deadend")
-    
+
     action = site.routeRequest(request)
     assert action.code == 418, "Expecting tea pot, but got %s" % action.code
     assert isinstance(action, ErrorPage)
@@ -143,31 +142,31 @@ def test_site_routeRequestCorrectly():
     u2m['/sub/bar']         = root.sub.bar
     u2m['/sub/foo']         = root.sub.foo
     u2m['/sub/far/is_here'] = root.sub.far.is_here
-    
+
     for path, method in u2m.items():
-        request = TestRequest([], path)        
+        request = TestRequest([], path)
         action = site.routeRequest(request)
-        assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)    
+        assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
 
 def test_prevents_underscores():
     request = TestRequest([], "/sub/__dict__/")
-    
+
     action = site.routeRequest(request)
     response = action.render(request)
     assert response.index("500 - Illegal characters") > 0 , "Missing expected error message"
-  
-    
+
+
 def test_handles_defaults_correctly():
     u2m = {}
     u2m['/doesn/t/exist'] = root.__default__
     u2m['/sub/doesn/t/exist'] = root.sub.__default__
-    
+
     for path, method in u2m.items():
         request = DummyRequest([])
         request.path = path
         action = site.routeRequest(request)
         assert getattr(action , "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
-        
+
 
 if __name__ == '__main__':#pragma: no cover
     nose.run()
