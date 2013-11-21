@@ -9,23 +9,40 @@ def expose(target):
     """
     target.exposed = True
     return target
-    
-    
-class OneTimeResource(resource.Resource):
+
+class ActionResource(resource.Resource):
+
+    __slots__ = ['func', 'parent']
+
+    def __init__(self, func, parent = None):
+        self.func = func
+        self.parent = parent
+
+    def render(self, request):
+
+        response = self.func(request) #pragma: no cover
+        #If the response is a Deferred, tell the stack to stop pre-emptive
+        # cleanup as the show's not over yet
+        if isinstance(response, defer.Deferred):
+            response = NOT_DONE_YET
+
+        return response
+
+
+
+class OneTimeResource(ActionResource):
     """
         Monkey patch to avoid rewriting more of twisted's lower web
         layer which does a fantastic job dealing with the minute details
         of receiving and sending HTTP traffic.
-        
+
         func is a callable and exposed property in the Root OO tree
         :parent is an optional param that is usually the parent instance of Func and allows for pre/post filter methods
     """
-    def __init__(self, func, parent = None):
-        self.func = func
-        self.parent = parent
-        
+
     def render(self, request):
-        #Here would be a fantastic place for a pre-filter        
+
+        #Here would be a fantastic place for a prefilter
         if self.parent is not None:
             if hasattr(self.parent, "_prefilter"):
                 try:
@@ -33,11 +50,8 @@ class OneTimeResource(resource.Resource):
                 except Exception as e:
                     #TODO hook for overriding default request should go here
                     raise e
-        
-        response = self.func(request) #pragma: no cover
-        #If the response is a Deferred, tell the stack to stop pre-emptive cleanup as the show's not over yet
-        if isinstance(response, defer.Deferred):
-            response = NOT_DONE_YET
+
+        response = ActionResource.render(self, request)
         
         if self.parent is not None:
             if hasattr(self.parent, "_postfilter"):
@@ -48,7 +62,6 @@ class OneTimeResource(resource.Resource):
                 except Exception as e:
                     #TODO
                     raise e
-                
+
+
         return response
-        
-    
