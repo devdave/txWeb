@@ -14,4 +14,5 @@ txweb/tests/test_data/subdir/b.txt
 txweb/util/__init__.py
 txweb/util/arghelper.py
 txweb/util/basic.py
+txweb/util/is_a.py
 txweb/util/testing.py

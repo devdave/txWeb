@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: txweb
-Version: 0.7.2011.11.12
+Version: 0.7.2013.11.16
 Summary: An alternative routing system for use with twisted.web
 Home-page: https://github.com/devdave/txWeb
 Author: David W.

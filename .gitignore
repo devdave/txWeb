@@ -2,7 +2,7 @@
 .komodotools
 *.komodoproject
 build/
-txweb.egg-info/*
+txweb.egg-info/
 dist/
 MANIFEST
 htmlcov
