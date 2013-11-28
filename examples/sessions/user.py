@@ -42,11 +42,53 @@ class WebUser(object):
     user_count = 0
 
     def __init__(self, session):
+        """
+            :param session: http://twistedmatrix.com/documents/current/api/twisted.web.server.Session.html
+        """
         self.session = session
-        self.user_count += 1
-        self.name = "NewUser%s" % self.user_count
+        self.user_count += 1 #Housekeeping/debugging metric - also demonstrates that a lot of
+        # twisted can/is memory resident through the life of the system.
+        """
+            Instead of self.name, you might bind a reference to a
+                UserAccount object and refer to that in WebUser's code.
+
+            All concerns about XSS, session fixiation/hijacking apply
+                as twisted relies on COOKIES and doesn't do any additional checks
+                like is session.user_ip == request.client_ip
+                Plus side, they are session cookies so they expire on client window close.
+
+            That said, for just example purposes.  If session.name is None, assume
+            this is a new user.
+
+        """
+        self.name = None
+
+        """
+            Stock twisted Session's can generally hold anything in them without
+             concern of serialization/state trainwrecks as they're stored in
+             twisted Site.sessions which is a dict.
+
+            Downside is that more so then ever you need to pay attention to Python's
+             by-reference mechanism to avoid epic memory leaks or worse ( who's modified this? Who needs this?
+             ah god what is this? ).
+
+            Saving grace is that twisted is a single process/async framework so you don't need
+             to deal with locks BUT that doesn't mean you shouldn't worry about context fights where:
+             User connects to /endpoint1 which calls expensive deferred thing and in the middle
+             User connects to /endpoint2 which changes something /endpoint1 was relying on before
+              /endpoint1 regains context and tries to cleanup.
+
+            Generally grab everything you need for a context and keep it in disposable/GC friendly
+             variables and then make sure assumptions are still correct in between deferred's
+
+        """
         self.messages = []
         self.client_socket = None
+
+        """
+            Generally you always want to bind to notifyOnExpire so you can
+                do house keeping and such.
+        """
 
         self.session.notifyOnExpire( self.shutdown )
 
@@ -57,6 +99,11 @@ class WebUser(object):
     def addSocket(self, socket):
         self.client_socket = socket
 
+    def addMessage(self, message):
+        self.messages.append(message)
+
+    #def __len__ - can be conveniant for checking on messages BUT be careful with this
+    # as `if self.my_session` will == False even if its not if messages is empty
 
     def shutdown(self):
         if self.client_socket:
