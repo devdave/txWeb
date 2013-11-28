@@ -6,7 +6,7 @@ from nose.tools import eq_
 from pprint import pprint
 
 from txweb.core import CSite
-from txweb.util import expose
+from txweb.core import expose
 from txweb.util.testing import TestRequest
 
 from twisted.web.test.test_web import DummyRequest
