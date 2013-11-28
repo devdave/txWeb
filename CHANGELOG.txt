@@ -1,23 +1,21 @@
+Goal 1:
+ Formalize txweb into a "light" weight web framework with similar functionality to
+  flask or better to CherryPy ( CP being the #1 inspiration/drive for txweb )
 
-2013-11-21
- * New Compiled site/CSite
+Goal 2:
+ Make a better name for txweb.  Because of Twisted's tx prefix for adjacent/extension logic, I've been
+ playing with pyTexas or "tiny Texas" as my experience of Texas is that it is a deceptively big state with a lot
+ of tiny towns.  Will come back to this.
 
-    For a mass-scale environment, having to constantly walk/map the URL to object
-     graph has shown to be a major time sink.  So I am throwing in with almost
-     every other web framework I know of and precomputing all assets ahead of time
-     and using regex's for matching.
 
-    Pros: less constant repeated work is done
-    Cons: regex maddness
-
- TODO: Duplicate FilePath that cuts out the busy loop in CSite.routeRequest for resources.
-        It seems more ideal that given a path to say "Is this safe and is it correct?" then to walk
-        down a tree of resources.
-        given FilePath("/path/2/files") and request.path "/path/2/files/1/2/3/4/5/6/7/9/10/etc"
-        if that was an actual path, it would need to grab a new FilePath resource for EACH directory
-        and then ultimately the "etc" file.  It seems wasteful to do that.
-        Granted in semi-pro environments, static file assets would be managed by nginx or a CDN so not
-        critical.
+  TODO: Duplicate FilePath that cuts out the busy loop in CSite.routeRequest for resources.
+    It seems more ideal that given a path to say "Is this safe and is it correct?" then to walk
+    down a tree of resources.
+    given FilePath("/path/2/files") and request.path "/path/2/files/1/2/3/4/5/6/7/9/10/etc"
+    if that was an actual path, it would need to grab a new FilePath resource for EACH directory
+    and then ultimately the "etc" file.  It seems wasteful to do that.
+    Granted in semi-pro environments, static file assets would be managed by nginx or a CDN so not
+    critical.
 
  TODO: With precomputed routes in CSite, this would allow for a few things:
 
@@ -37,3 +35,53 @@
         out of TRACE but it's not required for this.
 
  TODOS: Finish the sessions example and start on autobahn
+
+ TODOS: HTTP accessible state machine
+
+    @webstate
+    def authentication(request):
+
+      if request.user != user.AUTHORIZED:
+
+         response = yield loginView
+         if response.invalid:
+           raise request.restart(authentication)
+
+    May need to come back to this as the act of typing it out from my head has
+    made apparent a few issues.  In addition would need to bind them to session.user
+    to prevent an obvious memory/stack leak.
+
+
+
+2013-11-27
+ * examples/tx_sessions
+     restructured where assets go, with the aim to simplify the whole speel.
+
+ * core & basic
+    ActionResource now behaves like a decorator, wrapping exposed methods to provide
+    redirectTo ( possibly more methods later )
+
+
+
+2013-11-25
+ * Added sugar.filters.json_out
+    given a handler like
+
+    @json_out
+    def foo(request):
+      return {"msg":'blah'}
+
+    it will automatically set correct content-type response + serialize the returned dict into JSON
+    using stdlib's json module.
+
+
+2013-11-21
+ * New Compiled site/CSite
+
+    For a mass-scale environment, having to constantly walk/map the URL to object
+     graph has shown to be a major time sink.  So I am throwing in with almost
+     every other web framework I know of and precomputing all assets ahead of time
+     and using regex's for matching.
+
+    Pros: less constant repeated work is done
+    Cons: regex maddness

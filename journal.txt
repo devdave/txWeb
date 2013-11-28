@@ -1,0 +1,65 @@
+2013
+    Nov
+
+    28
+        Night of the culling.  I've wiped out most of txweb.sugar.* as it was
+        a fun experiment but somewhat insane ( to much magic or to open to really
+        weird errors. )  Additionally I've consolidated what I could into less
+        files to avoid problems like txweb.util.testing & util_testing where 2 classes
+        basically did the samething.
+
+        For today I'd like to work on finish the tx_sessions example ( baring distractions or
+        contractual obligations ).
+
+    27
+        Similar to the old dev blogs of yore, will record misc notes here.
+
+        Goal with txWeb;
+        #1 is to create a proof of capability with twisted.
+
+        #2 I like CherryPy and Flask is awesome but I've lost count of how often
+            I have a problem that's not perfectly stateful.
+
+            ##Basic examples
+            ###long running user requested reports.
+
+            User's are well meaning people but they're by nature not tech savy
+            "What do you mean I can't get back a 30MB xls product in under 5
+            seconds after I click this button?"
+
+            No matter what the report will need to go from browser to frontline
+            logic to a report building/processing system.
+
+            Browser to frontline can be solved 3 ways: by email, by Ajax/Comet
+            polling, or by web socket.
+
+            * By email isn't so bad but it can be a nuisance when the user
+              requests multiple reports ( sometimes of the samething, cause
+              clicking the button makes it run faster) and it adds more work for
+              designers ( I dare you to make a complex but asthetically pleasing
+              email that renders in Gmail, MS, and thunderbird ) along with more
+              requiring the user to leave the application to get application
+              data.
+
+
+            * Ajax/Comet or Websocket is totally fine. Long polling isn't as big
+              an issue with epoll ( realistically, how many users are you going
+              to have issuing time/memory expensive reports? ) but it is still
+              problematic with WSGI which is designed for relatively quick turn
+              and burn operations. Nevermind an array of Apache servers can be
+              brought to their knee's with 3-4 computers making hundreds ( not
+              thousands ) of slow request HTTP sessions.
+
+              Also more problematic is requiring a SOA system where 80% of your
+              application is in one framework while all the magical
+              Websocket/comet stuff is in other. With txweb, the idea would be
+              to have your normal flask/cherrypy web app sitting adjacent to
+              your async/websocket and the presentation html/templates a
+              directory away... all wrapped up in the same scc repository.
+
+
+        #3 try and promote more interest in Twisted.
+
+            To be honest, twisted while awesome is flat out intimidating in some aspects.  I've been
+            using twisted for off and on for 3-4 years and while I now kind of understand most its core
+            components, I will look at conch and think "That's pretty cool, I get what it's meant for...but not how."
