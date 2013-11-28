@@ -4,6 +4,7 @@
     as this is some fairly trivial stuff here and I don't even know if it will
     work correctly with txweb proper.
 """
+#pragma: no cover
 from twisted.python.rebuild import rebuild
 from twisted.internet import reactor
 from os.path import exists, isdir, dirname, abspath
@@ -11,7 +12,7 @@ from os import stat
 from stat import ST_MTIME
 import sys
 
-class ModuleReloader(object):
+class ModuleReloader(object): #pragma: no cover
     """
         A development tool that dynamically reloads code def's IN PLACE.
 
