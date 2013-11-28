@@ -52,6 +52,9 @@ Goal 2:
     to prevent an obvious memory/stack leak.
 
 
+2013-11-28
+ * Delete a large swath of dead code
+   No more sugar, removed duplicate TestRequest defs, removed old Site.
 
 2013-11-27
  * examples/tx_sessions
