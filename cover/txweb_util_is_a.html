@@ -25,8 +25,8 @@
         </h1>
         <img id='keyboard_icon' src='keybd_closed.png'>
         <h2 class='stats'>
-            3 statements &nbsp;
-            <span class='run hide_run shortkey_r button_toggle_run'>3 run</span>
+            4 statements &nbsp;
+            <span class='run hide_run shortkey_r button_toggle_run'>4 run</span>
             <span class='mis shortkey_m button_toggle_mis'>0 missing</span>
             <span class='exc shortkey_x button_toggle_exc'>0 excluded</span>
             
@@ -72,6 +72,7 @@
 <p id='n7' class='stm run hide_run'><a href='#n7'>7</a></p>
 <p id='n8' class='pln'><a href='#n8'>8</a></p>
 <p id='n9' class='stm run hide_run'><a href='#n9'>9</a></p>
+<p id='n10' class='stm run hide_run'><a href='#n10'>10</a></p>
                 
             </td>
             <td class='text' valign='top'>
@@ -84,6 +85,7 @@
 <p id='t7' class='stm run hide_run'><span class='nam'>isResource</span> <span class='op'>=</span> <span class='key'>lambda</span> <span class='nam'>entity</span> <span class='op'>:</span> <span class='nam'>callable</span><span class='op'>(</span><span class='nam'>getattr</span><span class='op'>(</span><span class='nam'>entity</span><span class='op'>,</span> <span class='str'>&quot;render&quot;</span><span class='op'>,</span> <span class='nam'>None</span><span class='op'>)</span><span class='op'>)</span><span class='strut'>&nbsp;</span></p>
 <p id='t8' class='pln'><span class='com'>#TODO safe to assume if it&#39;s a resource that it should be exposed</span><span class='strut'>&nbsp;</span></p>
 <p id='t9' class='stm run hide_run'><span class='nam'>isAction</span> <span class='op'>=</span> <span class='key'>lambda</span> <span class='nam'>entity</span> <span class='op'>:</span> <span class='op'>(</span> <span class='nam'>isExposed</span><span class='op'>(</span><span class='nam'>entity</span><span class='op'>)</span> <span class='key'>and</span> <span class='nam'>callable</span><span class='op'>(</span><span class='nam'>entity</span><span class='op'>)</span> <span class='op'>)</span> <span class='key'>or</span> <span class='op'>(</span> <span class='nam'>isResource</span><span class='op'>(</span><span class='nam'>entity</span><span class='op'>)</span> <span class='op'>)</span><span class='strut'>&nbsp;</span></p>
+<p id='t10' class='stm run hide_run'><span class='nam'>isEndpoint</span> <span class='op'>=</span> <span class='nam'>isAction</span><span class='strut'>&nbsp;</span></p>
                 
             </td>
         </tr>
