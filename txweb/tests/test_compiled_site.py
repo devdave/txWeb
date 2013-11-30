@@ -18,6 +18,14 @@ from twisted.web.static import DirectoryLister
 
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
+
+def debug_routes(site):#pragma: no cover
+    """
+        Intended for symbolic debug usage only
+    """
+    for key, obj in site.object_graph.items():
+        print key.pattern, obj
+
 class NearPage(object): #pragma: no cover
     @expose
     def test(self, request):
@@ -129,7 +137,6 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 
     request = TestRequest([], "/files/subdir/b.txt")
 
-    #from dbgp.client import brk; brk("192.168.1.2", 9090)
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
@@ -140,12 +147,13 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 
 
 def test_site_routRequest_HandlesIndexAsResource():
+
     staticSite = CSite(RootWithStaticIndex())
 
     request = TestRequest([], "/")
-
     action = staticSite.routeRequest(request)
     response = action.render(request)
+
     assert response == NOT_DONE_YET
     with open(relPath("LICENSE.txt")) as testFile:
         expected = testFile.read()
