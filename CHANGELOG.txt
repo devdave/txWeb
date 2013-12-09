@@ -36,21 +36,17 @@ Goal 2:
 
  TODOS: Finish the sessions example and start on autobahn
 
- TODOS: HTTP accessible state machine
 
-    @webstate
-    def authentication(request):
+2013-12-08
+ * Added ParamsDict to subsume the stock twisted request.args
+   given `request.args = ParamsDict{ foo: ["bar"], numbers: [1,2,3]}`
 
-      if request.user != user.AUTHORIZED:
+   `request.args.first("foo") == "bar"` and `request.args.first("numbers") == 1`
+    which is 90% of most use cases for GET/POST arguments.
 
-         response = yield loginView
-         if response.invalid:
-           raise request.restart(authentication)
-
-    May need to come back to this as the act of typing it out from my head has
-    made apparent a few issues.  In addition would need to bind them to session.user
-    to prevent an obvious memory/stack leak.
-
+   Also provides
+   `request.args.foo == "bar" and request.args.numbers == 1` but this maybe
+   ephemeral until I can be certain it won't be a source of pain and suffering.
 
 2013-11-28
  * Delete a large swath of dead code
