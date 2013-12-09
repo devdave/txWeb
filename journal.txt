@@ -1,5 +1,35 @@
 2013
+
+    Dec
+    8th
+        Had some contract work plus a minor bout of the flu so sadly this suffered.
+
+        Made some more progress on example/sessions but more importantly added a
+        new overloaded dict called ParamsDict which subsumes request.args and provides
+        new functionality ( paramdDict.first(key, default = None) and
+            __getattr__ which is a shortcut to calling first()
+
+        Most of my time is going into relearning ExtJS4 which is ancillary to texas/txweb
+        but helps with discovery of what bits could be improved.
+
+
     Nov
+
+    29
+        It's becoming somewhat of a joke, keep getting distracted or stymed to
+        finish the sessions example.
+
+        Been bouncing ideas around on how to allow for tiered pre/post filtering
+        on object attributes that included stock twisted.web resources and
+        decided the best solution is to only support Root._prefilter internally.
+
+        if someone wants to add sub-tier pre run logic, it can be done.
+
+        Also, totally forgot about Python's __ means obfusticate magic for class
+        def's.   __prefilter becomes _ClassDefName_prefilter :(
+
+
+
 
     28
         Night of the culling.  I've wiped out most of txweb.sugar.* as it was

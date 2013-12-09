@@ -3,6 +3,8 @@ from util.is_a import isAction
 from util.is_a import isExposed
 from util.is_a import isResource
 
+from util.param_dict import ParamDict
+
 #Twisted level
 from twisted.web import server
 from twisted.web import resource
@@ -12,6 +14,7 @@ from twisted.web.server import NOT_DONE_YET
 #from twisted.web.resource import ErrorPage
 #from twisted.web.resource import ForbiddenResource
 from twisted.web.resource import NoResource
+
 
 
 #stdlib
@@ -85,6 +88,7 @@ class CSite(server.Site):
         # no idea what the consensus was on using old style vs super
         # parent.method calls
         server.Site.__init__(self, resource, logPath, timeout)
+        self.prefilter = hasattr(resource, "_prefilter")
         self.object_graph = self._compute_path(self.resource, "")
 
     def getResourceFor(self, request): #pragma: no cover
@@ -94,23 +98,17 @@ class CSite(server.Site):
         """
         request.site = self
         request.sitepath = copy.copy(request.prepath)
+        request.args = ParamDict(request.args)
         return self.routeRequest(request)
 
     def _compute_path(self, parent, path):
 
 
         graph = OrderedDict()
-        print parent, path
-
-        if hasattr(parent, "index"):
-            if isExposed(parent.index):
-                parent.index = graph[re.compile("^%s/$" % path) ] = ActionResource(parent.index, path = "%s/" % path)
-            else:
-                graph[re.compile("^%s/$" % path) ] = parent.index
 
 
 
-        for name in dir(parent):
+        for name in [item for item in dir(parent) if item[0] != "_"]:
             if name.startswith("_"):
                 continue
 
@@ -129,11 +127,16 @@ class CSite(server.Site):
             elif obj:
                 graph.update(self._compute_path(obj, "%s/%s" % (path, name,)))
 
+        if hasattr(parent, "index"):
+            if isExposed(parent.index):
+                parent.index = graph[re.compile("^%s/$" % path) ] = ActionResource(parent.index, path = "%s/" % path)
+            else:
+                graph[re.compile("^%s/$" % path) ] = parent.index
+
         return graph
 
 
     def routeRequest(self, request):
-
         action = None
         url_match = None
         for url_regex, candidate in self.object_graph.items():
@@ -156,4 +159,16 @@ class CSite(server.Site):
                 while childPath:
                     action = action.getChild(childPath.pop(0), request)
 
-        return action
+
+        try:
+            if self.prefilter:
+                result = self.resource._prefilter(request, action)
+                if isinstance(result, resource.Resource):
+                    return result
+                elif result == NOT_DONE_YET:
+                    return NOT_DONE_YET
+
+            return action
+        except Exception as e:
+            #TODO Redirect catch logic?
+            raise e
