@@ -8,3 +8,4 @@ MANIFEST
 htmlcov
 .coverage
 twistd.log
+twistd.pid
