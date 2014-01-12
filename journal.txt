@@ -1,6 +1,12 @@
 2013
 
+
     Dec
+    30th
+        Lost a significant amount of time due to extenuating circumstances
+
+        Reviewing what is here now, going ahead and merging the refactor branch into master.
+
     8th
         Had some contract work plus a minor bout of the flu so sadly this suffered.
 
@@ -9,10 +15,7 @@
         new functionality ( paramdDict.first(key, default = None) and
             __getattr__ which is a shortcut to calling first()
 
-        Most of my time is going into relearning ExtJS4 which is ancillary to texas/txweb
-        but helps with discovery of what bits could be improved.
-
-
+        
     Nov
 
     29
