@@ -18,8 +18,23 @@ from txweb.sugar.reloader import ModuleReloader
 
 class Root(object):
 
-    app             = File("./app/")
-    home_page       = File("./html/home.html")
 
-    index           = home_page
 
+
+    index       = File("./html/home.html")
+    app       = File("./app/")
+
+    def _prefilter(self, request, resource):
+        user = request.getSession(IWebUser)
+        request.user = user
+        if user.name == None:
+            request.setHeader("x-is_new","1")
+        print "Prefilter!"
+
+    @expose
+    @json_out
+    def login(self, request):
+        if request.args.name:
+            request.user.name = request.args.name
+
+        return {"success": request.user.name is not None, "name": request.user.name}

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html ng-app>
     <head>
-        <title>Simple chat server</title>
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular.min.js"></script>
+        <title>(less) simple chat server</title>
 
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
-        <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="http://cdn.sencha.io/ext-4.0.7-gpl/resources/css/ext-all.css">
+        <!--<link rel="stylesheet" type="text/css" href="http://cdn.sencha.com/ext/gpl/4.2.0/resources/ext-theme-access/ext-theme-access-all-debug.css">-->
+        <!--
+            ExtJS4 is not a small deal, if your browser crashes ( generally happens in OSX, try switching to ext-all.js
+            or checkout http://www.ubuntu.com/download/desktop
 
-        <script src="/app/"
+            Must use one of the -all variations due to XHR limitations
+        -->
+        <script type="text/javascript" charset="utf-8" src="http://cdn.sencha.io/ext-4.0.7-gpl/ext-all-debug.js"></script>
+        <!--<script type="text/javascript" charset="utf-8" src="http://cdn.sencha.io/ext-4.0.7-gpl/ext-all.js"></script>-->
+
+        <script type="text/javascript" src="/app/app.js"></script>
     </head>
-    <body>
 
-    </body>
 </html>
