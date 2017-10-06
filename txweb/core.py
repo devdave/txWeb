@@ -57,7 +57,7 @@ class CSite(server.Site):
 
 
         graph = OrderedDict()
-        print parent, path
+        # print parent, path
 
         if hasattr(parent, "index"):
             graph[re.compile("^%s/$" % path) ] = parent.index
