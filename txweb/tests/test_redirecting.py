@@ -1,13 +1,13 @@
 """
     NOTE: Attempt to re-org tests by problem and less by originating code
-    
-    Tests for handling odd/undesirable routing issues 
+
+    Tests for handling odd/undesirable routing issues
 """
 
 
 #pragma: no cover
 from os.path import dirname, abspath, join
-import nose
+
 
 from txweb.core import Site
 from txweb.util import expose
@@ -21,7 +21,7 @@ from twisted.web.static import DirectoryLister
 from twisted.web.util import Redirect
 
 class SubClass(object):
-    
+
     @expose
     def index(self, request):
         return "Hello World!"
@@ -32,15 +32,13 @@ class ExampleRoot(object):
 site = Site(ExampleRoot)
 
 def test_redirectIfPathPointsToAnAttributeObject():
-    request = TestRequest([], "/subclass")    
-    
+    request = TestRequest([], "/subclass")
+
     result = site.routeRequest(request)
     assert isinstance(result, Redirect )
     assert result.url == "/subclass/"
     result.render(request)
     request.redirectToURL == "/subclass/"
     dbg = 1
-    
 
-if __name__ == '__main__':#pragma: no cover
-    nose.run()
+

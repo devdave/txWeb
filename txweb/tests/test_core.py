@@ -1,6 +1,6 @@
 #pragma: no cover
 from os.path import dirname, abspath, join
-import nose
+
 
 from txweb.core import Site
 from txweb.util import expose
@@ -93,7 +93,7 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-    assert request.written[0].count("a") > 0
+    assert len(request.written[0].count("a")) > 0
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = Site(RootWithStaticDirectory())

@@ -1,7 +1,6 @@
 #pragma: no cover
 from os.path import dirname, abspath, join
-import nose
-from nose.tools import eq_
+
 
 from pprint import pprint
 

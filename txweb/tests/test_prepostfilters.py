@@ -1,6 +1,5 @@
 #pragma: no cover
 from os.path import dirname, abspath, join
-import nose
 
 from txweb.core import Site
 from txweb.util import expose
@@ -18,17 +17,17 @@ relPath = lambda filename : abspath(join(dirname(__file__), "test_data" , filena
 
 #todo find a viable mock library
 class Root(object):
-    
+
     def _prefilter(self, request):
         self.preFilterWasCalled = True
-    
-    @expose   
+
+    @expose
     def anAction(self, request):
         return "anActionWasCalled"
-        
+
     def _postfilter(self, request, response):
         self.postFilterWasCalled = True
-        
+
 def test_filtersAreCalled():
     root = Root()
     site = Site(root)
@@ -40,6 +39,4 @@ def test_filtersAreCalled():
     assert response == "anActionWasCalled"
     assert getattr(root, "preFilterWasCalled", False) == True
     assert getattr(root, "postFilterWasCalled", False) == True
-    
-    
-    
+
