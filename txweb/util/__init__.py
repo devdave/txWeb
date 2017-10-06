@@ -1,4 +1,4 @@
-from basic import expose, OneTimeResource
+from .basic import expose, OneTimeResource
 
 #deprecated
 #from arghelper import Can, Must
