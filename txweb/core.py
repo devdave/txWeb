@@ -1,9 +1,9 @@
 #Module level
-from util import OneTimeResource
+from .util import OneTimeResource
 #TODO terrible module name
-from util.is_a import isAction
-from util.is_a import isExposed
-from util.is_a import isResource
+from .util.is_a import isAction
+from .util.is_a import isExposed
+from .util.is_a import isResource
 
 #Twisted level
 from twisted.web import server
