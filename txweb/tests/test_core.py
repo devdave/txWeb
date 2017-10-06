@@ -12,6 +12,8 @@ from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 
+from helper import helper
+
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
 class NearPage(object): #pragma: no cover
@@ -120,8 +122,9 @@ def test_site_routRequest_HandlesIndexAsResource():
     with open(relPath("LICENSE.txt")) as testFile:
         expected = testFile.read()
         assert len(request.written) ==  1, "Expected written log to be equal to one"
-        actualSize = len(request.written[0])
-        expectedSize = len(expected)
+        # actualSize = len(request.written[0])
+        # expectedSize = len(expected)
+        helper.assertEqual(actualSize, expectedSize)
         actual = request.written[0]
         assert expectedSize == actualSize, "Expected size doesn't match actual"
         assert expected == actual, "Expecting actual written body to equal expected body"
