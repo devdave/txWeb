@@ -14,6 +14,8 @@ from twisted.web.resource import ErrorPage
 from twisted.web.resource import ForbiddenResource
 from twisted.web.resource import NoResource
 
+import hyperlink
+
 
 #stdlib
 import re
@@ -178,7 +180,6 @@ class Site(server.Site):
 
 
 
-
         for i, element in enumerate(path):
 
             #For the first run through the loop, parent == root, but subsequent iterations parent will equal the Nth child of root
@@ -243,7 +244,8 @@ class Site(server.Site):
 
             #handles calls to child object attributes where they're at root.foo and url == "/foo" but should be "/foo/"
             elif not endedWithSlash and element in dir(parent) and element[0] != "_" and isinstance(getattr(parent, element), object):
-                action = util.Redirect("%s/" % request.path)
+                byte_path = hyperlink.URL.from_text("%s/" % request.path).to_text().encode()
+                action = util.Redirect(byte_path)
 
         if action is None:
             action = defaultAction or NoResource()
@@ -268,3 +270,6 @@ class Site(server.Site):
         request.site = self
         request.sitepath = copy.copy(request.prepath)
         return self.routeRequest(request)
+
+
+
