@@ -98,7 +98,7 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
 
 
     actualOutput = str(request.written[0])
-    helper.assertGreater(len(actualOutput.count("a")), 0)
+    helper.assertGreater(actualOutput.count("a"), 0)
     
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
@@ -110,7 +110,7 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-    assert request.written[0].count("b") > 0
+    assert str(request.written[0]).count("b") > 0
 
 
 
@@ -123,11 +123,11 @@ def test_site_routRequest_HandlesIndexAsResource():
     action = staticSite.routeRequest(request)
     response = action.render(request)
     assert response == NOT_DONE_YET
-    with open(relPath("LICENSE.txt")) as testFile:
+    with open(relPath("LICENSE.txt"), "rb") as testFile:
         expected = testFile.read()
         assert len(request.written) ==  1, "Expected written log to be equal to one"
-        # actualSize = len(request.written[0])
-        # expectedSize = len(expected)
+        actualSize = len(request.written[0])
+        expectedSize = len(expected)
         helper.assertEqual(actualSize, expectedSize)
         actual = request.written[0]
         assert expectedSize == actualSize, "Expected size doesn't match actual"
@@ -160,7 +160,7 @@ def test_prevents_underscores():
 
     action = site.routeRequest(request)
     response = action.render(request)
-    assert response.index("500 - Illegal characters") > 0 , "Missing expected error message"
+    assert str(response).index("500 - Illegal characters") > 0 , "Missing expected error message"
 
 
 def test_handles_defaults_correctly():
