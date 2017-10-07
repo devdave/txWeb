@@ -49,10 +49,9 @@ class CSite(server.Site):
     """
 
     def __init__(self, resource, logPath=None, timeout=60*60*12):
-        #TODO I remember talking to exarkun or glyph on freenode but I have
-        # no idea what the consensus was on using old style vs super
-        # parent.method calls
-        server.Site.__init__(self, resource, logPath, timeout)
+
+        super().__init__(resource, logPath=logPath, timeout=timeout)        
+        # server.Site.__init__(self, resource, logPath, timeout)
         self.object_graph = self._compute_path(self.resource, "")
 
     def _compute_path(self, parent, path):
