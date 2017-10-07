@@ -95,7 +95,11 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-    assert len(request.written[0].count("a")) > 0
+
+
+    actualOutput = str(request.written[0])
+    helper.assertGreater(len(actualOutput.count("a")), 0)
+    
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = Site(RootWithStaticDirectory())
