@@ -12,7 +12,7 @@ from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 
-from helper import helper
+from txweb.tests.helper import helper
 
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
