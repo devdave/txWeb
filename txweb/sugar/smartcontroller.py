@@ -132,12 +132,6 @@ class SmartController(type):
                 #TODO unwind/compact ActionMethodDecorator to avoid this mess
                 cdict[name] = Decorator(Decorator.GetDirectives(cdict[name]))(cdict[name])
                         
-                
-                    
-                
-                
-            
-        
         return type.__new__(mcs, clsname, bases, cdict)
                 
                 
