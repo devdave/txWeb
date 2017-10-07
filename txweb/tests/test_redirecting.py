@@ -20,6 +20,9 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 from twisted.web.util import Redirect
 
+#TODO this is not good
+from txweb.tests.helper import helper
+
 class SubClass(object):
 
     @expose
@@ -33,12 +36,15 @@ site = Site(ExampleRoot)
 
 def test_redirectIfPathPointsToAnAttributeObject():
     request = TestRequest([], "/subclass")
-
     result = site.routeRequest(request)
-    assert isinstance(result, Redirect )
-    assert result.url == "/subclass/"
+    expectedURL = "/subclass/".encode()
+
+    helper.assertIsInstance(result, Redirect)
+    helper.assertEqual(result.url, expectedURL)
+    
     result.render(request)
-    request.redirectToURL == "/subclass/"
+    helper.assertEqual(request.redirectToURL, expectedURL)
+
     dbg = 1
 
 
