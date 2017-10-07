@@ -6,7 +6,8 @@ from pprint import pprint
 
 from txweb.core import CSite
 from txweb.util import expose
-from txweb.util.testing import TestRequest
+from txweb.util.testing import TestRequest #todo relo into tests module?
+from txweb.tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
@@ -93,7 +94,7 @@ def test_graph_is_correct():
                         '/sub/far/is_here',
                         '/sub/foo']
 
-    eq_(len(root.object_graph), 8)
+    helper.assertEqual(len(root.object_graph), 8)
     for test_path in expected_routes:
         found = False
         for url_test, action in root.object_graph.items():
@@ -121,7 +122,7 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-    assert request.written[0].count("a") > 0
+    assert str(request.written[0]).count("a") > 0
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = CSite(RootWithStaticDirectory())
@@ -133,7 +134,7 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-    assert request.written[0].count("b") > 0
+    assert str(request.written[0]).count("b") > 0
 
 
 
@@ -146,13 +147,14 @@ def test_site_routRequest_HandlesIndexAsResource():
     action = staticSite.routeRequest(request)
     response = action.render(request)
     assert response == NOT_DONE_YET
-    with open(relPath("LICENSE.txt")) as testFile:
+    with open(relPath("LICENSE.txt"), "rb") as testFile:
         expected = testFile.read()
         assert len(request.written) ==  1, "Expected written log to be equal to one"
         actualSize = len(request.written[0])
         expectedSize = len(expected)
         actual = request.written[0]
-        assert expectedSize == actualSize, "Expected size doesn't match actual"
+        helper.assertEqual(expectedSize, actualSize)
+        
         assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
