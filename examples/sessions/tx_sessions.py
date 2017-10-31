@@ -1,8 +1,11 @@
 
 import time
+import webbrowser
 
-from txweb import CSite as Site
+from txweb import Site as Site
 from txweb import expose
+
+
 
 from twisted.web.static import File
 from twisted.internet import reactor, defer
@@ -18,12 +21,12 @@ class Root(object):
 
     @expose
     def index(request):
-        from dbgp.client import brk; brk("192.168.1.2", 9090)
+        # from dbgp.client import brk; brk("192.168.1.2", 9090)
         return "index"
 
     @expose
     def on_register(request):
-        from dbgp.client import brk; brk("192.168.1.2", 9090)
+        # from dbgp.client import brk; brk("192.168.1.2", 9090)
         if not request.args.get('name', False):
             return "Missing name"
 
@@ -31,6 +34,7 @@ class Root(object):
 
 def run():
     reactor.listenTCP(8080, Site(Root()))
+    reactor.callLater(3, webbrowser.open, "http://127.0.0.1:8080/home" )
     reactor.run()
 
 if __name__ == '__main__':
