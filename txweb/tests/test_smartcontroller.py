@@ -80,17 +80,6 @@ def test_requestAttrHandlingLogic(testController = None):
     assert actual['r_store'] == expectedStoreValue
     assert actual['r_foo'] == None
 
-def test_postPathArgsHandlingLogic(testController = None):
-    testClass = testController or ExampleController
-
-    postPath = ["first argument", "second argument"]
-    request = DummyRequest(postPath)
-
-
-    actuals = testClass().postpathargs(request)
-    assert postPath == [actuals['u_first'], actuals['u_second']]
-    assert actuals['u_third'] is None
-
 
 def test_defaultArgumentsWorksAsExpected(testController = None):
     testClass = testController or ExampleController
@@ -107,7 +96,23 @@ def test_defaultArgumentsWorksAsExpected(testController = None):
     assert actuals2['a_name'] == "John Doe", "%s is not equal to %s" % (actuals2['a_name'], "John Doe")
 
 
-def test_everything():
+def test_compare_example_vs_extended_controller():
+
+    tests = [
+        test_simple_method_isunchanged,
+        test_actions_were_renamed,
+        test_argshandlingLogic,
+        test_requestAttrHandlingLogic
+    ]
+    test_subjects = {"Example": ExampleController, "Extended": ExtendedController}
+
+    for subject_name, subject_cls in test_subjects.items():
+        for test in tests:
+            yield test, (subject_cls,)
+
+
+
+def test_everything_method():
     postPath = ["first", "second"]
     request = DummyRequest(postPath)
     request.addArg("foo", "hello")
