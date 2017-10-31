@@ -135,6 +135,7 @@ class Site(server.Site):
 
 
         """
+        assert isinstance(request.path, bytes), f"Twisted expects <request.path '{request.path}'> to be a byte string, got {type(request.path)} instead"
         action = None
 
         #self.resource is the Root controller object provided to Site.__init__(resource)
