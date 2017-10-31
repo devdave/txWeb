@@ -1,11 +1,11 @@
 #Module level
 from .util import OneTimeResource
-#TODO terrible module name
+from .util import MAB
 from .util.is_a import isAction
 from .util.is_a import isExposed
 from .util.is_a import isResource
 
-#Twisted level
+#Twisted
 from twisted.web import server
 from twisted.web import resource
 from twisted.web import util
@@ -241,10 +241,11 @@ class Site(server.Site):
             if endedWithSlash and hasattr(root, "index"):
                 action = getattr(root, "index")
 
-            #handles calls to child object attributes where they're at root.foo and url == "/foo" but should be "/foo/"
-            elif not endedWithSlash and element in dir(parent) and element[0] != "_" and isinstance(getattr(parent, element), object):
-                byte_path = hyperlink.URL.from_text("%s/" % request.path).to_text().encode()
-                action = util.Redirect(byte_path)
+            #DISABLE this behavior should be a application side responsibility
+            # #handles calls to child object attributes where they're at root.foo and url == "/foo" but should be "/foo/"
+            # elif not endedWithSlash and element in dir(parent) and element[0] != "_" and isinstance(getattr(parent, element), object):
+            #     byte_path = hyperlink.URL.from_text("%s/" % request.path).to_text().encode()
+            #     action = util.Redirect(byte_path)
 
         if action is None:
             action = defaultAction or NoResource()
