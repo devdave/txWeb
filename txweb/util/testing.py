@@ -1,6 +1,7 @@
 
 from twisted.web.test.test_web import DummyRequest
 
+mab = lambda x: x if isinstance(x, bytes) else x.encode()
 
 
 class TestRequest(DummyRequest):# prama: no cover
@@ -9,7 +10,7 @@ class TestRequest(DummyRequest):# prama: no cover
     """
     def __init__(self, postpath = [], path = "/", args = {}):
         DummyRequest.__init__(self, postpath)
-        self.path = path
+        self.path = mab(path)
         self.redirectToURL = None
         for name, arg in args.items():
             self.addArg(name, arg)
