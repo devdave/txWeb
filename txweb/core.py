@@ -176,10 +176,8 @@ class Site(server.Site):
 
 
         #crucial check because /foo/bar and /foo/bar/ should be treated as different ( former suggest Foo.<bound method bar> while the second Foo.<object instance bar>)
-        endedWithSlash = request.path.endswith("/")
-        path = request.path.strip("/").split("/")
-
-
+        endedWithSlash = request.path.decode().endswith("/")
+        path = request.path.decode().strip("/").split("/")
 
         for i, element in enumerate(path):
 
