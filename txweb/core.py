@@ -87,8 +87,9 @@ class CSite(server.Site):
 
         action = None
         url_match = None
+        str_request_path = request.path.decode()
         for url_regex, candidate in self.object_graph.items():
-            url_match = url_regex.match(request.path)
+            url_match = url_regex.match(str_request_path)
             if url_match:
                 action = candidate
                 break
