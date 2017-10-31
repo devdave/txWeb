@@ -162,7 +162,8 @@ def test_site_routeRequest_HandlesErrorPageResource():
     request = TestRequest([], "/deadend")
 
     action = make_new_graph().routeRequest(request)
-    assert action.code == 418, "Expecting tea pot, but got %s" % action.code
+    helper.assertEqual(action.code, 418)
+    # assert action.code == 418, "Expecting tea pot, but got %s" % action.code
     assert isinstance(action, ErrorPage)
 
 def test_site_routeRequestCorrectly():
@@ -199,12 +200,13 @@ def test_handles_defaults_correctly():
 
     for path, method in u2m.items():
         request = DummyRequest([])
-        request.path = path
+        request.path = path.encode()
         action = site.routeRequest(request)
         assert isinstance(action, NoResource)
 
 
 
 
-if __name__ == '__main__':#pragma: no cover
-    nose.run()
+if __name__ == '__main__':
+    import nose2
+    nose2.main()
