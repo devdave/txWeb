@@ -34,12 +34,12 @@ from collections import OrderedDict
 
 """
 
-class CBranch(object):
-    """
-        To simplify traversing/descending an object graph, make all branches
-        required to be an child class of CBranch.
-    """
-    pass
+# class CBranch(object):
+#     """
+#         To simplify traversing/descending an object graph, make all branches
+#         required to be an child class of CBranch.
+#     """
+#     pass
 
 
 class CSite(server.Site):
