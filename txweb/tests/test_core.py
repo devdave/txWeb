@@ -170,9 +170,10 @@ def test_handles_defaults_correctly():
 
     for path, method in u2m.items():
         request = DummyRequest([])
-        request.path = path
+        request.path = path.encode()
         action = site.routeRequest(request)
         assert getattr(action , "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
+
 
 
 if __name__ == '__main__':#pragma: no cover
