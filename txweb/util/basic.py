@@ -21,6 +21,10 @@ class ActionResource(resource.Resource):
     def render(self, request):
 
         response = self.func(request) #pragma: no cover
+
+        if isinstance(response, str):
+            response = response.encode()
+
         #If the response is a Deferred, tell the stack to stop pre-emptive
         # cleanup as the show's not over yet
         if isinstance(response, defer.Deferred):
