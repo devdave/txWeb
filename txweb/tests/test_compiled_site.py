@@ -84,7 +84,7 @@ def test_compiles():
 
 def test_graph_is_correct():
     root = make_new_graph()
-    pprint(root.object_graph.keys(), indent = 2)
+    # pprint(root.object_graph.keys(), indent = 2)
     expected_routes = [ '/',
                         '/deadend',
                         '/index',
