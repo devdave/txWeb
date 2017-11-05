@@ -99,20 +99,6 @@ def test_defaultArgumentsWorksAsExpected(testClass):
     assert actuals2['u_number'] == 50, "%s is not equal to %s" % (actuals2['u_number'], 50)
     assert actuals2['a_name'] == "John Doe", "%s is not equal to %s" % (actuals2['a_name'], "John Doe")
 
-
-def test_compare_example_vs_extended_controller():
-
-    tests = [
-        test_simple_method_isunchanged,
-        test_actions_were_renamed,
-        test_argshandlingLogic,
-        test_requestAttrHandlingLogic
-    ]
-    test_subjects = {"Example": ExampleController, "Extended": ExtendedController}
-
-    for subject_name, subject_cls in test_subjects.items():
-        for test in tests:
-            yield test, (subject_cls,)
 # def test_compare_example_vs_extended_controller():
 #
 #     tests = [
