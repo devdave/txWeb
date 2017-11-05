@@ -12,11 +12,12 @@ from twisted.internet import reactor, defer
 from twisted.web.server import NOT_DONE_YET
 
 
-
 class Root(object):
 
+    index = File("./views/index.html")
+
     @expose
-    def index(self, request):
+    def whatnow(self, request):
 
         return f"It is currently {time.time()}"
 

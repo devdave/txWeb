@@ -20,12 +20,12 @@ class Root(object):
     register_page   = File("./register.html")
 
     @expose
-    def index(request):
+    def index(self, request):
         # from dbgp.client import brk; brk("192.168.1.2", 9090)
         return "index"
 
     @expose
-    def on_register(request):
+    def on_register(self, request):
         # from dbgp.client import brk; brk("192.168.1.2", 9090)
         if not request.args.get('name', False):
             return "Missing name"

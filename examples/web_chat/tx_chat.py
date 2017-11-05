@@ -55,7 +55,7 @@ class ZeHub(object):
         client = ZmqSubConnection(self.zf, self.client)
         client.subscribe("")
         self.clients.append(client)
-        print len(self.clients), " waiting clients"
+        print(len(self.clients), " waiting clients")
 
         def cleanup():
             """
