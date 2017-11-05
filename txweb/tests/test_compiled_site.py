@@ -6,7 +6,7 @@ from pprint import pprint
 
 from txweb.core import CSite
 from txweb.util import expose
-from txweb.util.testing import TestRequest #todo relo into tests module?
+from txweb.util.testing import MockRequest #todo relo into tests module?
 from txweb.tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
@@ -107,7 +107,7 @@ def test_graph_is_correct():
 def test_site_routeRequest_HandlesDirectoryListing():
 
     staticDir = CSite(RootWithStaticDirectory())
-    request = TestRequest([], "/files/")
+    request = MockRequest([], "/files/")
 
     action = staticDir.routeRequest(request)
 
@@ -116,7 +116,7 @@ def test_site_routeRequest_HandlesDirectoryListing():
 
 def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     staticDir = CSite(RootWithStaticDirectory())
-    request = TestRequest([], "/files/a.txt")
+    request = MockRequest([], "/files/a.txt")
 
     action = staticDir.routeRequest(request)
     response = action.render(request)
@@ -127,7 +127,7 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = CSite(RootWithStaticDirectory())
 
-    request = TestRequest([], "/files/subdir/b.txt")
+    request = MockRequest([], "/files/subdir/b.txt")
 
     #from dbgp.client import brk; brk("192.168.1.2", 9090)
     action = staticDir.routeRequest(request)
@@ -142,7 +142,7 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 def test_site_routRequest_HandlesIndexAsResource():
     staticSite = CSite(RootWithStaticIndex())
 
-    request = TestRequest([], "/")
+    request = MockRequest([], "/")
 
     action = staticSite.routeRequest(request)
     response = action.render(request)
@@ -154,12 +154,12 @@ def test_site_routRequest_HandlesIndexAsResource():
         expectedSize = len(expected)
         actual = request.written[0]
         helper.assertEqual(expectedSize, actualSize)
-        
+
         assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
 
-    request = TestRequest([], "/deadend")
+    request = MockRequest([], "/deadend")
 
     action = make_new_graph().routeRequest(request)
     helper.assertEqual(action.code, 418)
@@ -179,12 +179,12 @@ def test_site_routeRequestCorrectly():
     u2m['/sub/far/is_here'] = root.sub.far.is_here
 
     for path, method in u2m.items():
-        request = TestRequest([], path)
+        request = MockRequest([], path)
         action = site.routeRequest(request)
         assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
 
 def test_prevents_underscores():
-    request = TestRequest([], "/sub/__dict__/")
+    request = MockRequest([], "/sub/__dict__/")
 
     action = make_new_graph().routeRequest(request)
 

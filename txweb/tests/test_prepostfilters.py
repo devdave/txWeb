@@ -4,7 +4,7 @@ from os.path import dirname, abspath, join
 from txweb.core import Site
 from txweb.util import expose
 from txweb.util import OneTimeResource
-from txweb.util.testing import TestRequest
+from txweb.util.testing import MockRequest
 from txweb.tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
@@ -34,14 +34,14 @@ class Root(object):
 def test_filtersAreCalled():
     root = Root()
     site = Site(root)
-    request = TestRequest([],"/anAction")
+    request = MockRequest([],"/anAction")
     action = site.routeRequest(request)
     helper.assertIsInstance(action, OneTimeResource)
     helper.assertEqual(action.func, root.anAction)
-    
+
     response = action.render(request)
     helper.assertEqual(response, "anActionWasCalled".encode())
-    
+
     helper.assertTrue(root.preFilterWasCalled)
     helper.assertTrue(root.postFilterWasCalled)
 

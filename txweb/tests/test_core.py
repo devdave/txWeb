@@ -4,7 +4,7 @@ from os.path import dirname, abspath, join
 
 from txweb.core import Site
 from txweb.util import expose
-from txweb.util.testing import TestRequest
+from txweb.util.testing import MockRequest
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
@@ -81,7 +81,7 @@ site = Site(root)
 def test_site_routeRequest_HandlesDirectoryListing():
 
     staticDir = Site(RootWithStaticDirectory())
-    request = TestRequest([], "/files/")
+    request = MockRequest([], "/files/")
 
     action = staticDir.routeRequest(request)
     response = action.render(request)
@@ -89,7 +89,7 @@ def test_site_routeRequest_HandlesDirectoryListing():
 
 def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
     staticDir = Site(RootWithStaticDirectory())
-    request = TestRequest([], "/files/a.txt")
+    request = MockRequest([], "/files/a.txt")
 
     action = staticDir.routeRequest(request)
     response = action.render(request)
@@ -99,12 +99,12 @@ def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
 
     actualOutput = str(request.written[0])
     helper.assertGreater(actualOutput.count("a"), 0)
-    
+
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     staticDir = Site(RootWithStaticDirectory())
 
-    request = TestRequest([], "/files/subdir/b.txt")
+    request = MockRequest([], "/files/subdir/b.txt")
 
     action = staticDir.routeRequest(request)
     response = action.render(request)
@@ -118,7 +118,7 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 def test_site_routRequest_HandlesIndexAsResource():
     staticSite = Site(RootWithStaticIndex())
 
-    request = TestRequest([], "/")
+    request = MockRequest([], "/")
 
     action = staticSite.routeRequest(request)
     response = action.render(request)
@@ -135,7 +135,7 @@ def test_site_routRequest_HandlesIndexAsResource():
 
 def test_site_routeRequest_HandlesErrorPageResource():
 
-    request = TestRequest([], "/deadend")
+    request = MockRequest([], "/deadend")
 
     action = site.routeRequest(request)
     assert action.code == 418, "Expecting tea pot, but got %s" % action.code
@@ -151,12 +151,12 @@ def test_site_routeRequestCorrectly():
     u2m['/sub/far/is_here'] = root.sub.far.is_here
 
     for path, method in u2m.items():
-        request = TestRequest([], path)
+        request = MockRequest([], path)
         action = site.routeRequest(request)
         assert getattr(action, "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
 
 def test_prevents_underscores():
-    request = TestRequest([], "/sub/__dict__/")
+    request = MockRequest([], "/sub/__dict__/")
 
     action = site.routeRequest(request)
     response = action.render(request)

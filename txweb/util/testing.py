@@ -4,7 +4,7 @@ from twisted.web.test.test_web import DummyRequest
 mab = lambda x: x if isinstance(x, bytes) else x.encode()
 
 
-class TestRequest(DummyRequest):# prama: no cover
+class MockRequest(DummyRequest):# prama: no cover
     """
         Utility class that builds on DummyRequest to fullfill some missing methods
     """
@@ -14,13 +14,13 @@ class TestRequest(DummyRequest):# prama: no cover
         self.redirectToURL = None
         for name, arg in args.items():
             self.addArg(name, arg)
-            
-            
+
+
     def redirect(self, url):
         """
             Just a simple trap to catch if .redirect was called and what the URL is
         """
         self.redirectToURL = url
-        
+
     def isSecure(self):
         return False

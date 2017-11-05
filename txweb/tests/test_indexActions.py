@@ -3,7 +3,7 @@ from os.path import dirname, abspath, join
 
 from txweb.core import Site
 from txweb.util import expose
-from txweb.util.testing import TestRequest
+from txweb.util.testing import MockRequest
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
@@ -30,7 +30,7 @@ def test_path2controllerResolvesToIndex():
         which should resolve to Root.parent.index
 
     """
-    request = TestRequest([],"/sub/")
+    request = MockRequest([],"/sub/")
 
     action = siteWithSubControllerWithFileIndex.routeRequest(request)
     response = action.render(request)
