@@ -1,7 +1,7 @@
 
 
 #pragma: no cover
-import unittest
+import pytest
 
 
 from txweb.sugar.smartcontroller import SmartController
@@ -34,9 +34,14 @@ class ExtendedController(ExampleController):
     def action_everything(self, request, a_foo = None, a_bar = None, r_args = None, r_postpath = None):
         return locals()
 
+@pytest.fixture(scope="session", params=[ExtendedController, ExampleController])
+def testClass(request):
+    print(f"Testing {type(request.param)}")
+    yield request.param
 
-def test_simple_method_isunchanged(testController = None):
-    testClass = testController or ExampleController
+
+def test_simple_method_isunchanged(testClass):
+    #
     eCon = testClass()
     request = DummyRequest([])
     assert hasattr(eCon, "simple_method")
@@ -45,15 +50,14 @@ def test_simple_method_isunchanged(testController = None):
 
     assert response['self'] == eCon
 
-def test_actions_were_renamed(testController = None):
-    testClass = testController or ExampleController
+def test_actions_were_renamed(testClass):
+
     eCon = testClass()
     for name in ['testmethod', 'args', 'requestattrs']:
         assert hasattr(eCon, name) == True, "Expecting action_%s to be renamed to %s" %(name, name)
 
 
-def test_argshandlingLogic(testController = None):
-    testClass = testController or ExampleController
+def test_argshandlingLogic(testClass):
 
     request = DummyRequest([])
     firstArgument = "Hello"
@@ -69,8 +73,8 @@ def test_argshandlingLogic(testController = None):
     for key in expected.keys():
         assert actual.get(key, ['unique object']) == expected[key], "Missing expected key %s in %r" % (key, actual)
 
-def test_requestAttrHandlingLogic(testController = None):
-    testClass = testController or ExampleController
+def test_requestAttrHandlingLogic(testClass):
+
     request = DummyRequest([])
     expectedStoreValue = {"data":"store"}
     expectedFooValue = None
@@ -81,8 +85,8 @@ def test_requestAttrHandlingLogic(testController = None):
     assert actual['r_foo'] == None
 
 
-def test_defaultArgumentsWorksAsExpected(testController = None):
-    testClass = testController or ExampleController
+def test_defaultArgumentsWorksAsExpected(testClass):
+
     emptyRequest = DummyRequest([])
     populatedRequest = DummyRequest([50])
     populatedRequest.addArg("name", "John Doe")
@@ -109,6 +113,19 @@ def test_compare_example_vs_extended_controller():
     for subject_name, subject_cls in test_subjects.items():
         for test in tests:
             yield test, (subject_cls,)
+# def test_compare_example_vs_extended_controller():
+#
+#     tests = [
+#         test_simple_method_isunchanged,
+#         test_actions_were_renamed,
+#         test_argshandlingLogic,
+#         test_requestAttrHandlingLogic
+#     ]
+#     test_subjects = {"Example": ExampleController, "Extended": ExtendedController}
+#
+#     for subject_name, subject_cls in test_subjects.items():
+#         for test in tests:
+#             yield test, subject_cls
 
 
 
