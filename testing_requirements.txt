@@ -1,0 +1,16 @@
+attrs==17.2.0
+Automat==0.6.0
+colorama==0.3.9
+constantly==15.1.0
+cov-core==1.15.0
+coverage==4.4.1
+decorator==4.1.2
+hyperlink==17.3.1
+incremental==17.5.0
+pipdeptree==0.10.1
+py==1.4.34
+pytest==3.2.3
+six==1.11.0
+Twisted==17.9.0
+-e git+https://github.com/devdave/txWeb.git@7516618411463d5e5f637737990a3c8bedbbb767#egg=txweb
+zope.interface==4.4.3
