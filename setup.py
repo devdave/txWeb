@@ -2,7 +2,7 @@
 from setuptools import setup
 META_DATA = dict(
     name            = "txweb",
-    version         = '0.7.2013.11.16',
+    version         = '0.11.2017.1.1',
     author          = "David W.",
     author_email    = "txwebpypi@ominian.net",
     url             = "https://github.com/devdave/txWeb",
