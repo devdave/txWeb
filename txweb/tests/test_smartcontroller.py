@@ -94,10 +94,20 @@ def test_defaultArgumentsWorksAsExpected(testClass):
     controller = testClass()
     actuals1 = controller.defaultArguments(emptyRequest)
     actuals2 = controller.defaultArguments(populatedRequest)
-    assert actuals1['u_number'] == 10, "%s is not equal to %s" % (actuals1['u_number'], 10)
-    assert actuals1['a_name'] == "Unknown", "%s is not equal to %s" % (actuals1['a_name'], "Unkown")
-    assert actuals2['u_number'] == 50, "%s is not equal to %s" % (actuals2['u_number'], 50)
-    assert actuals2['a_name'] == "John Doe", "%s is not equal to %s" % (actuals2['a_name'], "John Doe")
+    expected1 = {
+
+        "a_name": "Unknown",
+        "request": emptyRequest,
+        "self": controller
+    }
+    expected2 = {
+        "a_name": "John Doe",
+        "request": populatedRequest,
+        "self": controller
+    }
+    assert actuals1 == expected1
+    assert actuals2 == expected2
+    # helper.assertDictEqual(actuals1, expected1)
 
 # def test_compare_example_vs_extended_controller():
 #
