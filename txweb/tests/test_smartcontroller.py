@@ -109,20 +109,6 @@ def test_defaultArgumentsWorksAsExpected(testClass):
     assert actuals2 == expected2
     # helper.assertDictEqual(actuals1, expected1)
 
-# def test_compare_example_vs_extended_controller():
-#
-#     tests = [
-#         test_simple_method_isunchanged,
-#         test_actions_were_renamed,
-#         test_argshandlingLogic,
-#         test_requestAttrHandlingLogic
-#     ]
-#     test_subjects = {"Example": ExampleController, "Extended": ExtendedController}
-#
-#     for subject_name, subject_cls in test_subjects.items():
-#         for test in tests:
-#             yield test, subject_cls
-
 
 
 def test_everything_method():
