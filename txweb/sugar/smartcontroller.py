@@ -120,18 +120,20 @@ class SmartController(type):
     def __new__(mcs, clsname, bases, cdict):
 
         #Allow for application level override for the default decorator
-        Decorator = cdict.get("__metamethoddecorator__", ActionDecorator)
+        decorator = cdict.get("__metamethoddecorator__", ActionDecorator)
 
 
         #Step 1 catch all methods prefixed with action_
-        for name in cdict.keys():
-            if ( inspect.ismethod(cdict[name]) or inspect.isfunction(cdict[name]) ) and name.startswith("action_"):
-                cdict[name[7:]] = cdict[name]
-                del cdict[name]
-                name = name[7:]
-                setattr(cdict[name], "exposed", True)
+        attributes = [x for x in cdict.keys() if x.startswith("action_") == True]
 
-                #TODO unwind/compact ActionMethodDecorator to avoid this mess
+        for name in attributes:
+            _, new_name = name.split("_",1)
+            obj = cdict[name]
+            if ( inspect.ismethod(obj) or inspect.isfunction(obj) ):
+                setattr(obj, "exposed", True)
+                cdict[new_name] = decorator(obj)
+                del cdict[name]
+
                 cdict[name] = Decorator(cdict[name])
 
         return type.__new__(mcs, clsname, bases, cdict)
