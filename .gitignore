@@ -8,3 +8,4 @@ htmlcov
 .coverage
 env/
 txweb.egg-info/*
+.cache/v/cache/lastfailed
