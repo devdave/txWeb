@@ -46,5 +46,5 @@ def test_filtersAreCalled():
     helper.assertTrue(root.postFilterWasCalled)
 
 if __name__ == '__main__':
-    import nose2
-    nose2.main()
+    import pytest
+    pytest.main()
