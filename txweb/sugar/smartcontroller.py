@@ -22,7 +22,6 @@ class AMDirectives(object):
     afirst = attr.ib(default=attr.Factory(list))
     prefixed = attr.ib(default=attr.Factory(dict))
     request_attrs = attr.ib(default=attr.Factory(list))
-    is_method = attr.ib(default=False)
 
 @attr.s
 class AMParam(object):
