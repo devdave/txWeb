@@ -3,12 +3,30 @@
 #pragma: no cover
 import pytest
 
+from inspect import signature
 
+from txweb.sugar.smartcontroller import FindDirectives
 from txweb.sugar.smartcontroller import SmartController
+from txweb.sugar.smartcontroller import SafeStr
+
 from txweb.util import expose
 from txweb.tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
+
+class BlankController():
+
+    def action_basic(self, request):
+        pass
+
+    def action_argument(self, request, a_first:SafeStr=None):
+        pass
+
+    def action_list(self, request, al_vars=None):
+        pass
+
+    def action_composite(self, request, a_first=None, al_vars=None):
+        pass
 
 class ExampleController(metaclass=SmartController):
 
@@ -19,11 +37,22 @@ class ExampleController(metaclass=SmartController):
     def action_testmethod(self, request):
         return locals()
 
+    def action_annotated(self, request, a_first:SafeStr = None):
+        return {"a_first":a_first}
+        
     def action_args(self, request, a_first = None, a_second = None, a_third = None):
-        return locals()
+        return {"a_first":a_first, "a_second":a_second,"a_third":a_third}
 
+    def action_collected(self, request, c_thing = None):
+        return {"c_thing":c_thing}
 
-    def action_requestattrs(self, request, r_store = None, r_foo = None):
+    def action_collected_annotated(self, request, c_thing:SafeStr = None):
+        return {"c_thing":c_thing}
+
+    def action_list_of_arguments(self, request, al_state:int=None):
+        return {"al_state":al_state}
+        
+    def action_requestattrs(self, request, r_args = None, r_foo = None):
         return locals()
 
     def action_defaultArguments(self, request, a_name = "Unknown"):
@@ -40,6 +69,71 @@ def testClass(request):
     yield request.param
 
 
+def test_obeys_annotations():
+    request = DummyRequest([])
+    econ = ExampleController()
+    request.addArg(b"first", 123)
+
+    actual = econ.annotated(request)
+    assert actual["a_first"] == "123"
+
+def test_obeys_annotation_handles_bytes():
+    request = DummyRequest([])
+    econ = ExampleController()
+    request.addArg(b"first", b"this is bytes")
+
+    actual = econ.annotated(request)
+    assert actual["a_first"] == "this is bytes"
+    
+def test_verify_prefixed_args():
+    controller = ExampleController()
+    request = DummyRequest([])
+    request.addArg(b"thing_size", b"giant")
+    request.addArg(b"thing_color", b"purple")
+    request.addArg(b"thing_vocation", b"people eater")
+
+    actual = controller.collected(request)
+    assert actual["c_thing"] == {"size":b"giant", "color":b"purple", "vocation":b"people eater"}
+
+def test_verify_prefixed_args_obey_annotation():
+    controller = ExampleController()
+    request = DummyRequest([])
+    request.addArg(b"thing_size", b"giant")
+    request.addArg(b"thing_color", b"purple")
+    request.addArg(b"thing_vocation", b"people eater")
+
+    actual = controller.collected_annotated(request)
+    assert actual["c_thing"] == {"size":"giant", "color":"purple", "vocation":"people eater"}
+
+
+def test_varify_argumentlist():
+    controller = ExampleController()
+    request = DummyRequest([])
+    request.args[b"state"] = [b"0",b"1",b"2",b"3"]
+
+
+    actual = controller.list_of_arguments(request)
+    assert actual["al_state"] == [0,1,2,3]
+
+    
+def test_verify_directives_ensure_basic_is_empty():
+    
+    directives = FindDirectives(BlankController.action_basic)
+    assert len(directives.afirst) == 0
+
+def test_directives_detected_argument_kwparam():
+    directives = FindDirectives(BlankController.action_argument)
+    assert len(directives.afirst) == 1
+
+    assert directives.afirst[0].str_name == "first"
+
+def test_directives_detected_argument_kwlist():
+    directives = FindDirectives(BlankController.action_list)
+    assert len(directives.alist) == 1
+    assert directives.alist[0].str_name == "vars"
+    
+    
+
 def test_simple_method_isunchanged(testClass):
     #
     eCon = testClass()
@@ -54,34 +148,31 @@ def test_actions_were_renamed(testClass):
 
     eCon = testClass()
     for name in ['testmethod', 'args', 'requestattrs']:
-        assert hasattr(eCon, name) == True, "Expecting action_%s to be renamed to %s" %(name, name)
+        assert hasattr(eCon, name) == True, dir(eCon)
 
 
 def test_argshandlingLogic(testClass):
 
     request = DummyRequest([])
-    firstArgument = "Hello"
-    secondArgument = "World"
-    thirdArgument = None
-
-    request.addArg("first", firstArgument)
-    request.addArg("second", secondArgument)
-
     eCon = testClass()
-    expected = {"self": eCon, "a_first" : firstArgument, "a_second" : secondArgument, "a_third" : None}
+    expected = {
+        "a_first" : b"Hello",
+        "a_second" : b"World",
+        "a_third" : None
+    }
+
+    request.addArg(b"first", expected["a_first"])
+    request.addArg(b"second", expected["a_second"])
+
     actual = eCon.args(request)
-    for key in expected.keys():
-        assert actual.get(key, ['unique object']) == expected[key], "Missing expected key %s in %r" % (key, actual)
+
+    assert actual == expected
+
 
 def test_requestAttrHandlingLogic(testClass):
 
     request = DummyRequest([])
-    expectedStoreValue = {"data":"store"}
-    expectedFooValue = None
-    setattr(request, 'store', expectedStoreValue )
-
     actual = testClass().requestattrs(request)
-    assert actual['r_store'] == expectedStoreValue
     assert actual['r_foo'] == None
 
 
@@ -89,7 +180,7 @@ def test_default_Arguments_Works_As_Expected(testClass):
 
     emptyRequest = DummyRequest([])
     populatedRequest = DummyRequest([50])
-    populatedRequest.addArg("name", "John Doe")
+    populatedRequest.addArg(b"name", b"John Doe")
 
     controller = testClass()
     actuals1 = controller.defaultArguments(emptyRequest)
@@ -101,7 +192,7 @@ def test_default_Arguments_Works_As_Expected(testClass):
         "self": controller
     }
     expected2 = {
-        "a_name": "John Doe",
+        "a_name": b"John Doe",
         "request": populatedRequest,
         "self": controller
     }
@@ -114,19 +205,26 @@ def test_default_Arguments_Works_As_Expected(testClass):
 def test_everything_method():
     postPath = ["first", "second"]
     request = DummyRequest(postPath)
-    request.addArg("foo", "hello")
-    request.addArg("bar", "world")
+    request.addArg(b"foo", b"hello")
+    request.addArg(b"bar", b"world")
 
     eCon = ExtendedController()
 
     expectedReturn = {
         'self': eCon,
         "request": request,
-        "a_foo": "hello",
-        "a_bar": "world",
-        'r_args': {'bar': ['world'], 'foo': ['hello']},
+        "a_foo": b"hello",
+        "a_bar": b"world",
+        'r_args': {b'bar': [b'world'], b'foo': [b'hello']},
         'r_postpath': ['first', 'second']
         }
 
     actuals = eCon.everything(request)
-    helper.assertEqual(expectedReturn, actuals)
+    assert expectedReturn == actuals
+    
+
+
+
+if __name__ == "__main__":
+    import pytest
+    pytest.main()

@@ -22,6 +22,7 @@ class AMDirectives(object):
     afirst = attr.ib(default=attr.Factory(list))
     prefixed = attr.ib(default=attr.Factory(dict))
     request_attrs = attr.ib(default=attr.Factory(list))
+    
 
 @attr.s
 class AMParam(object):
@@ -44,24 +45,35 @@ class AMParam(object):
     def default(self):
         return None if self.signature.default == self.signature.empty else self.signature.default
 
+    def sanitize(self, raw, transformer = None):
+        retval = None
+
+        if self.signature.annotation is self.signature.empty:
+            retval = raw
+        else:
+            transformer = self.signature.annotation if transformer is None else transformer
+
+            if isinstance(raw, list):
+                retval = [self.sanitize(elm, transformer) for elm in raw]
+            else:
+                retval = transformer(raw)
+
+        return retval
+
     def fetch(self, src):
         if isinstance(src, dict):
-            val = src.get(self.byte_name, self.default)
+            value = src.get(self.byte_name, self.default)
         else:
-            val = getattr(src, self.str_name, self.default)
+            value = getattr(src, self.str_name, self.default)
 
-        if self.signature.annotation is not self.signature.empty and val != self.default:
-            target = self.signature.annotation
-            if isinstance(val, bytes) and target is str:
-                val = val.decode()
-            else:
-                val = target(val)
-
-        return val
+        return self.sanitize(value, self.signature.annotation)
 
     def fetch_first(self, src):
-            val = self.fetch(src)
-            return val[0] if isinstance(val, list) else val
+        val = self.fetch(src)
+        if isinstance(val, list):
+            val = val[0]
+
+        return val
 
 
 def FindDirectives(method):
@@ -72,26 +84,23 @@ def FindDirectives(method):
     spec = inspect.signature(method)
     directives = AMDirectives()
 
-    if ["self", "request"] == [x for x in spec.parameters]:
-        directives.is_method = True
-    elif len(spec.parameters) == 1 and "request" in spec.parameters:
-        directives.is_method = False
-    else:
-        for param_name, param in spec.parameters.items():
 
-            if param_name.find("_") == -1:
-                continue
+    for param_name, param in spec.parameters.items():
 
-            prefix, name = param_name.split("_")
-            if prefix in ['a', 'al', 'c', 'r']:
-                if prefix == "a":
-                    directives.afirst.append(AMParam(param))
-                elif prefix == "al":
-                    directives.alist.append(AMParam(param))
-                elif prefix == "c":
-                    directives.prefixed[param_name] = AMParam(param)
-                elif prefix == "r":
-                    directives.request_attrs.append(param_name)
+        if param_name.find("_") == -1:
+            continue
+
+        prefix, name = param_name.split("_")
+        wrapped_param = AMParam(param)
+
+        if prefix == "a":
+            directives.afirst.append(wrapped_param)
+        elif prefix == "al":
+            directives.alist.append(wrapped_param)
+        elif prefix == "c":
+            directives.prefixed[param_name] = wrapped_param
+        elif prefix == "r":
+            directives.request_attrs.append(wrapped_param)
 
     return directives
 
@@ -123,22 +132,21 @@ def ActionDecorator(src_func):
             kwargs[param.name] = param.fetch_first(request.args)
 
         for param in directives.alist:
-            kwargs[arg_name.name] = param.fetch(request.args)
+            kwargs[param.name] = param.fetch(request.args)
 
-        for prefix_name, default_value in directives.prefixed.items():
+        for _, param in directives.prefixed.items():
 
             prefixed_items = {}
             for request_arg_name, value in request.args.items():
-                _, property_name = request_arg_name.split(b"_", 1)
+                if request_arg_name.decode().startswith(param.str_name):
+                    _, attribute_name = request_arg_name.decode().split("_", 1)
 
-                if request_arg.name.startswith(name):
-                    prefixed_items[property_name[len(name):]] = value
+                    prefixed_items[attribute_name] = param.sanitize(value[0])
 
-            kwargs[prefix_name] = prefixed_items
+            kwargs[param.name] = prefixed_items
 
-        for prefixed_named in directives.request_attrs:
-            _, attr_name = prefixed_named.split("_",1)
-            kwargs[prefixed_named] = getattr(request, attr_name, None)
+        for param in directives.request_attrs:            
+            kwargs[param.name] = param.fetch(request)
 
         return src_func(*args, **kwargs)
 
@@ -163,10 +171,12 @@ class SmartController(type):
         #Step 1 catch all methods prefixed with action_
         attributes = [x for x in cdict.keys() if x.startswith("action_") == True]
 
+        is_callable = lambda obj: inspect.ismethod(obj) or inspect.isfunction(obj)
+
         for name in attributes:
             _, new_name = name.split("_",1)
             obj = cdict[name]
-            if ( inspect.ismethod(obj) or inspect.isfunction(obj) ):
+            if ( is_callable(obj) ):
                 setattr(obj, "exposed", True)
                 cdict[new_name] = decorator(obj)
                 del cdict[name]
@@ -174,3 +184,14 @@ class SmartController(type):
 
 
         return type.__new__(mcs, clsname, bases, cdict)
+
+
+def SafeStr(raw):
+    if isinstance(raw, str):
+        retval = raw
+    elif isinstance(raw, bytes):
+        retval = raw.decode()
+    else:
+        retval = str(raw)
+
+    return retval
