@@ -85,7 +85,7 @@ def test_requestAttrHandlingLogic(testClass):
     assert actual['r_foo'] == None
 
 
-def test_defaultArgumentsWorksAsExpected(testClass):
+def test_default_Arguments_Works_As_Expected(testClass):
 
     emptyRequest = DummyRequest([])
     populatedRequest = DummyRequest([50])
