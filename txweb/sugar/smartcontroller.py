@@ -18,11 +18,51 @@ import attr
 class AMDirectives(object):
 
     path_elements = attr.ib(default=attr.Factory(list))
-    param_list = attr.ib(default=attr.Factory(dict))
-    param_first = attr.ib(default=attr.Factory(dict))
+    alist = attr.ib(default=attr.Factory(list))
+    afirst = attr.ib(default=attr.Factory(list))
     prefixed = attr.ib(default=attr.Factory(dict))
     request_attrs = attr.ib(default=attr.Factory(list))
     is_method = attr.ib(default=False)
+
+@attr.s
+class AMParam(object):
+
+    signature = attr.ib()
+
+    @property
+    def name(self):
+        return self.signature.name
+        
+    @property
+    def str_name(self):
+        return self.signature.name.split("_",1)[1]
+
+    @property
+    def byte_name(self):
+        return self.str_name.encode()
+
+    @property
+    def default(self):
+        return None if self.signature.default == self.signature.empty else self.signature.default
+
+    def fetch(self, src):
+        if isinstance(src, dict):
+            val = src.get(self.byte_name, self.default)
+        else:
+            val = getattr(src, self.str_name, self.default)
+
+        if self.signature.annotation is not self.signature.empty and val != self.default:
+            target = self.signature.annotation
+            if isinstance(val, bytes) and target is str:
+                val = val.decode()
+            else:
+                val = target(val)
+
+        return val
+
+    def fetch_first(self, src):
+            val = self.fetch(src)
+            return val[0] if isinstance(val, list) else val
 
 
 def FindDirectives(method):
@@ -46,11 +86,11 @@ def FindDirectives(method):
             prefix, name = param_name.split("_")
             if prefix in ['a', 'al', 'c', 'r']:
                 if prefix == "a":
-                    directives.param_first[param_name] = param.default if param.default != param.empty else None
+                    directives.afirst.append(AMParam(param))
                 elif prefix == "al":
-                    directives.param_list[param_name] = param.default if param.default != param.empty else None
+                    directives.alist.append(AMParam(param))
                 elif prefix == "c":
-                    directives.prefixed[param_name] = param.default if param.default != param.empty else None
+                    directives.prefixed[param_name] = AMParam(param)
                 elif prefix == "r":
                     directives.request_attrs.append(param_name)
 
@@ -80,22 +120,20 @@ def ActionDecorator(src_func):
         request = args[-1]
         # assert hasattr(request, "get"), f"Unexpected param {request} in \n{dir(request)}\n"
 
-        for arg_name, default_value in directives.param_first.items():
-            _, name = arg_name.split("_")
-            kwargs[arg_name] = request.args.get(name, [default_value])[0]
+        for param in directives.afirst:
+            kwargs[param.name] = param.fetch_first(request.args)
 
-        for arg_name, default_value in directives.param_list.items():
-            _, name = arg_name.split("_")
-            kwargs[arg_name] = request.args.get(name, default_value)
+        for param in directives.alist:
+            kwargs[arg_name.name] = param.fetch(request.args)
 
         for prefix_name, default_value in directives.prefixed.items():
-            _, name = prefix_name.split("_")
+
             prefixed_items = {}
             for request_arg_name, value in request.args.items():
-                _, property_name = request_arg_name.split("_",1)
+                _, property_name = request_arg_name.split(b"_", 1)
 
                 if request_arg.name.startswith(name):
-                    prefixed_items[property_name] = value
+                    prefixed_items[property_name[len(name):]] = value
 
             kwargs[prefix_name] = prefixed_items
 
@@ -134,6 +172,6 @@ class SmartController(type):
                 cdict[new_name] = decorator(obj)
                 del cdict[name]
 
-                cdict[name] = Decorator(cdict[name])
+
 
         return type.__new__(mcs, clsname, bases, cdict)
