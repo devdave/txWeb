@@ -168,18 +168,19 @@ class SmartController(type):
         decorator = cdict.get("__metamethoddecorator__", ActionDecorator)
 
 
-        #Step 1 catch all methods prefixed with action_
-        attributes = [x for x in cdict.keys() if x.startswith("action_") == True]
+        is_callable = lambda thing: inspect.ismethod(thing) or inspect.isfunction(thing)
 
-        is_callable = lambda obj: inspect.ismethod(obj) or inspect.isfunction(obj)
+        #Step 1 catch all methods prefixed with action_
+        attributes = [x for x in cdict.keys() if x.startswith("action_") == True and is_callable(cdict[x])]
+
+
 
         for name in attributes:
             _, new_name = name.split("_",1)
             obj = cdict[name]
-            if ( is_callable(obj) ):
-                setattr(obj, "exposed", True)
-                cdict[new_name] = decorator(obj)
-                del cdict[name]
+            setattr(obj, "exposed", True)
+            cdict[new_name] = decorator(obj)
+            del cdict[name]
 
 
 
