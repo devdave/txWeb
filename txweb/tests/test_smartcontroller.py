@@ -221,10 +221,11 @@ def test_everything_method():
 
     actuals = eCon.everything(request)
     assert expectedReturn == actuals
+    assert 1 == 1
     
 
 
 
 if __name__ == "__main__":
     import pytest
-    pytest.main()
+    pytest.main([__file__])
