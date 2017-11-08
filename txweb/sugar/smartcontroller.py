@@ -50,6 +50,8 @@ class AMParam(object):
 
         if self.signature.annotation is self.signature.empty:
             retval = raw
+        elif raw == self.signature.default:
+            retval = raw
         else:
             transformer = self.signature.annotation if transformer is None else transformer
 

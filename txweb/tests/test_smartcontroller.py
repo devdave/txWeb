@@ -84,6 +84,12 @@ def test_obeys_annotation_handles_bytes():
 
     actual = econ.annotated(request)
     assert actual["a_first"] == "this is bytes"
+
+def test_annotations_dont_cause_type_error_when_no_input_provided():
+        request = DummyRequest([])
+        controller = ExampleController()
+        actual = controller.annotated(request)
+        assert actual == dict(a_first=None)
     
 def test_verify_prefixed_args():
     controller = ExampleController()
