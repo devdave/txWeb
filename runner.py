@@ -56,6 +56,14 @@ class Runner(threading.Thread):
         self.ret_val = 0
 
 
+    def check_kill(self, process):
+        if self.kill_switch.is_set():
+            tprint("Kill switch is set, exiting")
+            process.terminate()
+            self.ret_val = 0
+            return False
+
+        return True
 
     def run(self):
     
@@ -63,34 +71,27 @@ class Runner(threading.Thread):
             process = subprocess.Popen([sys.executable, str(self.entry_point.resolve())], cwd=self.base_dir)
         except:
             tprint("Crashed!!")
-            self.ret_val = self.CRASH #I don't know what happened
+            self.ret_val = self.CRASH
             self.kill_switch.set()
             raise
         else:
             tprint("Process is live")
 
-
-
         while True:
             try:
                 returncode = process.wait(.5)
-                self.ret_val = returncode
-
                 tprint(f"Got returncode {returncode}")
-                
-                if self.kill_switch.is_set():
-                    tprint("Kill switch is set, exiting")
-                    process.terminate()
-                    self.ret_val = 0
-                    return
-                                    
+
+                self.ret_val = returncode
+                self.kill_switch.set()
+
             except subprocess.TimeoutExpired:
-                pass
+                if self.check_kill(process) == False:
+                    return
                 
             except (subprocess.CompletedProcess, subprocess.CalledProcessError,) as exp:
                 self.ret_val = exp.returncode
-                tprint(f"Process closed/failed with {self.ret_val}")
-                time.sleep(1) #give stdout time to catch up
+                tprint(f"Process closed/failed with {self.ret_val}")                
                 self.kill_switch.set()
                 return
             except:
@@ -98,9 +99,6 @@ class Runner(threading.Thread):
                 raise
 
             
-            
-
-
 def main():
 
     entry_point = pathlib.Path(sys.argv[1])
