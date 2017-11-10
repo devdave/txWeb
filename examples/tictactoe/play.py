@@ -57,7 +57,7 @@ def SafeStr(raw):
         return raw.decode()
     elif raw is None:
         return None
-    else:
+    else: 
         return str(raw)
         
 
