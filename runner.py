@@ -8,8 +8,45 @@ import time
 import subprocess
 
 
+#Constants
+PROCESS = 1
+WATCH = 2
+
+
 def tprint(*str_in):
     print(f"\t{threading.current_thread().name}: ", *str_in)
+
+
+
+class EventReason(threading.Event):
+
+    def __init__(self, *args, **kwargs):
+        self.reason = None
+        #lock should be fine
+        self._er_lock = threading.Lock()
+        super().__init__(*args, **kwargs)
+
+    def set(self, reason=None):
+        if self.is_set() == True:
+            return
+
+        with self._er_lock:
+            self.reason = None
+
+        super().set()
+
+    def clear(self):
+        with self._er_lock:
+            self.reason = None
+
+    def why(self):
+        with self._er_lock:
+            return self.reason
+
+
+
+
+
 
 def watcher(entry_point, kill_switch, additional):
     base_dir = entry_point.parent
@@ -25,13 +62,14 @@ def watcher(entry_point, kill_switch, additional):
             # tprint(f"Watching {pyfile}")
 
     #begin the loop
-    while kill_switch.wait(1) == False:
+    while kill_switch.is_set() == False:
 
+        time.sleep(.5)
         for pyfile, mtime in manifest.items():
 
             if pyfile.stat().st_mtime != mtime:
                 tprint(f"Modified - {pyfile}")
-                kill_switch.set()
+                kill_switch.set(WATCH)
                 return
 
             
@@ -72,37 +110,40 @@ class Runner(threading.Thread):
         except:
             tprint("Crashed!!")
             self.ret_val = self.CRASH
-            self.kill_switch.set()
+            self.kill_switch.set(PROCESS)
             raise
         else:
             tprint("Process is live")
 
-        while True:
+        while self.kill_switch.is_set() == False:
             try:
                 returncode = process.wait(.5)
                 tprint(f"Got returncode {returncode}")
 
                 self.ret_val = returncode
-                self.kill_switch.set()
+                self.kill_switch.set(PROCESS)
 
             except subprocess.TimeoutExpired:
-                if self.check_kill(process) == False:
-                    return
-                
+                pass                
             except (subprocess.CompletedProcess, subprocess.CalledProcessError,) as exp:
                 self.ret_val = exp.returncode
                 tprint(f"Process closed/failed with {self.ret_val}")                
-                self.kill_switch.set()
+                self.kill_switch.set(PROCESS)
                 return
             except:
-                self.kill_switch.set()
+                self.ret_val = self.CRASH
+                self.kill_switch.set(PROCESS)
                 raise
+
+        if process.returncode is None:
+            process.terminate()
+            time.sleep(1)
 
             
 def main():
 
     entry_point = pathlib.Path(sys.argv[1])
-    kill_switch = threading.Event()
+    kill_switch = EventReason()
     threads = []
     
     
@@ -114,6 +155,7 @@ def main():
     run_failed = False
 
     while True:
+        print(f"Running {entry_point}.")
         try:
             if kill_switch.is_set():
                 kill_switch.clear()
@@ -123,12 +165,12 @@ def main():
 
             if run_failed == True:
                 run_failed = False
-                tprint("Waiting for a repair")
+                tprint("Waiting for repair")
                 accum_time = 0
-                while True:
-                    watch_thread.join(.5)
+                while kill_switch.wait(.5) == False:
+                    
                     accum_time += .5
-                    if accum_time > 30:
+                    if accum_time > 60:
                         tprint("Excessive wait")
                         kill_switch.set()
                         return
@@ -139,27 +181,28 @@ def main():
             run_thread = Runner(kill_switch, entry_point)
             run_thread.start()
 
-            while True:
-                run_thread.join(.5)
+            while kill_switch.is_set() == False:
+                kill_switch.wait(.5)
+                
 
-                if run_thread.is_alive() == False:
-                    tprint("run thread is dead")
-                    break
+            tprint(f"process return code {run_thread.ret_val}")
 
+            if kill_switch.why() == WATCH:
+                #file changed, reloading
+                pass
 
-            if run_thread.ret_val == run_thread.CRASH:
-                tprint("process crashed")
+            elif kill_switch.why() == PROCESS:
                 return
-            else:
-                tprint(f"process return code {run_thread.ret_val}")
-                kill_switch.set()
-                run_failed = True
-            
-            if kill_switch.is_set() == False:
-                kill_switch.set()
-
-            watch_thread.join()
-
+                # if run_thread.ret_val == 0:
+                #     return
+                # elif run_thread.ret_val == run_thread.CRASH:
+                #     tprint("process crashed")
+                #     #End loop
+                #     return
+                # elif run_thread.ret_val != 0:
+                #     run_failed = True
+                                    
+            time.sleep(2)
             del run_thread, watch_thread
 
 
