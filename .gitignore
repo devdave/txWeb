@@ -9,3 +9,4 @@ htmlcov
 env/
 txweb.egg-info/*
 .cache/v/cache/lastfailed
+log.txt
