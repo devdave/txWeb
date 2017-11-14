@@ -13,12 +13,11 @@ class State(object):
     P1 = 1
     CPU = 2
 
-
+@attr.s
 class Rules(object):
 
-    def __init__(self, game_map):
-        self.map = game_map
-
+    map = attr.ib()
+    
     def check(self):
 
         forwardslash = [0, 4 , 8]
@@ -71,6 +70,9 @@ class Rules(object):
             
         #Idiot AI time
         options = self.map.filter(State.EMPTY)
+        if len(options) == 0:
+            raise Error("No more moves, stalemate")
+            
         next_move = random.choice(options)
         self.map.iset(next_move, State.CPU)
 
@@ -123,3 +125,22 @@ class Map:
 
     def raw(self):
         return "".join([str(i) for i in self.data])
+
+
+def Factory(raw_input):
+
+
+    if raw_input in [None, "None"]:
+        print("new map")
+        new_state = [0 for i in range(0,9)]
+    elif isinstance(raw_input, bytes):
+        new_state = [int(i) for i in raw_input.decode()]
+    elif isinstance(raw_input, str):
+        new_state = [int(i) for i in raw_input]
+
+    game_map = Map(data=new_state)
+
+    return Rules(game_map)
+
+
+

@@ -65,31 +65,21 @@ class Root(BaseController):
 
     
   
-    def action_index(self, request, a_box:int=None, a_state:SafeStr=None):
-        
-        if a_state in [None, "None"]:
-            new_state = [0 for i in range(0,9)]
-        else:
-            new_state = [int(v) for v in a_state]
-        
+    def action_index(self, request, a_box:int=None, a_game:TTT.Factory="000000000"):
         
             
         flash = None
-        game_map = TTT.Map(data=new_state)
-        game = TTT.Rules(game_map)
-        
-
         
         try:
                         
             if a_box is not None:
-                game.move(a_box)
+                a_game.move(a_box)
                 
         except TTT.Error as issue:
             flash = issue.rule_error
         
-        print(a_box, a_state, new_state, game_map)
-        return self.render("index.html", context=dict(state=game_map, flash=flash))
+        print(a_box, a_game)
+        return self.render("index.html", context=dict(game=a_game, flash=flash))
 
 
 def main(port=8080):
