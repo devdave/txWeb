@@ -80,6 +80,8 @@ class AMParam(object):
 
         return val
 
+from .utils import fetch_first
+
 
 def FindDirectives(method):
     """

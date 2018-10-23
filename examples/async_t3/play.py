@@ -7,7 +7,6 @@
 """
 
 import webbrowser
-import sys, os
 
 import attr
 from txweb import Site, expose
@@ -31,8 +30,7 @@ import game as TTT
 class BaseController(metaclass=SmartController):
 
     def __init__(self):
-        print(f"Using {os.path.abspath(os.path.dirname(__file__))}/templates")
-        self.env = Environment(loader=FileSystemLoader(f"{os.path.abspath(__file__)}\\templates\\"),
+        self.env = Environment(loader=FileSystemLoader("./templates"),
             autoescape=select_autoescape(["html"])
         )
 
@@ -50,10 +48,7 @@ class BaseController(metaclass=SmartController):
             buffer += digest + "\n<br>"
             buffer += "#" * 60 + "\n<br>"
             buffer += "</pre>"
-            buffer += repr(ex)
-            buffer += repr(dir(self.env))
 
-            raise
             return buffer
  
 
@@ -69,6 +64,14 @@ def SafeStr(raw):
 class Root(BaseController):
 
     
+    def action_index(self, request):
+
+
+        game = TTT.factory(None)
+        return self.render("index.html",context=dict(game=game, flash=None))
+
+    # def action_move(self, )
+
   
     def action_index(self, request, a_box:int=None, a_game:TTT.Factory="000000000"):
         

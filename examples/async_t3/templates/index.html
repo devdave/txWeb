@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>Let's play a game</title>
+    <script
+        src="https://code.jquery.com/jquery-3.2.1.js"
+        integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE="
+        crossorigin="anonymous"></script>
+
+    <style>
+        .content {
+            position: relative;
+            top: 20em;
+            left: 40%;
+
+        }
+
+        button {
+            height: 5em;
+            width: 5em;
+        }
+
+        .block_1 {
+            background-color: blue;
+        }
+
+        .block_2{
+            background-color: green;
+        }
+
+    </style>
+    </head>
+    <body>
+        {% if flash %}
+            <div style="color:red;">
+                {{flash}}
+            </div>
+        {% endif %}
+        <div class="content">
+            <form>
+                <input type="hidden" name="game" value="{{game.map.raw()}}">
+                <!-- game board-->
+                {%- for box_state in game.map.data %}
+                    <button name="box" value="{{loop.index0}}" class="block_{{box_state}}"><div></div></button>
+                    {%- if loop.index % 3 == 0 %}
+                        <br>
+                    {%- endif %}
+                {%- endfor %}
+                <br>
+            </form>
+
+            <a href="/">Reset</a>
+        </div>
+    </body>
+</html>
