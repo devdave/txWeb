@@ -1,0 +1,2 @@
+# The Gif maker example
+

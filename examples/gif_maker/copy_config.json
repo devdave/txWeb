@@ -1,0 +1,7 @@
+{
+    path:
+    {
+        temp: "/tmp",
+        backup: "~/backup/"
+    }
+}
