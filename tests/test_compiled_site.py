@@ -1,18 +1,17 @@
 #pragma: no cover
 from os.path import dirname, abspath, join
 
-
-from txweb.core import Site
+from txweb.core import CSite
 from txweb.util import expose
-from txweb.util.testing import MockRequest
+from txweb.util.testing import MockRequest #todo relo into tests module?
+from tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
+from twisted.web.resource import NoResource
 from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
-
-from txweb.tests.helper import helper
 
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
 
@@ -72,40 +71,62 @@ class RootWithStaticDirectory(object):
 
 
 
-root = Root()
-site = Site(root)
+def make_new_graph():
+    root = Root()
+    return CSite(root)
 
 
+def test_compiles():
+    make_new_graph()
 
+def test_graph_is_correct():
+    root = make_new_graph()
+    # pprint(root.object_graph.keys(), indent = 2)
+    expected_routes = [ '/',
+                        '/deadend',
+                        '/index',
+                        '/near/test',
+                        '/spaced_named',
+                        '/sub/bar',
+                        '/sub/far/is_here',
+                        '/sub/foo']
+
+    helper.assertEqual(len(root.object_graph), 8)
+    for test_path in expected_routes:
+        found = False
+        for url_test, action in root.object_graph.items():
+            if url_test.match(test_path):
+                found = True
+                break
+
+        assert found, "Failed to find %s" % test_path
 
 def test_site_routeRequest_HandlesDirectoryListing():
 
-    staticDir = Site(RootWithStaticDirectory())
+    staticDir = CSite(RootWithStaticDirectory())
     request = MockRequest([], "/files/")
 
     action = staticDir.routeRequest(request)
+
     response = action.render(request)
     assert isinstance(action, DirectoryLister)
 
 def test_site_routeRequest_CorrectlyRoutesToAChildOfstaticFileResource():
-    staticDir = Site(RootWithStaticDirectory())
+    staticDir = CSite(RootWithStaticDirectory())
     request = MockRequest([], "/files/a.txt")
 
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
-
-
-    actualOutput = str(request.written[0])
-    helper.assertGreater(actualOutput.count("a"), 0)
-
+    assert str(request.written[0]).count("a") > 0
 
 def test_site_routeRequest_CorrectlyHandlesSubDirectories():
-    staticDir = Site(RootWithStaticDirectory())
+    staticDir = CSite(RootWithStaticDirectory())
 
     request = MockRequest([], "/files/subdir/b.txt")
 
+    #from dbgp.client import brk; brk("192.168.1.2", 9090)
     action = staticDir.routeRequest(request)
     response = action.render(request)
     assert not isinstance(action, DirectoryLister)
@@ -116,7 +137,7 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
 
 
 def test_site_routRequest_HandlesIndexAsResource():
-    staticSite = Site(RootWithStaticIndex())
+    staticSite = CSite(RootWithStaticIndex())
 
     request = MockRequest([], "/")
 
@@ -128,21 +149,25 @@ def test_site_routRequest_HandlesIndexAsResource():
         assert len(request.written) ==  1, "Expected written log to be equal to one"
         actualSize = len(request.written[0])
         expectedSize = len(expected)
-        helper.assertEqual(actualSize, expectedSize)
         actual = request.written[0]
-        assert expectedSize == actualSize, "Expected size doesn't match actual"
+        helper.assertEqual(expectedSize, actualSize)
+
         assert expected == actual, "Expecting actual written body to equal expected body"
 
 def test_site_routeRequest_HandlesErrorPageResource():
 
     request = MockRequest([], "/deadend")
 
-    action = site.routeRequest(request)
-    assert action.code == 418, "Expecting tea pot, but got %s" % action.code
+    action = make_new_graph().routeRequest(request)
+    helper.assertEqual(action.code, 418)
+    # assert action.code == 418, "Expecting tea pot, but got %s" % action.code
     assert isinstance(action, ErrorPage)
 
 def test_site_routeRequestCorrectly():
     u2m = {}
+    site = make_new_graph()
+    root = site.resource
+
     u2m["/"] = root.index
     u2m['/spaced_named']    = root.spaced_named
     u2m["/near/test"]       = root.near.test
@@ -158,13 +183,15 @@ def test_site_routeRequestCorrectly():
 def test_prevents_underscores():
     request = MockRequest([], "/sub/__dict__/")
 
-    action = site.routeRequest(request)
-    response = action.render(request)
-    assert str(response).index("500 - Illegal characters") > 0 , "Missing expected error message"
+    action = make_new_graph().routeRequest(request)
+
+    assert isinstance(action, NoResource)
 
 
 def test_handles_defaults_correctly():
     u2m = {}
+    site = make_new_graph()
+    root = site.resource
     u2m['/doesn/t/exist'] = root.__default__
     u2m['/sub/doesn/t/exist'] = root.sub.__default__
 
@@ -172,9 +199,11 @@ def test_handles_defaults_correctly():
         request = DummyRequest([])
         request.path = path.encode()
         action = site.routeRequest(request)
-        assert getattr(action , "func", None) == method, "Expecting %s but got %s for URL %s" %(method, action, path)
+        assert isinstance(action, NoResource)
 
 
 
-if __name__ == '__main__':#pragma: no cover
-    nose.run()
+
+if __name__ == '__main__':
+    import nose2
+    nose2.main()

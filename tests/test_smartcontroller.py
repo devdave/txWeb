@@ -3,14 +3,11 @@
 #pragma: no cover
 import pytest
 
-from inspect import signature
-
 from txweb.sugar.smartcontroller import FindDirectives
 from txweb.sugar.smartcontroller import SmartController
 from txweb.sugar.smartcontroller import SafeStr
 
 from txweb.util import expose
-from txweb.tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
 
