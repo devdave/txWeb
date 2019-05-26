@@ -1,9 +1,0 @@
-[run]
-branch = True
-omit= txweb/tests/*
-
-
-
-[html]
-directory = htmlcov
-
