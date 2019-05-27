@@ -3,17 +3,20 @@ from os.path import dirname, abspath, join
 
 from txweb.core import CSite
 from txweb.util import expose
+from txweb.util.file import File
+
 from txweb.util.testing import MockRequest #todo relo into tests module?
 from tests.helper import helper
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
 from twisted.web.resource import NoResource
-from twisted.web.static import File
+
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
+localPath = lambda filename : abspath(join(dirname(__file__), filename ))
 
 class NearPage(object): #pragma: no cover
     @expose
@@ -67,7 +70,7 @@ class RootWithStaticIndex(object):
 
 class RootWithStaticDirectory(object):
 
-    files = File(relPath("tests/test_data/"))
+    files = File(localPath("test_data/"))
 
 
 
@@ -132,8 +135,6 @@ def test_site_routeRequest_CorrectlyHandlesSubDirectories():
     assert not isinstance(action, DirectoryLister)
     assert response == NOT_DONE_YET
     assert str(request.written[0]).count("b") > 0
-
-
 
 
 def test_site_routRequest_HandlesIndexAsResource():
