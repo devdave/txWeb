@@ -1,21 +1,22 @@
-
 from txweb import NOT_DONE_YET
 from txweb import web_views
 
-def hanging_view(request):
+
+def hanging_view(_):
     yield NOT_DONE_YET
     yield "Hello World"
 
-def string_view(request, word:str):
-    return "A String"
 
+def string_view(_, word: str):
+    return word
 
 
 def test__process_route__matches():
 
-    mock = lambda _, number: (_, number)
+    def mock(_, number):
+        return _, number
 
-    #todo break in two tests
+    # todo break in two tests
 
     test_no_trail_url = "/foo/bar/123"
     test_no_trail_route_str = "/foo/bar/<number:int>"
@@ -25,10 +26,10 @@ def test__process_route__matches():
     assert actual_no_trail_matches is True
 
 
-
 def test__process_route__matches_trailing_slash():
 
-    mock = lambda _, number: (_, number)
+    def mock(_, number):
+        return _, number
 
     test_trail_url = "/foo/bar/123/"
     test_trail_route_str = "/foo/bar/<number:int>/"
@@ -37,3 +38,7 @@ def test__process_route__matches_trailing_slash():
 
     assert actual_trail_route.raw_regex == f"^/foo/bar/(?P<number>.*)/$"
     assert actual_trail_matches is True
+
+
+def test__process_route__calls():
+    pass
