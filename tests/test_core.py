@@ -1,20 +1,23 @@
 #pragma: no cover
 from os.path import dirname, abspath, join
 
+import pytest
 
 from txweb.core import Site
 from txweb.util import expose
 from txweb.util.testing import MockRequest
+from txweb.util.file import File
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.resource import ErrorPage
-from twisted.web.static import File
+
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import DirectoryLister
 
 from tests.helper import helper
 
 relPath = lambda filename : abspath(join(dirname(__file__), ".." , filename))
+localPath = lambda filename : abspath(join(dirname(__file__), filename))
 
 class NearPage(object): #pragma: no cover
     @expose
@@ -68,12 +71,19 @@ class RootWithStaticIndex(object):
 
 class RootWithStaticDirectory(object):
 
-    files = File(relPath("tests/test_data/"))
+    files = File(localPath("test_data/"))
 
 
 
 root = Root()
 site = Site(root)
+
+
+def test_util_missing_file_raises_exception():
+    with pytest.raises(ValueError):
+        File("bogus.txt")
+
+    file = File(relPath("LICENSE.txt"))
 
 
 
