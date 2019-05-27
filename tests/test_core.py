@@ -177,4 +177,4 @@ def test_handles_defaults_correctly():
 
 
 if __name__ == '__main__':#pragma: no cover
-    nose.run()
+    pytest.main()

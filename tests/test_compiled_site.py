@@ -204,6 +204,3 @@ def test_handles_defaults_correctly():
 
 
 
-if __name__ == '__main__':
-    import nose2
-    nose2.main()
