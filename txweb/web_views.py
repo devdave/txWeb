@@ -56,11 +56,20 @@ class WebRoute(object):
         return self.regex.match(url) is not None
 
     def run(self, request):
-        matches = self.regex.match(request.url)
+        matches = self.regex.match(request.path)
 
         vargs = [request]
-        # currently unused as is
-        kwargs = matches.groupdict()
+        kwargs = OrderedDict()
+
+
+        def eval_type(type_str, value):
+            transform = eval(type_str, self.func.__globals__)
+            return transform(value)
+
+
+        for rule_name in self.rules:
+            kwargs[rule_name] = eval_type(self.rules[rule_name], matches[rule_name])
+
         vargs += kwargs.values()
 
         return self.func(*vargs)
