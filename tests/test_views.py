@@ -72,3 +72,24 @@ def test__process_route__calls_str_type_correctly():
 
     actual_result = actual_route.run(Request123())
     assert actual_result == "word"
+
+
+def test__add_route():
+
+    class RequestStubString:
+        path = "/foo/bar/thing_string/"
+
+    class RequestStubNumber:
+        path = "/foo/bar/4567/"
+
+    @web_views.add("/foo/blah/<thing_str:str>/")
+    def stub(request, thing_str):
+        return thing_str
+
+    @web_views.add("/foo/bar/<thing_number:int>")
+    def stub2(request, thing_int):
+        return thing_int
+
+    action = web_views.site.getResourceFor(RequestStubNumber())
+
+    assert action.func == stub2

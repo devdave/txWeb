@@ -75,6 +75,38 @@ class WebRoute(object):
         return self.func(*vargs)
 
 
+class Site(object):
+
+    def __init__(self):
+        self.routes = {}
+
+    def add(self, route_str):
+
+        if isinstance(route_str, str) is False:
+            raise ValueError(f"Expecting {route_str} to be <type str>")
+
+        def decorator(func):
+
+            processed_route = process_route(route_str, func)
+            self.routes[processed_route.regex] = processed_route
+            return func
+
+        return decorator
+
+
+    def getResourceFor(self, request):
+        for route_regex, route in self.routes.items():
+            if route_regex.match(request.path) is not None:
+                return route
+
+        else:
+            raise Exception("Raise a 404 Resource error here")
+
+
+site = Site()
+add = site.add
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main()
