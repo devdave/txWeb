@@ -1,7 +1,14 @@
+#twisted imports
+from twisted.web import server
+from twisted.web.resource import NoResource
+
 from functools import wraps
+import sys
 import inspect
 import re
 from collections import OrderedDict
+
+
 
 
 def process_route(route_str, func, double_slash_warn=True):
@@ -100,7 +107,7 @@ class Site(object):
                 return route
 
         else:
-            raise Exception("Raise a 404 Resource error here")
+            return NoResource()
 
 
 site = Site()
