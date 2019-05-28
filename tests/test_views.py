@@ -40,8 +40,6 @@ def test__process_route__matches_trailing_slash():
     assert actual_trail_matches is True
 
 
-def test__process_route__calls():
-    pass
 def test__process_route__calls_int_type_correctly():
 
     def stub(request, argument1):

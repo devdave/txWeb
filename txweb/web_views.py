@@ -1,6 +1,7 @@
 #twisted imports
 from twisted.web import server
 from twisted.web.resource import NoResource
+from twisted.web import resource
 
 from functools import wraps
 import sys
