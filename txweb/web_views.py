@@ -1,14 +1,17 @@
 #txweb imports
 
 #twisted imports
+
+from twisted.web import resource
 from twisted.web import server
 from twisted.web.resource import NoResource
-from twisted.web import resource
+from twisted.web.server import NOT_DONE_YET
+from twisted.internet import defer
 
 #stdlib
 import re
 from collections import OrderedDict
-
+import inspect
 
 class ViewResource(resource.Resource):
 
@@ -63,9 +66,11 @@ class ViewResource(resource.Resource):
         self.route_rules = match_rules
 
     def run(self, request):
-        matches = self.regex.match(request.path)
+        str_request_path = request.path.decode()
 
-        vargs = [request, self]
+        matches = self.regex.match(str_request_path)
+
+        vargs = [request]
         kwargs = OrderedDict()
 
         def eval_type(type_str, value):
@@ -77,7 +82,13 @@ class ViewResource(resource.Resource):
 
         vargs += kwargs.values()
 
-        return self.func(*vargs)
+
+        result = self.func(*vargs)
+        if isinstance(result, defer.Deferred):
+            return NOT_DONE_YET
+        else:
+            # TODO catch str results and coerce to bytes
+            return result
 
     def render(self, request):
         return self.run(request)
@@ -113,11 +124,17 @@ class WebSite(server.Site):
 
     def getResourceFor(self, request):
 
+        str_request_path = request.path.decode()
+
         for path_regex, web_resource in self.routes.items():
-            if path_regex.match(request.path) is not None:
+            if path_regex.match(str_request_path) is not None:
                 return web_resource
         else:
             return self.no_resource_cls()
+
+    def routeRequest(self, request):
+        #TODO verify this isn't correct
+        return self.getResourceFor(request)
 
 
 
