@@ -93,3 +93,17 @@ def test__add_route():
     action = web_views.site.getResourceFor(RequestStubNumber())
 
     assert action.func == stub2
+
+
+def test__Site_getResourceFor__returns_NoResource_if_no_match():
+
+    class RequestBad:
+        path = "/no/match/url"
+
+    @web_views.add("/foo/bar/<number:int>")
+    def stub(request, number):
+        return number
+
+    action = web_views.site.routeRequest(RequestBad())
+
+    assert isinstance(action, web_views.NoResource)
