@@ -107,3 +107,18 @@ def test__Site_getResourceFor__returns_NoResource_if_no_match():
     action = web_views.site.routeRequest(RequestBad())
 
     assert isinstance(action, web_views.NoResource)
+
+
+def test_Site_getResourceFor__returns_ActionResource_if_match():
+
+    class MatchingPath:
+        path = "/foo/bar/a_number_follows/123/"
+
+    @web_views.add("/foo/bar/a_number_follows/<number:int>/")
+    def stub(request, number):
+        return number
+
+
+    action = web_views.site.routeRequest(MatchingPath())
+    assert isinstance(action, web_views.resource.Resource)
+    assert action.render(MatchingPath()) == 123

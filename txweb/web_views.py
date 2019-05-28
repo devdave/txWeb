@@ -49,7 +49,7 @@ def process_route(route_str, func, double_slash_warn=True):
     return WebRoute(raw_regex, func, rules=match_rules)
 
 
-class WebRoute(object):
+class WebRoute(resource.Resource):
 
     def __init__(self, raw_regex, func, rules=None):
         self.raw_regex = raw_regex
@@ -81,6 +81,9 @@ class WebRoute(object):
 
         return self.func(*vargs)
 
+    def render(self, request):
+        return self.run(request)
+
 
 class Site(object):
 
@@ -101,7 +104,7 @@ class Site(object):
         return decorator
 
 
-    def getResourceFor(self, request):
+    def routeRequest(self, request):
         for route_regex, route in self.routes.items():
             if route_regex.match(request.path) is not None:
                 return route
