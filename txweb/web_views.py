@@ -18,8 +18,8 @@ def process_route(route_str, func, double_slash_warn=True):
 
     for segment in segments:
         if segment.startswith("<"):
-            name, _ = segment[1:-1].split(":")
-            match_rules[name] = type
+            name, name_type = segment[1:-1].split(":")
+            match_rules[name] = name_type
             re_segment = f"(?P<{name}>.*)"
             raw_regex.append(re_segment)
 

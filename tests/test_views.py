@@ -57,3 +57,18 @@ def test__process_route__calls_int_type_correctly():
 
     actual_result = actual_route.run(Request123())
     assert actual_result == 123
+
+
+def test__process_route__calls_str_type_correctly():
+
+    def stub(request, argument1):
+        return argument1
+
+    class Request123:
+        path = "/foo/bar/word/"
+
+    test_route_str = "/foo/bar/<a_word:str>/"
+    actual_route = web_views.process_route(test_route_str, stub)
+
+    actual_result = actual_route.run(Request123())
+    assert actual_result == "word"
