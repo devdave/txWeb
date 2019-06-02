@@ -23,6 +23,9 @@ def index(request):
 def helo(request):
     return b"Hello World"
 
+@website.add("/safe_str")
+def returns_unicode(request):
+    return "Hello world! this was a &LT;str&GT;"
 
 @website.add("/delayed")
 def timed(request):
