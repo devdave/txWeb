@@ -136,6 +136,11 @@ class WebSite(server.Site):
         if self.jinja2_env is not None:
 
             return self.jinja2_env.get_template(template_name).render(**context)
+
+
+    def setNoResourceCls(self, no_resource_cls):
+        self.no_resource_cls = no_resource_cls
+
     def add(self, route_str):
 
         def decorator(func):
