@@ -9,24 +9,15 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted import application
 
-import jinja2
-
 import time
 
-env = jinja2.Environment(
-    loader=jinja2.FileSystemLoader("./templates")
-    , autoescape=jinja2.select_autoescape(["html"])
-)
-
-def render(template_name, **context):
-    return env.get_template(template_name).render(**context)
 
 
 
 @website.add("/")
 def index(request):
-    routes = website.routes
-    return render("home.html", title="Home page", routes=routes)
+    return request.site.render_template("home.html", title="Home page", routes=request.site.routes)
+
 
 @website.add("/hello")
 def helo(request):
