@@ -69,6 +69,14 @@ def stepbystep(request):
     request.finish()
     print("Finished!")
 
+@website.add("/argument/<name:str>")
+def print_argument(request, name):
+    return name
+
+@website.add("/argument/foo/<number:int>")
+def print_number(request, number):
+    return number
+
 PORT = 8080
 
 def main():
