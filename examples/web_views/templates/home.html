@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+    Hello World
+    <h1>Routes</h1>
+    <ul>
+    {% for route, resource in routes.items() %}
+        <li>{{route}} - {{resource.routing_str}} - {{resource.func}}</li>
+    {% endfor %}
+    </ul>
+
+
+</body>
+</html>
