@@ -45,6 +45,7 @@ class ViewResource(resource.Resource):
                 name, name_type = segment[1:-1].split(":")
                 match_rules[name] = name_type
                 re_segment = f"(?P<{name}>.*)"
+                re_segment = f"(?P<{name}>.[^/]*)"
                 raw_regex.append(re_segment)
 
             elif ">" in segment:
@@ -88,8 +89,6 @@ class ViewResource(resource.Resource):
         if isinstance(result, defer.Deferred):
             return NOT_DONE_YET
         else:
-            # TODO catch str results and coerce to bytes
-            if self.coerce_str_to_bytes is True:
 
             if result is NOT_DONE_YET:
                 pass
