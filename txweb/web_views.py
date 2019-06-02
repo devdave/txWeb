@@ -17,10 +17,11 @@ class ViewResource(resource.Resource):
 
     isLeaf = True # Disable dynamic resource mechanism in twisted.web
 
-    def __init__(self, routing_str, func, double_slash_warning=True):
+    def __init__(self, routing_str, func, double_slash_warning=True, coerce_str_to_bytes=True):
         self.routing_str = routing_str
         self.func = func
         self.double_slash_warning = double_slash_warning
+        self.coerce_str_to_bytes = coerce_str_to_bytes
         self.regex = None
         self.route_rules = None
 
@@ -88,6 +89,9 @@ class ViewResource(resource.Resource):
             return NOT_DONE_YET
         else:
             # TODO catch str results and coerce to bytes
+            if self.coerce_str_to_bytes is True:
+                if isinstance(result, str):
+                    result = result.encode()
             return result
 
     def render(self, request):
@@ -132,9 +136,6 @@ class WebSite(server.Site):
         else:
             return self.no_resource_cls()
 
-    def routeRequest(self, request):
-        #TODO verify this isn't correct
-        return self.getResourceFor(request)
 
 
 
