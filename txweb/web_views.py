@@ -90,8 +90,16 @@ class ViewResource(resource.Resource):
         else:
             # TODO catch str results and coerce to bytes
             if self.coerce_str_to_bytes is True:
+
+            if result is NOT_DONE_YET:
+                pass
+            # TODO this could be problematic if the "wrong" data is returned
+            elif self.coerce_str_to_bytes is True:
                 if isinstance(result, str):
                     result = result.encode()
+                elif isinstance(result, bytes) is False:
+                    result = str(result).encode()
+
             return result
 
     def render(self, request):
