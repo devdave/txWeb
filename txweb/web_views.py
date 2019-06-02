@@ -151,6 +151,9 @@ class WebSite(server.Site):
 
         return decorator
 
+    # def addResource(self, route_str, resource):
+
+
     def getResourceFor(self, request):
 
         str_request_path = request.path.decode()
