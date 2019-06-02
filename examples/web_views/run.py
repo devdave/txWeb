@@ -83,14 +83,16 @@ def main():
     import sys
     from twisted.python import log
     log.startLogging(sys.stdout)
-
+    website.setTemplateDir("./templates")
     reactor.listenTCP(PORT, website)
     reactor.run()
+
 
 if __name__ == '__main__':
     from txweb.sugar.reloader import reloader
     reloader(main)
 else:
     application = service.Application("web_views")
+    website.setTemplateDir("./templates")
     web_service = app_internet.TCPServer(PORT, website)
     web_service.setServiceParent(application)
