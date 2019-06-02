@@ -44,7 +44,6 @@ class ViewResource(resource.Resource):
             if segment.startswith("<"):
                 name, name_type = segment[1:-1].split(":")
                 match_rules[name] = name_type
-                re_segment = f"(?P<{name}>.*)"
                 re_segment = f"(?P<{name}>.[^/]*)"
                 raw_regex.append(re_segment)
 
@@ -119,10 +118,24 @@ class WebSite(server.Site):
         self.double_slash_warning = True
 
         self.no_resource_cls = NoResource
+        self.jinja2_env = None
 
         server.Site.__init__(self, self.no_resource_cls())
 
 
+    def setTemplateDir(self, path):
+        import jinja2
+
+        self.jinja2_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(path)
+            , autoescape=jinja2.select_autoescape(["html"])
+        )
+
+
+    def render_template(self, template_name, **context):
+        if self.jinja2_env is not None:
+
+            return self.jinja2_env.get_template(template_name).render(**context)
     def add(self, route_str):
 
         def decorator(func):
