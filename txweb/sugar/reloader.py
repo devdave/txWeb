@@ -20,7 +20,7 @@
 
     I didn't like how the watching logic walked through sys.modules as I was just concerned with the immediate
     project files and not the entire ecosystem.   Instead it starts with the current working directory via os.getcwd
-    and then walks upward to look over .py files
+    and then walks downward to look over .py files
 
     sys.exit didn't work correctly so I switched to use os._exit as hardset.   I am not sure what to do if
     os._exit ever gets deprecated.
@@ -69,16 +69,13 @@ except ImportError:
     pass
 
 
-
-
-
 _watch_list = {}
 _win = (sys.platform == "win32")
 
 
 def build_list(root_dir, watch_self = False):
     """
-        Walk from root_dir down, collecting all files that end with ^*.py$ to wa
+        Walk from root_dir down, collecting all files that end with ^*.py$ to watch
 
         This could get into a recursive hell loop but I don't use symlinks in my projects
         so just roll with it.
@@ -91,17 +88,18 @@ def build_list(root_dir, watch_self = False):
     global _watch_list
 
     if watch_self is True:
-        stat = pathlib.Path(__file__).stat()
-        _watch_list[__file__] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+        selfpath = pathlib.Path(__file__)
+        stat = selfpath.stat()
+        _watch_list[selfpath] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
 
     for pathobj in root_dir.iterdir():
         if pathobj.is_dir():
             build_list(pathobj, watch_self=False)
         elif pathobj.name.endswith(".py") and not (pathobj.name.endswith(".pyc") or pathobj.name.endswith(".pyo")):
-            _watch_list[pathobj] = (pathobj.stat().st_size, pathobj.stat().st_ctime,pathobj.stat().st_mtime,)
+            stat = pathobj.stat()
+            _watch_list[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
         else:
             pass
-
 
 
 def file_changed():
@@ -111,9 +109,7 @@ def file_changed():
         pathobj = pathlib.Path(pathname)
         stat = pathobj.stat()
         if pathobj.exists() is False:
-            print(f"Lost track of {pathname!r}")
-            raise Exception("Blow up")
-
+            raise Exception(f"Lost track of {pathname!r}")
         elif stat.st_size != st_size:
             change_detected = True
         elif stat.st_ctime != st_ctime:
@@ -128,10 +124,7 @@ def file_changed():
     return change_detected
 
 
-
-
-
-def watch_thread(os_exit = True, watch_self=False):
+def watch_thread(os_exit = SENTINEL_OS_EXIT, watch_self=False):
 
     exit_func = os._exit if os_exit is True else sys.exit
 
@@ -142,6 +135,7 @@ def watch_thread(os_exit = True, watch_self=False):
             exit_func(SENTINEL_CODE)
 
         time.sleep(1)
+
 
 def run_reloader():
     while True:
