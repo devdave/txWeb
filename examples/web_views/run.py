@@ -7,6 +7,7 @@ from twisted.internet import reactor
 from twisted.internet import threads
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.web import static
 from twisted import application
 
 import time
@@ -44,6 +45,9 @@ def timed(request):
     reactor.callLater(5, callme)
 
     return NOT_DONE_YET
+
+
+static_resource = website.addResource("static", static.File("./static/"))
 
 
 def sleepfor5seconds(sleeptime):
