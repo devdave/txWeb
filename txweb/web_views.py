@@ -11,7 +11,7 @@ from twisted.internet import defer
 #stdlib
 import re
 from collections import OrderedDict
-import inspect
+import copy
 
 class ViewResource(resource.Resource):
 
@@ -86,19 +86,17 @@ class ViewResource(resource.Resource):
 
         result = self.func(*vargs)
         if isinstance(result, defer.Deferred):
-            return NOT_DONE_YET
-        else:
+            #Catch inlineCallback's
+            result = NOT_DONE_YET
+        elif result is NOT_DONE_YET:
+            pass #Reactor is holding open http channels if this isn't returned as is
+        elif self.coerce_str_to_bytes is True:
+            if isinstance(result, str):
+                result = result.encode()
+            elif isinstance(result, bytes) is False:
+                result = str(result).encode()
 
-            if result is NOT_DONE_YET:
-                pass
-            # TODO this could be problematic if the "wrong" data is returned
-            elif self.coerce_str_to_bytes is True:
-                if isinstance(result, str):
-                    result = result.encode()
-                elif isinstance(result, bytes) is False:
-                    result = str(result).encode()
-
-            return result
+        return result
 
     def render(self, request):
         return self.run(request)
@@ -107,8 +105,9 @@ class ViewResource(resource.Resource):
         return self
 
 
-
-
+class NullResource(resource.Resource):
+    def render(self, request):
+        return "TODO - Prevent this from showing"
 
 
 class WebSite(server.Site):
@@ -120,22 +119,26 @@ class WebSite(server.Site):
         self.no_resource_cls = NoResource
         self.jinja2_env = None
 
-        server.Site.__init__(self, self.no_resource_cls())
+        server.Site.__init__(self, NullResource())
 
 
     def setTemplateDir(self, path):
         import jinja2
 
-        self.jinja2_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(path)
-            , autoescape=jinja2.select_autoescape(["html"])
-        )
+        if self.jinja2_env is None:
+            self.jinja2_env = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(path)
+                , autoescape=jinja2.select_autoescape(["html"])
+            )
+        else:
+            raise RuntimeError(f"website.setTemplateDir already set {self.jinja2_env}")
 
 
     def render_template(self, template_name, **context):
         if self.jinja2_env is not None:
-
             return self.jinja2_env.get_template(template_name).render(**context)
+        else:
+            raise RuntimeError(f"render_template called without using setTemplateDir first")
 
 
     def setNoResourceCls(self, no_resource_cls):
@@ -151,8 +154,19 @@ class WebSite(server.Site):
 
         return decorator
 
-    # def addResource(self, route_str, resource):
+    def addResource(self, route_str:str, new_resource:resource.Resource) -> resource.Resource:
+        """
+            To allow for static directory support and or use of native Twisted resources
 
+        :param route_str: str A valid regex pattern that is converted to re.compile for routing
+        :param resource: twisted.web.resource.Resource
+        :return: twisted.web.resource.Resource
+        """
+        if isinstance(route_str, str):
+            route_str = route_str.encode()
+
+        self.resource.putChild(route_str, new_resource)
+        return new_resource
 
     def getResourceFor(self, request):
 
@@ -162,9 +176,13 @@ class WebSite(server.Site):
             if path_regex.match(str_request_path) is not None:
                 return web_resource
         else:
+            # Routing failed with regex, default back to twisted.web's default routing system
+            resrc = server.Site.getResourceFor(self, request)
+
+        if isinstance(resource, NullResource):
             return self.no_resource_cls()
-
-
+        else:
+            return resrc
 
 
 website = WebSite()
