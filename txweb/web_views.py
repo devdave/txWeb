@@ -41,6 +41,16 @@ EndpointCallable = typing.NewType("InstanceCallable",
         match_rules = {}
 
         trailing_slash = routing_str.endswith("/")
+class GenericError(resource.Resource):
+
+    isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
+
+    def __init__(self, message: str, error_code: typing.Optional[int] = 500):
+        self.message = message # type: typing.Text
+        self.error_code = error_code #type: int
+
+    def render(self):
+        raise NotImplementedError("TODO")
 
         if "//" in routing_str:
             if self.double_slash_warning is True:
