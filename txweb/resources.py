@@ -21,3 +21,46 @@ def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteS
         raise RuntimeError(f"render outputted {type(output)}, expected bytes,str,int, or NOT_DONE_YET")
 
     return returnValue
+
+
+class ViewClassResource(resource.Resource):
+
+    isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
+
+    def __init__(self, kls_view):
+        self.kls_view = kls_view
+        self.instance = self.kls_view(self)
+
+    def getChildWithDefault(self, path, request):
+        if hasattr(self.instance, "prefilter"):
+            return self.instance.pre_filter(request, path, self)
+        else:
+            return self
+
+    def render(self, request)->bytes:
+        str_request_kwargs = request.path.decode()
+
+        request_kwargs = getattr(request, "_view_args", {})
+        request_method = getattr(request, "method").decode("utf-8").toupper()
+
+        prefilter_result = getattr(self.instance, "prefilter", lambda r,v: None)(request, self)
+
+        render_target = None
+
+        if isinstance(prefilter_result, resource.Resource):
+            render_target = getattr(prefilter_result, "render")
+        elif hasattr(self.instance, "render"):
+            render_target = getattr(self.instance, "render", None)
+        else:
+            render_target = getattr(self.instance, f"render_{request_method}", None)
+
+        assert render_target is not None, f"Unable to find render|render_{request_method} method for {self.kls_view} - {self.instance}"
+
+        result = render_target(request, **request_kwargs)
+
+        if hasattr(self.instance, "post_filter"):
+            post_result = getattr(self.instance, "post_filter")(request, result)
+            result = post_result
+            assert post_result is not None, f"post_filter for {self.kls_view} must not return None"
+
+        return sanitize_render_output(result)
