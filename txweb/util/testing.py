@@ -12,6 +12,8 @@ class MockRequest(DummyRequest):# prama: no cover
         DummyRequest.__init__(self, postpath)
         self.path = mab(path)
         self.path = ensureBytes(path)
+        self.postpath = self.path.split(b"/")
+        self.prepath = []
         self.redirectToURL = None
         for name, arg in args.items():
             self.addArg(name, arg)
