@@ -64,3 +64,23 @@ class ViewClassResource(resource.Resource):
             assert post_result is not None, f"post_filter for {self.kls_view} must not return None"
 
         return sanitize_render_output(result)
+
+
+class ViewFunctionResource(resource.Resource):
+
+    isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
+
+    def __init__(self, func: typing.Callable):
+        self.func = func # rework to callable
+
+    def render(self, request):
+
+        request_view_kwargs = getattr(request, "_view_args", {})
+
+        result = self.func(request, **request_view_kwargs)
+
+        return sanitize_render_output(result)
+
+    def getChild(self, child_name, request):
+        return self
+
