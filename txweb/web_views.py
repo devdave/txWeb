@@ -16,6 +16,12 @@ import copy
 class ViewResource(resource.Resource):
 
     isLeaf = True # Disable dynamic resource mechanism in twisted.web
+EndpointCallable = typing.NewType("InstanceCallable",
+                                  typing.Callable[
+                                      [Request,
+                                       typing.Optional[typing.Iterable],
+                                       typing.Optional[typing.Dict],
+                                       ], typing.Union[str, int]])
 
     def __init__(self, routing_str, func, double_slash_warning=True, coerce_str_to_bytes=True):
         self.routing_str = routing_str
