@@ -1,21 +1,29 @@
-#txweb imports
+# txweb imports
+from txweb import resources as txw_resources
+from txweb.util.basic import get_thing_name
 
-#twisted imports
-
+# twisted imports
+from twisted.python import compat
 from twisted.web import resource
 from twisted.web import server
+from twisted.web.server import Request
 from twisted.web.resource import NoResource
 from twisted.web.server import NOT_DONE_YET
-from twisted.internet import defer
 
-#stdlib
-import re
+# Werkzeug routing import
+from werkzeug import routing as wz_routing
+
+# stdlib
+import typing
+import inspect
 from collections import OrderedDict
 import copy
 
-class ViewResource(resource.Resource):
 
-    isLeaf = True # Disable dynamic resource mechanism in twisted.web
+# given
+#    website.add("/<foo:str>/<bar:int")
+#    view_function(request, foo, bar)
+# EndPointCallable should match `view_function`
 EndpointCallable = typing.NewType("InstanceCallable",
                                   typing.Callable[
                                       [Request,
@@ -23,24 +31,10 @@ EndpointCallable = typing.NewType("InstanceCallable",
                                        typing.Optional[typing.Dict],
                                        ], typing.Union[str, int]])
 
-    def __init__(self, routing_str, func, double_slash_warning=True, coerce_str_to_bytes=True):
-        self.routing_str = routing_str
-        self.func = func
-        self.double_slash_warning = double_slash_warning
-        self.coerce_str_to_bytes = coerce_str_to_bytes
-        self.regex = None
-        self.route_rules = None
 
-        self.process_route(self.routing_str)
 
-        resource.Resource.__init__(self)
 
-    def process_route(self, routing_str):
-        segments = routing_str.split("/")
-        raw_regex = []
-        match_rules = {}
 
-        trailing_slash = routing_str.endswith("/")
 class GenericError(resource.Resource):
 
     isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
@@ -52,90 +46,169 @@ class GenericError(resource.Resource):
     def render(self):
         raise NotImplementedError("TODO")
 
-        if "//" in routing_str:
-            if self.double_slash_warning is True:
-                print("Warning: there is a double slash (//) in route")
 
-        for segment in segments:
-            if segment.startswith("<"):
-                name, name_type = segment[1:-1].split(":")
-                match_rules[name] = name_type
-                re_segment = f"(?P<{name}>.[^/]*)"
-                raw_regex.append(re_segment)
+class RoutingResource(resource.Resource):
 
-            elif ">" in segment:
-                raise ValueError("Missing < to match >")
+    FAILURE_RSRC_CLS = GenericError # type: typing.ClassVar[GenericError]
 
-            elif segment == "":
-                pass
+    def __init__(self, on_error: typing.Optional[resource.Resource] = None):
+        resource.Resource.__init__(self) #this basically just ensures that children is added to self
+
+
+        self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
+        self._instances = OrderedDict() # type: typing.Dict[str, object]
+        self._route_map = wz_routing.Map() # type: wz_routing.Map
+        self._error_resource = self.FAILURE_RSRC_CLS if on_error is None else on_error
+
+    def setErrorResource(self, error_resource: resource.Resource):
+        self._error_resource = error_resource
+
+    def iter_rules(self) -> typing.Generator:
+        return self._route_map.iter_rules()
+
+    def add(self, route_str, **kwargs):
+
+        assert "endpoint" not in kwargs, "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
+        assert isinstance(route_str, str) is True, "add must be called with RoutingResource.add('/some/route/', **...)"
+
+        # todo swap object for
+        def processor(original_thing: typing.Union[EndpointCallable, object]) -> typing.Union[EndpointCallable, object]:
+
+            endpoint_name = get_thing_name(original_thing)
+
+            common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_args":kwargs}
+
+            if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
+                self._add_resource_cls(route_str, **common_kwargs)
+            elif isinstance(original_thing, resource.Resource):
+                self._add_resource(route_str, **common_kwargs)
+            elif inspect.isclass(original_thing):
+                self._add_class(route_str, **common_kwargs)
+            elif inspect.isfunction(original_thing) is True:
+                self._add_callable(route_str, **common_kwargs)
             else:
-                raw_regex.append(segment)
+                ValueError(f"Recieved {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 
-        raw_regex.insert(0, "^")
-        raw_regex = "/".join(raw_regex)
+            # return whatever was decorated unchanged
+            # the Resource.getChildForRequest is completely shortcircuited so
+            # that a viewable class could be inherited in userland
+            return original_thing
 
-        if trailing_slash is True:
-            raw_regex += "/"
+        return processor
 
-        raw_regex += "$"
+    def _add_callable(self, route_str, endpoint=None, thing=None, route_args=None):
+        route_args = route_args if route_args is not None else {}
+        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+        view_resource = txw_resources.ViewFunctionResource(thing)
+        self._endpoints[endpoint] = view_resource
 
-        self.regex = re.compile(raw_regex)
-        self.route_rules = match_rules
+        self._route_map.add(new_rule)
 
-    def run(self, request):
-        str_request_path = request.path.decode()
+    def _add_class(self, route_str, endpoint=None, thing=None, route_args=None):
 
-        matches = self.regex.match(str_request_path)
+        route_args = route_args if route_args is not None else {}
+        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
 
-        vargs = [request]
-        kwargs = OrderedDict()
+        # Avoid making multiple instances of a routed view class
+        #  and avoid reinstantiaing thing.__init__ in case it depends on that
+        #  to configure itself
+        if endpoint not in self._instances:
+            self._instances[endpoint] = thing()
 
-        def eval_type(type_str, value):
-            transform = eval(type_str, self.func.__globals__)
-            return transform(value)
+        view_resource = txw_resources.ViewClassResource(thing, self._instances[endpoint])
+        self._endpoints[endpoint] = view_resource
 
-        for rule_name in self.route_rules:
-            kwargs[rule_name] = eval_type(self.route_rules[rule_name], matches[rule_name])
+        self._route_map.add(new_rule)
 
-        vargs += kwargs.values()
+    def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_args=None):
+        route_args = route_args if route_args is not None else {}
+        if endpoint not in self._instances:
+            self._instances[endpoint] = thing()
+        self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_args=route_args)
+
+    def _add_resource(self, route_str, endpoint=None, thing=None, route_args=None):
+        route_args = route_args if route_args is not None else {}
+
+        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+        self._endpoints[endpoint] = thing
+
+        self._route_map.add(new_rule)
+
+    def _buildMap(self, pathEl, request):
+
+        from twisted.web.wsgi import _wsgiString
+
+        map_bind_kwargs = {}
+
+        server_port = getattr(request.getHost(), "port", 0)
+
+        if server_port not in [443, 80, 0]:
+            map_bind_kwargs["server_name"] = request.getRequestHostname() + b":" + compat.intToBytes(server_port)
+        else:
+            map_bind_kwargs["server_name"] = request.getRequestHostname()
+
+        map_bind_kwargs["script_name"] = b"/".join(request.prepath) if request.prepath else b"/"
+
+        #TODO add strict slash check flag to here or to website.add
+        if map_bind_kwargs["script_name"].startswith(b"/") is False:
+            map_bind_kwargs["script_name"] = b"/" + map_bind_kwargs["script_name"]
+
+        map_bind_kwargs["path_info"] = request.path
+        map_bind_kwargs['url_scheme'] = "https" if request.isSecure() else "http"
+        map_bind_kwargs['default_method'] = request.method
+
+        map_bind_kwargs = {k:v.decode("utf-8") for k,v in map_bind_kwargs.items() if isinstance(v, bytes)}
+
+        return self._route_map.bind(**map_bind_kwargs)
 
 
-        result = self.func(*vargs)
-        if isinstance(result, defer.Deferred):
-            #Catch inlineCallback's
-            result = NOT_DONE_YET
-        elif result is NOT_DONE_YET:
-            pass #Reactor is holding open http channels if this isn't returned as is
-        elif self.coerce_str_to_bytes is True:
-            if isinstance(result, str):
-                result = result.encode()
-            elif isinstance(result, bytes) is False:
-                result = str(result).encode()
 
-        return result
+    def getChildWithDefault(self, pathEl, request):
 
-    def render(self, request):
-        return self.run(request)
+        request.map = self._buildMap(pathEl, request)
 
-    def getChild(self, child_name, request):
-        return self
+        try:
 
+            (rule, kwargs) = request.map.match(return_rule=True)
+        except wz_routing.NotFound:
+            rule = None
 
-class NullResource(resource.Resource):
-    def render(self, request):
-        return "TODO - Prevent this from showing"
+        if rule:
+            request.rule = rule
+            request.route_args = kwargs
+            return self._endpoints[rule.endpoint]
+        else:
+            raise NotImplemented("TODO handle 404 logic")
 
 
 class WebSite(server.Site):
+    """
+        Overloads/overrides the twisted.web.server.Site classes routing logic
+
+            standard logic for /foo/bar/widget/thing is
+                site()->resource == /
+                    ._children[foo resource]._children[bar resource] and etc until reaching widget or thing resource
+
+            New logic
+                callable_name = WerkZeug.map.match(route string) -> str
+                self._view_map[callable](request, *args, **kwargs)
+
+    """
 
     def __init__(self):
-        self.routes = {}
+
+        self._route_map = wz_routing.Map()
+        self._match_route = None
+        self._instance_map = {} # type: typ.Dict[str, typ.Any ] # todo make a txweb BaseView class
+        self._view_map = {} # type: typ.Dict[str, EndpointCallable]
+
         self.double_slash_warning = True
 
         self.no_resource_cls = NoResource
-        self.jinja2_env = None
+        self.jinja2_env = None # type: jinja2.Environment
 
-        server.Site.__init__(self, NullResource())
+
+        server.Site.__init__(self, RoutingResource())
 
 
     def setTemplateDir(self, path):
@@ -160,45 +233,9 @@ class WebSite(server.Site):
     def setNoResourceCls(self, no_resource_cls):
         self.no_resource_cls = no_resource_cls
 
-    def add(self, route_str):
+    def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
 
-        def decorator(func):
-            action = ViewResource(route_str, func, self.double_slash_warning)
-            self.routes[action.regex] = action
-
-            return func
-
-        return decorator
-
-    def addResource(self, route_str:str, new_resource:resource.Resource) -> resource.Resource:
-        """
-            To allow for static directory support and or use of native Twisted resources
-
-        :param route_str: str A valid regex pattern that is converted to re.compile for routing
-        :param resource: twisted.web.resource.Resource
-        :return: twisted.web.resource.Resource
-        """
-        if isinstance(route_str, str):
-            route_str = route_str.encode()
-
-        self.resource.putChild(route_str, new_resource)
-        return new_resource
-
-    def getResourceFor(self, request):
-
-        str_request_path = request.path.decode()
-
-        for path_regex, web_resource in self.routes.items():
-            if path_regex.match(str_request_path) is not None:
-                return web_resource
-        else:
-            # Routing failed with regex, default back to twisted.web's default routing system
-            resrc = server.Site.getResourceFor(self, request)
-
-        if isinstance(resource, NullResource):
-            return self.no_resource_cls()
-        else:
-            return resrc
+        return self.resource.add(route_str, **kwargs)
 
 
 website = WebSite()
