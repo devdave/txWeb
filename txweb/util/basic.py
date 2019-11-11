@@ -12,7 +12,10 @@ def get_thing_name(thing: object) -> str:
         Currently relies exclusively on __qualname__ as per https://www.python.org/dev/peps/pep-3155/
 
     """
-
-    return getattr(thing, "__qualname__") #throws exception if it doesn't have __qualname__ property
+    if hasattr(thing, "__qualname__"):
+        return thing.__qualname__
+    else:
+        thing_name = str(id(thing)) + "_" + repr(thing) #This
+        return thing_name
 
 
