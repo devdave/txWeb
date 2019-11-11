@@ -1,9 +1,10 @@
 
 from twisted.web import resource as tw_resource
 
+import pytest
+
 from txweb import web_views
-from txweb.web_views import website
-from txweb.util.testing import ensureBytes, MockRequest
+from .helper import ensureBytes, MockRequest
 
 def getChildForRequest(resource, request):
     """
@@ -52,20 +53,25 @@ def test_website_add__handles_native_resources():
     assert isinstance(rsrc, TestResource)
     assert rsrc.render(request) == b"Rendered TestResource"
 
-def test_website_add__catches_method_not_allowed():
+def test_website__returns_no_resource_if_added_resource_is_not_a_leaf():
 
     test_website = web_views.WebSite()
 
-    @test_website.add("/rest/add")
+
     class TestResource(tw_resource.Resource):
 
         def render_POST(self, request):
             # Don't waste time testing as twisted's trials cover it already
             pass
+    with pytest.warns(RuntimeWarning):
+        test_website.add("/rest/add")(TestResource)
+
 
     request = MockRequest([], f"/rest/add")
     request.method = b"POST"
 
     rsrc = test_website.getResourceFor(request)
+
+    assert isinstance(rsrc, tw_resource.NoResource)
 
 

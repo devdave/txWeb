@@ -1,3 +1,9 @@
+2019
+   Removed all of the other resource classes and went with a more simplified werkzeug routing resource.
+
+   Removed the sugar logic as it was unwieldy and just plain goofy.
+
+
 
 2013-11-21
  * New Compiled site/CSite
