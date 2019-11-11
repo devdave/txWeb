@@ -190,7 +190,7 @@ class RoutingResource(resource.Resource):
             resource = self._endpoints[rule.endpoint]
             return resource
         else:
-            raise NotImplemented("TODO handle 404 logic")
+            return NoResource()
 
 
 class WebSite(server.Site):
@@ -248,6 +248,14 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
 
         return self.resource.add(route_str, **kwargs)
+
+    def getResourceFor(self, request):
+        resource = super().getResourceFor(request)
+
+        if resource is None or isinstance(resource, NoResource):
+            return self.no_resource_cls()
+        else:
+            return resource
 
 
 website = WebSite()
