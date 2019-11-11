@@ -6,15 +6,15 @@ import pytest
 from txweb import web_views
 from .helper import ensureBytes, MockRequest
 
-def getChildForRequest(resource, request):
-    """
-    Traverse resource tree to find who will handle the request.
-    """
-    while request.postpath and not resource.isLeaf:
-        pathElement = request.postpath.pop(0)
-        request.prepath.append(pathElement)
-        resource = resource.getChildWithDefault(pathElement, request)
-    return resource
+# def getChildForRequest(resource, request):
+#     """
+#     Traverse resource tree to find who will handle the request.
+#     """
+#     while request.postpath and not resource.isLeaf:
+#         pathElement = request.postpath.pop(0)
+#         request.prepath.append(pathElement)
+#         resource = resource.getChildWithDefault(pathElement, request)
+#     return resource
 
 
 def test__website_add__works():
@@ -31,7 +31,6 @@ def test__website_add__works():
     rsrc = test_website.getResourceFor(request)
 
     assert rsrc.func == stub
-
 
 
 def test_website_add__handles_native_resources():
@@ -59,13 +58,10 @@ def test_website__returns_no_resource_if_added_resource_is_not_a_leaf():
 
 
     class TestResource(tw_resource.Resource):
+        pass
 
-        def render_POST(self, request):
-            # Don't waste time testing as twisted's trials cover it already
-            pass
     with pytest.warns(RuntimeWarning):
         test_website.add("/rest/add")(TestResource)
-
 
     request = MockRequest([], f"/rest/add")
     request.method = b"POST"
