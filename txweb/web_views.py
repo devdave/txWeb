@@ -207,7 +207,7 @@ class WebSite(server.Site):
 
     """
 
-    def __init__(self):
+    def __init__(self, requestFactory=None):
 
         self._route_map = wz_routing.Map()
         self._match_route = None
@@ -220,7 +220,7 @@ class WebSite(server.Site):
         self.jinja2_env = None # type: jinja2.Environment
 
 
-        server.Site.__init__(self, RoutingResource())
+        server.Site.__init__(self, RoutingResource(), requestFactory=requestFactory)
 
 
     def setTemplateDir(self, path):
@@ -246,7 +246,6 @@ class WebSite(server.Site):
         self.no_resource_cls = no_resource_cls
 
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
-
         return self.resource.add(route_str, **kwargs)
 
     def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
