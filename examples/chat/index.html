@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TxWeb Chat app</title>
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+        .main {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        .main h1 {
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+
+        .main .body {
+            flex: 1;
+            border: inset 15px black;
+        }
+
+        .prompt {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .prompt .messagebox {
+            flex: 1
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>Hello World</h1>
+        <div class="body">&nbsp;</div>
+        <div class="prompt">
+            <input class="username"     type="text" value="username">
+            <input class="messagebox"   type="text">
+            <button class="send_msg" type="button">Send</button>
+        </div>
+        <div class="footer">
+            &nbsp;<br>
+        </div>
+    </div>
+
+</body>
+</html>
