@@ -131,6 +131,8 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
+
+
     def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_args=None):
         route_args = route_args if route_args is not None else {}
         if endpoint not in self._instances:
