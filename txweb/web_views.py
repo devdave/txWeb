@@ -17,6 +17,7 @@ from werkzeug import routing as wz_routing
 import typing
 import inspect
 from collections import OrderedDict
+import warnings
 import copy
 
 
@@ -79,6 +80,16 @@ class RoutingResource(resource.Resource):
             common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_args":kwargs}
 
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
+                if hasattr(original_thing, "isLeaf") and getattr(original_thing, "isLeaf") not in [True, 1]:
+                    """
+                        If a resource doesn't handle getResourceFor correctly, this can lead to always returning a
+                        NoResource found error.
+                    """
+                    warnings.warn(
+                        f"Added resource {original_thing}.isLeaf is {getattr(original_thing, 'isLeaf')!r}?",
+                        RuntimeWarning
+                    )
+
                 self._add_resource_cls(route_str, **common_kwargs)
             elif isinstance(original_thing, resource.Resource):
                 self._add_resource(route_str, **common_kwargs)
@@ -176,7 +187,8 @@ class RoutingResource(resource.Resource):
         if rule:
             request.rule = rule
             request.route_args = kwargs
-            return self._endpoints[rule.endpoint]
+            resource = self._endpoints[rule.endpoint]
+            return resource
         else:
             raise NotImplemented("TODO handle 404 logic")
 
