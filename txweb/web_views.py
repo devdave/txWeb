@@ -249,6 +249,9 @@ class WebSite(server.Site):
 
         return self.resource.add(route_str, **kwargs)
 
+    def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
+        return self.resource.add(route_str, **kwargs)(rsrc)
+
     def getResourceFor(self, request):
         resource = super().getResourceFor(request)
 
