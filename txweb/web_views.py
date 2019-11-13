@@ -96,7 +96,7 @@ class RoutingResource(resource.Resource):
                 self._add_resource(route_str, **common_kwargs)
             elif inspect.isclass(original_thing):
                 self._add_class(route_str, **common_kwargs)
-            elif inspect.isfunction(original_thing) is True:
+            elif inspect.isfunction(original_thing) is True or inspect.ismethod(original_thing) is True:
                 self._add_callable(route_str, **common_kwargs)
             else:
                 raise ValueError(f"Recieved {original_thing} but expected callable|Object|twisted.web.resource.Resource")
