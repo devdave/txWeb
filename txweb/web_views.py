@@ -118,19 +118,34 @@ class RoutingResource(resource.Resource):
 
     def _add_class(self, route_str, endpoint=None, thing=None, route_args=None):
 
-        route_args = route_args if route_args is not None else {}
-        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+
 
         # Avoid making multiple instances of a routed view class
         #  and avoid reinstantiaing thing.__init__ in case it depends on that
         #  to configure itself
-        if endpoint not in self._instances:
-            self._instances[endpoint] = thing()
 
-        view_resource = txw_resources.ViewClassResource(thing, self._instances[endpoint])
-        self._endpoints[endpoint] = view_resource
+        instance = thing()
 
-        self._route_map.add(new_rule)
+        if hasattr(instance, "needsSite"):
+            instance.needsSite(self.site)
+
+        if hasattr(instance, "hasRoutes"):
+            prefix = route_str.rstrip()
+            def add_subrule(route_str, thing, **kwargs):
+                self.add(prefix + route_str, **kwargs)(thing)
+
+            instance.hasRoutes(add_subrule)
+
+        else:
+            assert endpoint not in self._instances
+            route_args = route_args if route_args is not None else {}
+            new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+            self._instances[endpoint] = instance
+            view_resource = txw_resources.ViewClassResource(thing, self._instances[endpoint])
+
+            self._endpoints[endpoint] = view_resource
+
+            self._route_map.add(new_rule)
 
 
 
