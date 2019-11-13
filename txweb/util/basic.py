@@ -1,3 +1,4 @@
+import inspect
 
 from twisted.web import resource
 from twisted.internet import defer
@@ -12,6 +13,9 @@ def get_thing_name(thing: object) -> str:
         Currently relies exclusively on __qualname__ as per https://www.python.org/dev/peps/pep-3155/
 
     """
+    if inspect.ismethod(thing):
+        return f"{thing.__qualname__}_{str(id(thing.__self__))}_{thing.__name__}"
+
     if hasattr(thing, "__qualname__"):
         return thing.__qualname__
     else:
