@@ -99,7 +99,7 @@ class RoutingResource(resource.Resource):
             elif inspect.isfunction(original_thing) is True:
                 self._add_callable(route_str, **common_kwargs)
             else:
-                ValueError(f"Recieved {original_thing} but expected callable|Object|twisted.web.resource.Resource")
+                raise ValueError(f"Recieved {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 
             # return whatever was decorated unchanged
             # the Resource.getChildForRequest is completely shortcircuited so
