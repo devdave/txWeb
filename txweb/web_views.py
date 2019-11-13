@@ -211,10 +211,6 @@ class WebSite(server.Site):
 
     def __init__(self, requestFactory=None):
 
-        self._route_map = wz_routing.Map()
-        self._match_route = None
-        self._instance_map = {} # type: typ.Dict[str, typ.Any ] # todo make a txweb BaseView class
-        self._view_map = {} # type: typ.Dict[str, EndpointCallable]
 
         self.double_slash_warning = True
 
