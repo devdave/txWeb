@@ -52,10 +52,11 @@ class RoutingResource(resource.Resource):
 
     FAILURE_RSRC_CLS = GenericError # type: typing.ClassVar[GenericError]
 
-    def __init__(self, on_error: typing.Optional[resource.Resource] = None):
+    def __init__(self, site, on_error: typing.Optional[resource.Resource] = None):
         resource.Resource.__init__(self) #this basically just ensures that children is added to self
 
 
+        self.site = site
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
         self._instances = OrderedDict() # type: typing.Dict[str, object]
         self._route_map = wz_routing.Map() # type: wz_routing.Map
@@ -218,7 +219,7 @@ class WebSite(server.Site):
         self.jinja2_env = None # type: jinja2.Environment
 
 
-        server.Site.__init__(self, RoutingResource(), requestFactory=requestFactory)
+        server.Site.__init__(self, RoutingResource(self), requestFactory=requestFactory)
 
 
     def setTemplateDir(self, path):
