@@ -1,6 +1,7 @@
 # txweb imports
 from txweb import resources as txw_resources
 from txweb.util.basic import get_thing_name
+from txweb.errors import UnrenderableException
 
 # twisted imports
 from twisted.python import compat

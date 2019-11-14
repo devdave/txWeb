@@ -48,4 +48,13 @@ def test_basic_idea():
     debug = 123
 
 
+def test_throws_exception_on_inaccessible_view_class():
+
+
+    app = WebSite()
+
+    with pytest.raises(UnrenderableException):
+        @app.add("/base")
+        class Foo:
+            pass
 

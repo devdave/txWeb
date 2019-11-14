@@ -1,0 +1,3 @@
+
+class UnrenderableException(Exception):
+    pass
