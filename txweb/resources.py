@@ -19,15 +19,19 @@ def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteS
     import warnings
 
     if isinstance(output, defer.Deferred):
-        result = NOT_DONE_YET
+        returnValue = NOT_DONE_YET
     elif output is NOT_DONE_YET:
         pass
     elif isinstance(output, str):
-        result = output.encode("utf-8")
+        returnValue = output.encode("utf-8")
+    elif isinstance(output, int):
+        returnValue = str(output).encode("utf-8")
     elif isinstance(output, bytes):
-        result = str(output).encode("utf-8")
+        returnValue = str(output).encode("utf-8")
     else:
         raise RuntimeError(f"render outputted {type(output)}, expected bytes,str,int, or NOT_DONE_YET")
+
+    assert isinstance(returnValue, bytes) or returnValue == NOT_DONE_YET
 
     return returnValue
 
@@ -84,7 +88,7 @@ class ViewFunctionResource(resource.Resource):
 
     def render(self, request):
 
-        request_view_kwargs = getattr(request, "_view_args", {})
+        request_view_kwargs = getattr(request, "route_args", {})
 
         result = self.func(request, **request_view_kwargs)
 
