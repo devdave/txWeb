@@ -21,7 +21,7 @@ def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteS
     if isinstance(output, defer.Deferred):
         returnValue = NOT_DONE_YET
     elif output is NOT_DONE_YET:
-        pass
+        returnValue = NOT_DONE_YET
     elif isinstance(output, str):
         returnValue = output.encode("utf-8")
     elif isinstance(output, int):
@@ -31,7 +31,7 @@ def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteS
     else:
         raise RuntimeError(f"render outputted {type(output)}, expected bytes,str,int, or NOT_DONE_YET")
 
-    assert isinstance(returnValue, bytes) or returnValue == NOT_DONE_YET
+    assert isinstance(returnValue, bytes) or returnValue == NOT_DONE_YET, f"Bad response data {type(returnValue)}-{returnValue!r}"
 
     return returnValue
 
@@ -92,7 +92,9 @@ class ViewFunctionResource(resource.Resource):
 
         result = self.func(request, **request_view_kwargs)
 
+
         return sanitize_render_output(result)
+
 
     def getChild(self, child_name, request):
         return self

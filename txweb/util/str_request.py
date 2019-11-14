@@ -63,7 +63,7 @@ class StrRequest(Request):
         x = self.uri.split(b"?", 1)
 
         if len(x) == 1:
-            self.path = x
+            self.path = self.uri
         else:
             self.path, argstring = x
             self.args = parse_qs(argstring.decode())
