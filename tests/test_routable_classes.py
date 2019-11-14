@@ -44,12 +44,20 @@ def test_basic_idea():
 
     assert len(app.resource._route_map._rules) == 3
 
-    number_request = MockRequest("/nexus/number")
+    number_request = MockRequest([], "/nexus/number")
     number_resource = app.getResourceFor(number_request)
 
     assert isinstance(number_resource, NoResource) is False
+    expected = b"1234"
+    actual = number_resource.render(number_request)
+    assert actual == expected
 
-    debug = 123
+    add_request = MockRequest([], "/nexus/add_one", {b"number":5})
+    resource = app.getResourceFor(add_request)
+    expected = b"6"
+    actual = resource.render(add_request)
+    assert actual == expected
+
 
 
 def test_throws_exception_on_inaccessible_view_class():
