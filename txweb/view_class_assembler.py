@@ -36,3 +36,35 @@ def expose(route,**route_kwargs):
 
     return processor
 
+ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
+
+def view_assembler(prefix, kls, route_args):
+    endpoints = {}
+    instance = None
+    rules = []
+    if has_exposed(kls):
+        kls_args = route_args.pop("init_args", [])
+        kls_kwargs = route_args.pop("init_kwargs", {})
+
+        instance = kls(*kls_args, **kls_kwargs)
+        exposed = [
+            getattr(
+                getattr(instance, m),
+                "__sub_rule__"
+            )
+            for m, m_obj in instance.__dict__.items()
+                if inspect.ismethod(m_obj) and hasattr(m_obj, "__exposed__")
+        ]
+        for sub_rule in exposed:
+            bound_method = getattr(instance, sub_rule.name)
+            bound_name = get_thing_name(bound_method)
+            rule = Rule(sub_rule.route, **sub_rule.kwargs, endpoint=bound_name)
+            endpoints[bound_name] = ViewFunctionResource(bound_method)
+            rules.append(rule)
+    elif is_renderable(kls):
+        raise NotImplementedError()
+    else:
+        raise UnrenderableException(f"{kls.__name__!r} is missing exposed method(s) or a render method")
+
+    return ViewAssemblerResult(instance, Submount(prefix, rules), endpoints)
+
