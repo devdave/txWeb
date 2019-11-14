@@ -1,6 +1,7 @@
 # txweb imports
 from txweb import resources as txw_resources
 from txweb.util.basic import get_thing_name
+from txweb import view_class_assembler as vca
 from txweb.errors import UnrenderableException
 
 # twisted imports
@@ -58,6 +59,7 @@ class RoutingResource(resource.Resource):
 
         # TODO - Type hinting site is kind of a chicken vs egg thing as site is declared afterwards
 
+        resource.Resource.__init__(self) #this basically just ensures that children is added to self
 
         self.site = site # type: WebSite
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
@@ -135,26 +137,19 @@ class RoutingResource(resource.Resource):
                    thing:object = None,
                    route_kwargs:T.Dict[str, T.Any] = None):
 
-        if hasattr(instance, "needsSite"):
-            instance.needsSite(self.site)
+        if vca.is_renderable(thing) is False:
+            raise UnrenderableException(f"{thing.__name__!r} is missing exposed methods or a render method")
 
-        if hasattr(instance, "hasRoutes"):
-            prefix = route_str.rstrip()
-            def add_subrule(route_str, thing, **kwargs):
-                self.add(prefix + route_str, **kwargs)(thing)
-
-            instance.hasRoutes(add_subrule)
-
+        if vca.has_exposed(thing):
+            result = vca.view_assembler(route_str, thing, route_kwargs)
+            self._instances[endpoint] = result.instance
+            self._endpoints.update(result.endpoints)
+            self._route_map.add(result.rule)
         else:
-            assert endpoint not in self._instances
-            route_args = route_args if route_args is not None else {}
-            new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
-            self._instances[endpoint] = instance
-            view_resource = txw_resources.ViewClassResource(thing, self._instances[endpoint])
+            instance = self._instances[endpoint] = thing(**route_kwargs.get("inits_kwargs",{}))
+            self._route_map.add(wz_routing.Rule(route_str, endpoint=endpoint))
+            self._endpoints[endpoint] = txw_resources.ViewClassResource(thing, instance)
 
-            self._endpoints[endpoint] = view_resource
-
-            self._route_map.add(new_rule)
 
 
 
@@ -167,7 +162,7 @@ class RoutingResource(resource.Resource):
     def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
 
-        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_kwargs)
         self._endpoints[endpoint] = thing
 
         self._route_map.add(new_rule)
@@ -287,5 +282,3 @@ class WebSite(server.Site):
             return resource
 
 
-website = WebSite()
-add = website.add

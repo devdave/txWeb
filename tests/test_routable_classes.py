@@ -1,5 +1,9 @@
 
-from txweb.web_views import WebSite
+import pytest
+
+from twisted.web.resource import NoResource
+
+from txweb.web_views import WebSite, UnrenderableException
 from .helper import MockRequest
 
 def test_basic_idea():
@@ -19,21 +23,17 @@ def test_basic_idea():
         def site(self):
             return self._site
 
-        def hasRoutes(self, add):
 
-            add("/number", self.respond_number)
-            add("/greeting", self.render_response_says_hello)
-            add("/add_one", self.adds_to_passed_get_argument)
-
-
-
+        @app.expose("/number")
         def respond_number(self, request):
             return 1234
 
+        @app.expose("/greeting")
         def render_response_says_hello(self, request):
             return "Hello"
 
 
+        @app.expose("/add_one")
         def adds_to_passed_get_argument(self, request):
             """
                 subviews do not need to start with render_
@@ -42,8 +42,12 @@ def test_basic_idea():
 
             return input + 1
 
+    assert len(app.resource._route_map._rules) == 3
+
     number_request = MockRequest("/nexus/number")
     number_resource = app.getResourceFor(number_request)
+
+    assert isinstance(number_resource, NoResource) is False
 
     debug = 123
 
@@ -57,4 +61,9 @@ def test_throws_exception_on_inaccessible_view_class():
         @app.add("/base")
         class Foo:
             pass
+
+
+
+
+
 
