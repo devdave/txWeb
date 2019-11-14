@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>TxWeb Chat app</title>
     <style>
-        body {
+        body,div,span {
             padding: 0px;
             margin: 0px;
         }
@@ -19,9 +19,26 @@
         }
 
         .main .body {
+            display: flex;
+            flex-direction: column;
             flex: 1;
             border: inset 15px black;
         }
+
+        .line {
+            display: flex;
+            flex-direction: row;
+            min-width: 85vw;
+        }
+
+        .line .timestamp:after {
+            content: ":"
+        }
+
+        .line .postedby:after {
+            content: ">"
+        }
+
 
         .prompt {
             display: flex;
@@ -32,14 +49,31 @@
             flex: 1
         }
     </style>
+
+    <script type="text/javascript" src="/index.js"></script>
+
 </head>
 <body>
     <div class="main">
-        <h1>Hello World</h1>
-        <div class="body">&nbsp;</div>
+        <h1>TxWeb Web chat example</h1>
+        <div class="body">
+            <div class="line">
+                <span class="timestamp">
+                    12345
+                </span>
+                <span class="postedby">
+                    username
+                </span>
+                <span class="message">
+                    Hello this is a test message
+                </span>
+            </div>
+
+
+        </div>
         <div class="prompt">
-            <input class="username"     type="text" value="username">
-            <input class="messagebox"   type="text">
+            <input class="username" disabled="disabled"  type="text" placeholder="Username?">
+            <input class="messagebox"  type="text" placeholder="Enter a message here and press enter or click send.">
             <button class="send_msg" type="button">Send</button>
         </div>
         <div class="footer">
