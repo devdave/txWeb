@@ -271,6 +271,10 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
         return self.resource.add(route_str, **kwargs)
 
+    def expose(self, route_str, **route_kwargs):
+
+        return vca.expose(route_str, **route_kwargs)
+
     def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
         return self.resource.add(route_str, **kwargs)(rsrc)
 
