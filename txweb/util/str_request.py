@@ -20,6 +20,7 @@ from twisted.web.http import _parseHeader
 from twisted.python.compat import _PY3, _PY37PLUS
 
 import cgi
+import json
 from urllib.parse import parse_qs
 
 
@@ -126,3 +127,10 @@ class StrRequest(Request):
 
         self.process()
 
+
+    @property
+    def json(self):
+        if self.getHeader("Content-Type") not in ["application/json", "text/json"]:
+            raise RuntimeError(f"Request content-type is not JSON content type {self.getHeader('Content-Type')!r}")
+
+        return json.loads(self.content.read())
