@@ -36,9 +36,9 @@ class ViewClassResource(resource.Resource):
 
     isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
 
-    def __init__(self, kls_view):
+    def __init__(self, kls_view, instance=None):
         self.kls_view = kls_view
-        self.instance = self.kls_view(self)
+        self.instance = instance # TODO is this needed?
 
     def getChildWithDefault(self, path, request):
         if hasattr(self.instance, "prefilter"):
