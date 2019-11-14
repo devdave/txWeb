@@ -79,7 +79,7 @@ class RoutingResource(resource.Resource):
 
             endpoint_name = get_thing_name(original_thing)
 
-            common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_args":kwargs}
+            common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_kwargs":kwargs}
 
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
                 if hasattr(original_thing, "isLeaf") and getattr(original_thing, "isLeaf") not in [True, 1]:
@@ -109,15 +109,15 @@ class RoutingResource(resource.Resource):
 
         return processor
 
-    def _add_callable(self, route_str, endpoint=None, thing=None, route_args=None):
-        route_args = route_args if route_args is not None else {}
-        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
+    def _add_callable(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+        route_kwargs = route_kwargs if route_kwargs is not None else {}
+        new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_kwargs)
         view_resource = txw_resources.ViewFunctionResource(thing)
         self._endpoints[endpoint] = view_resource
 
         self._route_map.add(new_rule)
 
-    def _add_class(self, route_str, endpoint=None, thing=None, route_args=None):
+    def _add_class(self, route_str, endpoint=None, thing=None, route_kwargs=None):
 
 
 
@@ -150,14 +150,14 @@ class RoutingResource(resource.Resource):
 
 
 
-    def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_args=None):
-        route_args = route_args if route_args is not None else {}
+    def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+        route_kwargs = route_kwargs if route_kwargs is not None else {}
         if endpoint not in self._instances:
             self._instances[endpoint] = thing()
-        self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_args=route_args)
+        self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_kwargs=route_kwargs)
 
-    def _add_resource(self, route_str, endpoint=None, thing=None, route_args=None):
-        route_args = route_args if route_args is not None else {}
+    def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+        route_kwargs = route_kwargs if route_kwargs is not None else {}
 
         new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_args)
         self._endpoints[endpoint] = thing
