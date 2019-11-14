@@ -1,6 +1,7 @@
 # txweb imports
 from txweb import resources as txw_resources
 from txweb.util.basic import get_thing_name
+from txweb.util.str_request import StrRequest
 from txweb import view_class_assembler as vca
 from txweb.errors import UnrenderableException
 
@@ -229,7 +230,7 @@ class WebSite(server.Site):
 
     """
 
-    def __init__(self, requestFactory=None):
+    def __init__(self):
 
 
         self.double_slash_warning = True
@@ -238,7 +239,7 @@ class WebSite(server.Site):
         self.jinja2_env = None # type: jinja2.Environment
 
 
-        server.Site.__init__(self, RoutingResource(self), requestFactory=requestFactory)
+        server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
 
 
     def setTemplateDir(self, path):
