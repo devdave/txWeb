@@ -16,6 +16,7 @@ from werkzeug import routing as wz_routing
 
 # stdlib
 import typing
+import typing as T
 import inspect
 from collections import OrderedDict
 import warnings
@@ -53,29 +54,30 @@ class RoutingResource(resource.Resource):
 
     FAILURE_RSRC_CLS = GenericError # type: typing.ClassVar[GenericError]
 
-    def __init__(self, site, on_error: typing.Optional[resource.Resource] = None):
-        resource.Resource.__init__(self) #this basically just ensures that children is added to self
+    def __init__(self, site, on_error: T.Optional[resource.Resource] = None):
+
+        # TODO - Type hinting site is kind of a chicken vs egg thing as site is declared afterwards
 
 
-        self.site = site
+        self.site = site # type: WebSite
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
         self._instances = OrderedDict() # type: typing.Dict[str, object]
         self._route_map = wz_routing.Map() # type: wz_routing.Map
-        self._error_resource = self.FAILURE_RSRC_CLS if on_error is None else on_error
+        self._error_resource = self.FAILURE_RSRC_CLS if on_error is None else on_error # type: resource.Resource
 
     def setErrorResource(self, error_resource: resource.Resource):
         self._error_resource = error_resource
 
-    def iter_rules(self) -> typing.Generator:
+    def iter_rules(self) -> T.Generator:
         return self._route_map.iter_rules()
 
-    def add(self, route_str, **kwargs):
+    def add(self, route_str:str, **kwargs:T.Dict[str, T.Any]):
 
         assert "endpoint" not in kwargs, "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
         assert isinstance(route_str, str) is True, "add must be called with RoutingResource.add('/some/route/', **...)"
 
         # todo swap object for
-        def processor(original_thing: typing.Union[EndpointCallable, object]) -> typing.Union[EndpointCallable, object]:
+        def processor(original_thing: T.Union[EndpointCallable, object]) -> T.Union[EndpointCallable, object]:
 
             endpoint_name = get_thing_name(original_thing)
 
@@ -109,7 +111,18 @@ class RoutingResource(resource.Resource):
 
         return processor
 
-    def _add_callable(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+    def _add_callable(self, route_str:str,
+                      endpoint:str=None,
+                      thing:T.Union[EndpointCallable, object]=None,
+                      route_kwargs:T.Dict[str,T.Any]=None):
+        """
+
+        :param route_str: a valid path for werkzeug routing
+        :param endpoint: a unique str identifier for thing
+        :param thing: either a function or a bound method
+        :param route_kwargs: optional dictionary intended for werkzeug.routing.Rule
+        :return:
+        """
         route_kwargs = route_kwargs if route_kwargs is not None else {}
         new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_kwargs)
         view_resource = txw_resources.ViewFunctionResource(thing)
@@ -117,15 +130,10 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def _add_class(self, route_str, endpoint=None, thing=None, route_kwargs=None):
-
-
-
-        # Avoid making multiple instances of a routed view class
-        #  and avoid reinstantiaing thing.__init__ in case it depends on that
-        #  to configure itself
-
-        instance = thing()
+    def _add_class(self, route_str: T.AnyStr,
+                   endpoint:T.AnyStr = None,
+                   thing:object = None,
+                   route_kwargs:T.Dict[str, T.Any] = None):
 
         if hasattr(instance, "needsSite"):
             instance.needsSite(self.site)
