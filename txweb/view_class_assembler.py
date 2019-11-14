@@ -1,4 +1,4 @@
-from txweb.resources import ViewFunctionResource
+from txweb.resources import ViewFunctionResource, ViewClassResource
 from txweb.errors import UnrenderableException
 
 from collections import namedtuple
@@ -7,12 +7,14 @@ from txweb.util.basic import get_thing_name
 
 import inspect
 
+EXPOSED_STR = "__exposed__"
+EXPOSED_RULE = "__sub_rule__"
 
 def has_exposed(obj):
     return any([
         True
         for m in getattr(obj, "__dict__", {}).values()
-            if inspect.isfunction(m) and hasattr(m, "__exposed__")
+            if inspect.isfunction(m) and hasattr(m, EXPOSED_STR)
     ])
 
 def is_renderable(kls):
@@ -30,8 +32,8 @@ ExposeSubRule = namedtuple("ExposeSubRule", "method_name,route,route_kwargs")
 def expose(route,**route_kwargs):
 
     def processor(func):
-        setattr(func, "__exposed__", True)
-        setattr(func, "__subrule__", ExposeSubRule(func.__name__, route, route_kwargs))
+        setattr(func, EXPOSED_STR, True)
+        setattr(func, EXPOSED_RULE, ExposeSubRule(func.__name__, route, route_kwargs))
         return func
 
     return processor
@@ -40,31 +42,39 @@ ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints
 
 def view_assembler(prefix, kls, route_args):
     endpoints = {}
-    instance = None
-    rules = []
-    if has_exposed(kls):
-        kls_args = route_args.pop("init_args", [])
-        kls_kwargs = route_args.pop("init_kwargs", {})
 
-        instance = kls(*kls_args, **kls_kwargs)
-        exposed = [
-            getattr(
-                getattr(instance, m),
-                "__sub_rule__"
-            )
-            for m, m_obj in instance.__dict__.items()
-                if inspect.ismethod(m_obj) and hasattr(m_obj, "__exposed__")
-        ]
-        for sub_rule in exposed:
-            bound_method = getattr(instance, sub_rule.name)
-            bound_name = get_thing_name(bound_method)
-            rule = Rule(sub_rule.route, **sub_rule.kwargs, endpoint=bound_name)
-            endpoints[bound_name] = ViewFunctionResource(bound_method)
+    rules = []
+    kls_args = route_args.pop("init_args", [])
+    kls_kwargs = route_args.pop("init_kwargs", {})
+    instance = kls(*kls_args, **kls_kwargs)
+
+    if has_exposed(kls):
+
+        attributes = {
+            name: getattr(instance, name)
+            for name in dir(instance)
+            if name[0] != "_" and
+               inspect.ismethod(getattr(instance, name)) and
+               hasattr(getattr(instance, name), EXPOSED_STR)
+        }
+
+        for name, bound_method in attributes.items():
+
+            sub_rule = getattr(bound_method, EXPOSED_RULE)
+            bound_endpoint = get_thing_name(bound_method)
+            rule = Rule(sub_rule.route, **sub_rule.route_kwargs, endpoint=bound_endpoint)
+            endpoints[bound_endpoint] = ViewFunctionResource(bound_method)
             rules.append(rule)
+
+        return ViewAssemblerResult(instance, Submount(prefix, rules), endpoints)
+
     elif is_renderable(kls):
-        raise NotImplementedError()
+        endpoint=get_thing_name(instance)
+        rule = Rule(prefix, **route_args, endpoint=endpoint)
+        endpoints[endpoint] = ViewClassResource(kls, instance)
+        return ViewAssemblerResult(instance, rule, endpoints)
+
     else:
         raise UnrenderableException(f"{kls.__name__!r} is missing exposed method(s) or a render method")
 
-    return ViewAssemblerResult(instance, Submount(prefix, rules), endpoints)
 
