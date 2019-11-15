@@ -88,6 +88,19 @@ class WebChat {
             this.onNewEvent(JSON.parse(evt.data));
         });
 
+    onError(data) {
+        console.log(`Handling new error event ${JSON.stringify(data)}`);
+
+        let newLineBody = `
+            <span class="timestamp">12345</span>
+            <span class="postedby">Server</span>
+            <span class="message">${data.reason}</span>
+        `;
+        let div = document.createElement("div");
+        div.classList.add("line");
+        div.classList.add("error");
+        div.innerHTML = newLineBody;
+        this.bodyDiv.append(div);
     }
 
     onNewEvent(data) {
