@@ -106,10 +106,15 @@ class MessageBoard(object):
     def tell(self, request):
         response = request.json
         msg_type = EventTypes(response['type'])
-        username = self.getUsername(request)
-        self.announce(msg_type, response['message'], username)
-
-        return json.dumps(dict(result="OK"))
+        try:
+            username = self.getUsername(request)
+        except ValueError:
+            #TODO use log
+            print("Unable to find username for request")
+            return json.dumps(dict(result="ERROR", reason="Unable to post message as username is not set!"))
+        else:
+            self.announce(msg_type, response['message'], username)
+            return json.dumps(dict(result="OK"))
 
     @Site.expose("/listen")
     def listen(self, request:server.Request):
