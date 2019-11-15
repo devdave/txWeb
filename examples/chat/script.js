@@ -1,6 +1,11 @@
-
+/**
+ * A simple Ajax POST helper
+ *
+ * @param url
+ * @param data
+ * @returns {{addError: (function(*)), addSuccess: (function(*)), go: (function())}}
+ */
 function post_ajax(url, data){
-
 
     var xhr = new XMLHttpRequest(),
         handler = {
@@ -38,6 +43,10 @@ const EventTypes = {
     , ERROR: 4
 };
 
+/**
+ * Client for Message board
+ *
+ */
 class WebChat {
     constructor(userInputCls, messageInputCls, bodyCls, sendButtonCls) {
         console.log("New Webchat client created");
@@ -73,8 +82,9 @@ class WebChat {
                 if(response['result'] == "OK") {
                     this.startListening();
                 } else{
-                    alert("Failed to register username");
+                    alert(`Failed to register username\n${response['reason']}`);
                     console.error(response);
+                    this.getUsername();
                 }
             }).go()
     }
