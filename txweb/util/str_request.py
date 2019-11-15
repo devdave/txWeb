@@ -30,16 +30,16 @@ class StrRequest(Request):
     def write(self, data):
 
         if isinstance(data, str):
-            data = data.encode()
+            data = data.encode("utf-8")
 
         return Request.write(self, data)
 
     def setHeader(self, name, value):
         if isinstance(name, str):
-            name = name.encode()
+            name = name.encode("utf-8")
 
         if isinstance(value, str):
-            value = value.encode()
+            value = value.encode("utf-8")
 
         return Request.setHeader(self, name, value)
 
