@@ -40,7 +40,7 @@ const EventTypes = {
 
 class WebChat {
     constructor(userInputCls, messageInputCls, bodyCls, sendButtonCls) {
-        console.debug("New Webchat client created");
+        console.log("New Webchat client created");
 
         this.usernameInput = document.querySelector(userInputCls);
         this.messageInput = document.querySelector(messageInputCls);
@@ -50,7 +50,7 @@ class WebChat {
     }
 
     run() {
-        console.debug("Webchat client running");
+        console.log("Webchat client running");
 
         this.getUsername();
         this.messageInput.addEventListener("keyup", this.handleKeyUp.bind(this));
@@ -59,14 +59,14 @@ class WebChat {
     }
 
     getUsername(){
-        console.debug("getting username");
+        console.log("getting username");
 
         this.usernameInput.value = prompt("Please provide a username")
         this.sendRegister(this.usernameInput.value);
     }
 
     sendRegister(username, on_success) {
-        console.debug(`Sending ${username} to server for registration`);
+        console.log(`Sending ${username} to server for registration`);
 
         post_ajax("/messageboard/register", {"type": EventTypes.USER_JOINED,"username":username})
             .addSuccess(response=>{
@@ -80,7 +80,7 @@ class WebChat {
     }
 
     startListening() {
-        console.debug("Starting to listen to messageboard for events");
+        console.log("Starting to listen to messageboard for events");
 
         this.listener = new EventSource("/messageboard/listen");
 
@@ -91,7 +91,7 @@ class WebChat {
     }
 
     onNewEvent(data) {
-        console.debug(`Handling new server event ${JSON.stringify(data)}`);
+        console.log(`Handling new server event ${JSON.stringify(data)}`);
 
         let newLineBody = `                
                     <span class="timestamp">
@@ -115,13 +115,13 @@ class WebChat {
         if(event.code !== "Enter") {
             return;
         }
-        console.debug("User pressed enter on message input");
+        console.log("User pressed enter on message input");
 
         this.sendMessage();
     }
 
     handleClick(evt) {
-        console.debug("User pressed send button");
+        console.log("User pressed send button");
 
         this.sendMessage();
     }
@@ -142,14 +142,14 @@ class WebChat {
     }
 
     tellServer(msg_code, message) {
-        console.debug(`Telling server ${msg_code} ${message}`);
+        console.log(`Telling server ${msg_code} ${message}`);
 
         post_ajax("/messageboard/tell",{"type":msg_code, "message":message})
             .addError((evt,xhr) => {
-                console.debug(evt,xhr);
+                console.log(evt,xhr);
             })
             .addSuccess(response => {
-                console.debug(response);
+                console.log(response);
             })
             .go();
     }
@@ -168,4 +168,4 @@ function main() {
 }
 
 window.addEventListener("load", main);
-console.debug("Waiting for document load")
+console.log("Waiting for document load")
