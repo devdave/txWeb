@@ -118,7 +118,6 @@ class MessageBoard(object):
 
     @Site.expose("/listen")
     def listen(self, request:server.Request):
-        username = self.getUsername(request)
 
         def write_response(msg_type: EventTypes, message: str, username: str = None):
             data = json.dumps(dict(type=msg_type.value, message=message, username=username))
@@ -131,18 +130,38 @@ class MessageBoard(object):
 
 
         def on_close(error):
-            self.deregister(username)
+            try:
+                username = self.getUsername(request)
+                self.deregister(username)
+                self.announce(EventTypes.USER_LEFT, f"{username} has left", "server")
+            except ValueError:
+                #Do nothing
+                pass
+            else:
+                self.announce(EventTypes.USER_LEFT, "Unknown user left", "server")
             # assume connection is closed
+
 
         request.setHeader("Cache-control", "no-cache")
         request.setHeader("Content-Type", "text/event-stream")
 
-        write_response(EventTypes.USER_JOINED, f"Welcome {username!r} joined", "server");
-        self.announce(EventTypes.USER_JOINED, f"{username!r} joined chat", "server")
+        request.notifyFinish().addCallback(on_close)
 
-        self.users[username] = on_event
 
-        return NOT_DONE_YET
+
+        try:
+            username = self.getUsername(request)
+        except ValueError:
+            write_response(EventTypes.CONNECTION_CLOSED, "Username not set", "server")
+            request.finish()
+            return NOT_DONE_YET
+        else:
+
+            write_response(EventTypes.USER_JOINED, f"Welcome {username!r}", "server");
+            self.announce(EventTypes.USER_JOINED, f"{username!r} joined chat", "server")
+            self.users[username] = on_event
+
+            return NOT_DONE_YET
 
 
 
