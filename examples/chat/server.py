@@ -65,7 +65,12 @@ class MessageBoard(object):
             user(msg_type, message, username)
 
     def getUsername(self, request):
-        return request.getSession(IDictSession).get("username")
+        session = request.getSession(IDictSession)
+        username = session.get("username", None)
+        if username is None:
+            raise ValueError("Username not set")
+
+        return username
 
     def setUsername(self, request, username):
         session = request.getSession(IDictSession)
