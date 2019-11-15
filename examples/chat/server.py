@@ -2,8 +2,9 @@
 from enum import Enum
 import sys
 import json
+import typing as T
 
-from txweb.web_views import WebSite
+from txweb.web_views import WebSite, StrRequest
 
 from zope.interface import Interface, Attribute, implementer
 from twisted.python.components import registerAdapter
@@ -56,15 +57,45 @@ class EventTypes(Enum):
 
 @Site.add("/messageboard")
 class MessageBoard(object):
+    """
+    Provides a web message board via the connections: register, logoff, tell, and listen
+
+
+    """
 
     def __init__(self):
-        self.users = {}
+        self.users = {} # type: T.Dict[str, T.Set[T.Callable, StrRequest]]
 
-    def announce(self, msg_type, message, username):
-        for user in self.users.values():
-            user(msg_type, message, username)
 
-    def getUsername(self, request):
+    def _add_user(self, username: str, callback:T.Callable, request:StrRequest):
+        if username in self.users:
+            raise ValueError(f"{username} is already registered")
+
+        self.users[username] = (callback, request,)
+
+    def _remove_user(self, username: str):
+        self.users.pop(username, None)
+
+    def _check_users(self):
+        """
+        TODO add StrRequest.onConnectionTimeout and or StrRequest.onConnectionClosed methods
+
+        Watches the registered users for disconnections and connection timeouts
+        """
+        for username, (write_event, request) in self.users.items(): # type: T.AnyStr, T.Callable, StrRequest
+            #TODO figure out how to know if connection is closed
+            pass
+
+
+    def _announce(self, msg_type: EventTypes, message:str, username:str):
+        """
+        Iterates over connected users and relays either a user message or
+        a server side event.
+        """
+        for (write_event, connection) in self.users.values():
+            write_event(msg_type, message, username)
+
+    def _get_username(self, request):
         session = request.getSession(IDictSession)
         username = session.get("username", None)
         if username is None:
@@ -72,11 +103,14 @@ class MessageBoard(object):
 
         return username
 
-    def setUsername(self, request, username):
+    def _set_username(self, request, username):
+        if username in self.users:
+            raise ValueError(f"{username} is already registered")
+
         session = request.getSession(IDictSession)
         session['username'] = username
 
-    def onUserLogoff(self, username):
+    def _on_user_logoff(self, username):
         """
         For whatever reason, username has logged off
         """
@@ -87,17 +121,20 @@ class MessageBoard(object):
     @Site.expose("/register", methods=["POST"])
     def register(self, request:server.Request):
         response = request.json
-        self.setUsername(request, response['username'])
-        username = self.getUsername(request)
+        try:
+            self._set_username(request, response['username'])
+        except ValueError as e:
+            return json.dumps(dict(result="ERROR", reason= repr(e.args)))
+
+        username = self._get_username(request)
         return json.dumps(dict(result="OK",username=repr(username)))
 
 
     @Site.expose("/logoff")
     def logoff(self, request:server.Request):
-        username = self.getUsername(request)
+        username = self._get_username(request)
 
-        if username in self.users:
-            del self.users[username]
+        self._remove_user(username)
 
         return json.dumps(dict(result="OK", username=repr(username)))
 
@@ -107,13 +144,13 @@ class MessageBoard(object):
         response = request.json
         msg_type = EventTypes(response['type'])
         try:
-            username = self.getUsername(request)
+            username = self._get_username(request)
         except ValueError:
             #TODO use log
             print("Unable to find username for request")
             return json.dumps(dict(result="ERROR", reason="Unable to post message as username is not set!"))
         else:
-            self.announce(msg_type, response['message'], username)
+            self._announce(msg_type, response['message'], username)
             return json.dumps(dict(result="OK"))
 
     @Site.expose("/listen")
@@ -129,28 +166,35 @@ class MessageBoard(object):
             write_response(msg_type, message, username)
 
 
-        def on_close(error):
+        def on_close(reason):
+            print("Handling connection closed")
+            print(repr(reason))
+            username = "Unknown"
+
             try:
-                username = self.getUsername(request)
-                self.deregister(username)
-                self.announce(EventTypes.USER_LEFT, f"{username} has left", "server")
-            except ValueError:
+                username = self._get_username(request)
+                self._remove_user(username)
+            except ValueError as e:
                 #Do nothing
+                print("Got Exception")
+                print(repr(e))
                 pass
             else:
-                self.announce(EventTypes.USER_LEFT, "Unknown user left", "server")
+                self._announce(EventTypes.USER_LEFT, f"{username!r}  left", "server")
             # assume connection is closed
 
+            return True
 
+        # Setup Server Side Event headers
         request.setHeader("Cache-control", "no-cache")
         request.setHeader("Content-Type", "text/event-stream")
 
-        request.notifyFinish().addCallback(on_close)
+        request.notifyFinish().addErrback(on_close)
 
 
 
         try:
-            username = self.getUsername(request)
+            username = self._get_username(request)
         except ValueError:
             write_response(EventTypes.CONNECTION_CLOSED, "Username not set", "server")
             request.finish()
@@ -158,8 +202,8 @@ class MessageBoard(object):
         else:
 
             write_response(EventTypes.USER_JOINED, f"Welcome {username!r}", "server");
-            self.announce(EventTypes.USER_JOINED, f"{username!r} joined chat", "server")
-            self.users[username] = on_event
+            self._announce(EventTypes.USER_JOINED, f"{username!r} joined chat", "server")
+            self._add_user(username, on_event, request)
 
             return NOT_DONE_YET
 
