@@ -31,40 +31,47 @@ function post_ajax(url, data){
 
 }
 
+const EventTypes = {
+    USER_SAYS: 1
+    , USER_JOINED: 2
+    , USER_LEFT: 3
+    , ERROR: 4
+};
 
-function webchat_application() {
-    /**
-     * txWeb simple chat application
-     *
-     */
-    const USER_SAYS = 1;
-    const USER_JOINED = 2;
-    const USER_LEFT = 3;
+class WebChat {
+    constructor(userInputCls, messageInputCls, bodyCls, sendButtonCls) {
+        console.debug("New Webchat client created");
 
-    var usernameInput = document.querySelector("input.username")
-        , messageInput = document.querySelector("input.messagebox")
-        , bodyDiv = document.querySelector("div.body")
-        , listener = null;
-
-    function tellServer(msg_code, message, on_success, on_fail) {
-
-        post_ajax("/messageboard/tell",{"type":msg_code, "message":message})
-            .addError((evt,xhr) => {
-                console.debug(evt,xhr);
-            })
-            .addSuccess(response => {
-                console.debug(response);
-
-            })
-            .go();
-
+        this.usernameInput = document.querySelector(userInputCls);
+        this.messageInput = document.querySelector(messageInputCls);
+        this.bodyDiv = document.querySelector(bodyCls);
+        this.sendButton = document.querySelector(sendButtonCls);
+        this.listener = null;
     }
 
-    function sendRegister(username) {
-        post_ajax("/messageboard/register", {"type":USER_JOINED,"username":username})
+    run() {
+        console.debug("Webchat client running");
+
+        this.getUsername();
+        this.messageInput.addEventListener("keyup", this.handleKeyUp.bind(this));
+        this.sendButton.addEventListener("click", this.handleClick.bind(this));
+        this.messageInput.focus();
+    }
+
+    getUsername(){
+        console.debug("getting username");
+
+        this.usernameInput.value = prompt("Please provide a username")
+        this.sendRegister(this.usernameInput.value);
+    }
+
+    sendRegister(username, on_success) {
+        console.debug(`Sending ${username} to server for registration`);
+
+        post_ajax("/messageboard/register", {"type": EventTypes.USER_JOINED,"username":username})
             .addSuccess(response=>{
                 if(response['result'] == "OK") {
-                    startListening();
+                    this.startListening();
                 } else{
                     alert("Failed to register username");
                     console.error(response);
@@ -72,78 +79,93 @@ function webchat_application() {
             }).go()
     }
 
-    function startListening() {
-        listener = new EventSource("/messageboard/listen");
+    startListening() {
+        console.debug("Starting to listen to messageboard for events");
 
-        listener.addEventListener("message", evt => {
-            data = JSON.parse(evt.data)
-            let newLineBody = `                
-                        <span class="timestamp">
-                            12345
-                        </span>
-                        <span class="postedby">
-                            ${data.username}
-                        </span>
-                        <span class="message">
-                            ${data.message}
-                        </span>                            
-            `
-            let div = document.createElement("div");
-            div.classList.add("line");
-            div.innerHTML = newLineBody;
+        this.listener = new EventSource("/messageboard/listen");
 
-            bodyDiv.append(div);
+        this.listener.addEventListener("message", evt => {
+            this.onNewEvent(JSON.parse(evt.data));
         });
 
     }
 
-    function writeToBoard(type, message) {
+    onNewEvent(data) {
+        console.debug(`Handling new server event ${JSON.stringify(data)}`);
 
+        let newLineBody = `                
+                    <span class="timestamp">
+                        12345
+                    </span>
+                    <span class="postedby">
+                        ${data.username}
+                    </span>
+                    <span class="message">
+                        ${data.message}
+                    </span>                            
+        `
+        let div = document.createElement("div");
+        div.classList.add("line");
+        div.innerHTML = newLineBody;
+
+        this.bodyDiv.append(div);
     }
 
-    function sendMessage() {
-        let username = usernameInput.value,
-            message = messageInput.value;
+    handleKeyUp(evt) {
+        if(event.code !== "Enter") {
+            return;
+        }
+        console.debug("User pressed enter on message input");
+
+        this.sendMessage();
+    }
+
+    handleClick(evt) {
+        console.debug("User pressed send button");
+
+        this.sendMessage();
+    }
+
+    sendMessage() {
+        let username = this.usernameInput.value,
+            message = this.messageInput.value;
 
         if(message === "") {
             return;
         }
 
-        tellServer(USER_SAYS, message);
+
+        this.tellServer(EventTypes.USER_SAYS, message);
 
         messageInput.value = "";
         messageInput.focus();
-
     }
 
-    function send_on_enter(event) {
-        if(event.code !== "Enter") {
-            return;
-        }
-        sendMessage();
-        console.debug("Enter key was pressed in message box");
+    tellServer(msg_code, message) {
+        console.debug(`Telling server ${msg_code} ${message}`);
+
+        post_ajax("/messageboard/tell",{"type":msg_code, "message":message})
+            .addError((evt,xhr) => {
+                console.debug(evt,xhr);
+            })
+            .addSuccess(response => {
+                console.debug(response);
+            })
+            .go();
     }
 
-
-    function send_on_buttonclick(event) {
-        sendMessage();
-        console.debug("Send button was clicked");
-    }
-
-    function getUsername(){
-        usernameInput.value = prompt("Please provide a username")
-        sendRegister(usernameInput.value);
-    }
-
-
-    getUsername();
-
-    document.querySelector(".messagebox").addEventListener("keyup", send_on_enter);
-    document.querySelector(".send_msg").addEventListener("click", send_on_buttonclick);
-    messageInput.focus()
-    console.debug("Webchat is setup");
 
 }
 
-window.addEventListener("load", webchat_application);
+
+function main() {
+    let chat = new WebChat("input.username"
+        , "input.messagebox"
+        , "div.body"
+        , "button.send_msg"
+    )
+    chat.run()
+}
+
+window.addEventListener("load", main);
 console.debug("Waiting for document load")
