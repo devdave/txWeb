@@ -85,8 +85,26 @@ class WebChat {
         this.listener = new EventSource("/messageboard/listen");
 
         this.listener.addEventListener("message", evt => {
-            this.onNewEvent(JSON.parse(evt.data));
+
+            let data = JSON.parse(evt.data)
+            console.log(`SSE ${evt.data}`);
+            this.onNewEvent(data);
         });
+
+        this.listener.addEventListener("error", evt => {
+            console.log(evt, this.listener);
+
+            if(this.listener.readyState == this.listener.CLOSED) {
+                this.onError({"reason": "Server listener disconnected"});
+            } else {
+                this.onError({"reason": "Unknown server listener error occurred"})
+            }
+
+            this.listener.close();
+        })
+
+
+    }
 
     onError(data) {
         console.log(`Handling new error event ${JSON.stringify(data)}`);
@@ -163,13 +181,20 @@ class WebChat {
             })
             .addSuccess(response => {
                 console.log(response);
+                //
+                if(response.result == "ERROR") {
+                    this.onError(response);
+                } else {
+                    //Ignore the response and assume everything is good
+                }
+
+
             })
             .go();
     }
 
 
 }
-
 
 function main() {
     let chat = new WebChat("input.username"
