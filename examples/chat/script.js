@@ -150,8 +150,8 @@ class WebChat {
 
         this.tellServer(EventTypes.USER_SAYS, message);
 
-        messageInput.value = "";
-        messageInput.focus();
+        this.messageInput.value = "";
+        this.messageInput.focus();
     }
 
     tellServer(msg_code, message) {
