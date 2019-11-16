@@ -11,7 +11,6 @@ from twisted.web import resource
 from twisted.web import server
 from twisted.web.server import Request
 from twisted.web.resource import NoResource
-from twisted.web.server import NOT_DONE_YET
 
 # Werkzeug routing import
 from werkzeug import routing as wz_routing
@@ -22,8 +21,6 @@ import typing as T
 import inspect
 from collections import OrderedDict
 import warnings
-import copy
-
 
 # given
 #    website.add("/<foo:str>/<bar:int")
@@ -37,16 +34,13 @@ EndpointCallable = typing.NewType("InstanceCallable",
                                        ], typing.Union[str, int]])
 
 
-
-
-
 class GenericError(resource.Resource):
 
     isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
 
     def __init__(self, message: str, error_code: typing.Optional[int] = 500):
-        self.message = message # type: typing.Text
-        self.error_code = error_code #type: int
+        self.message = message  # type: typing.Text
+        self.error_code = error_code  #type: int
 
     def render(self):
         raise NotImplementedError("TODO")
@@ -76,7 +70,8 @@ class RoutingResource(resource.Resource):
 
     def add(self, route_str:str, **kwargs:T.Dict[str, T.Any]):
 
-        assert "endpoint" not in kwargs, "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
+        assert "endpoint" not in kwargs, \
+            "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
         assert isinstance(route_str, str) is True, "add must be called with RoutingResource.add('/some/route/', **...)"
 
         # todo swap object for
@@ -105,7 +100,7 @@ class RoutingResource(resource.Resource):
             elif inspect.isfunction(original_thing) is True or inspect.ismethod(original_thing) is True:
                 self._add_callable(route_str, **common_kwargs)
             else:
-                raise ValueError(f"Recieved {original_thing} but expected callable|Object|twisted.web.resource.Resource")
+                raise ValueError(f"Received {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 
             # return whatever was decorated unchanged
             # the Resource.getChildForRequest is completely shortcircuited so
@@ -134,9 +129,9 @@ class RoutingResource(resource.Resource):
         self._route_map.add(new_rule)
 
     def _add_class(self, route_str: T.AnyStr,
-                   endpoint:T.AnyStr = None,
-                   thing:object = None,
-                   route_kwargs:T.Dict[str, T.Any] = None):
+                   endpoint: T.AnyStr = None,
+                   thing:T.Union[object,T.Callable] = None,
+                   route_kwargs: T.Dict[str, T.Any] = None):
 
         if vca.is_renderable(thing) is False:
             raise UnrenderableException(f"{thing.__name__!r} is missing exposed methods or a render method")
@@ -150,9 +145,6 @@ class RoutingResource(resource.Resource):
             instance = self._instances[endpoint] = thing(**route_kwargs.get("inits_kwargs",{}))
             self._route_map.add(wz_routing.Rule(route_str, endpoint=endpoint))
             self._endpoints[endpoint] = txw_resources.ViewClassResource(thing, instance)
-
-
-
 
     def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
@@ -168,7 +160,7 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def _buildMap(self, pathEl, request):
+    def _build_map(self, pathEl, request):
 
         from twisted.web.wsgi import _wsgiString
 
@@ -199,19 +191,17 @@ class RoutingResource(resource.Resource):
 
     def getChildWithDefault(self, pathEl, request):
 
-        request.map = self._buildMap(pathEl, request)
+        map = self._build_map(pathEl, request)
 
         try:
-
-            (rule, kwargs) = request.map.match(return_rule=True)
+            (rule, kwargs) = map.match(return_rule=True)
         except wz_routing.NotFound:
             rule = None
 
         if rule:
             request.rule = rule
             request.route_args = kwargs
-            resource = self._endpoints[rule.endpoint]
-            return resource
+            return self._endpoints[rule.endpoint]
         else:
             return NoResource()
 
@@ -232,15 +222,12 @@ class WebSite(server.Site):
 
     def __init__(self):
 
-
         self.double_slash_warning = True
 
         self.no_resource_cls = NoResource
-        self.jinja2_env = None # type: jinja2.Environment
-
+        self.jinja2_env = None  # type: jinja2.Environment
 
         server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
-
 
     def setTemplateDir(self, path):
         import jinja2
@@ -253,13 +240,11 @@ class WebSite(server.Site):
         else:
             raise RuntimeError(f"website.setTemplateDir already set {self.jinja2_env}")
 
-
     def render_template(self, template_name, **context):
         if self.jinja2_env is not None:
             return self.jinja2_env.get_template(template_name).render(**context)
         else:
             raise RuntimeError(f"render_template called without using setTemplateDir first")
-
 
     def setNoResourceCls(self, no_resource_cls):
         self.no_resource_cls = no_resource_cls
@@ -268,18 +253,17 @@ class WebSite(server.Site):
         return self.resource.add(route_str, **kwargs)
 
     def expose(self, route_str, **route_kwargs):
-
         return vca.expose(route_str, **route_kwargs)
 
     def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
         return self.resource.add(route_str, **kwargs)(rsrc)
 
     def getResourceFor(self, request):
-        resource = super().getResourceFor(request)
+        found_resource = super().getResourceFor(request)
 
-        if resource is None or isinstance(resource, NoResource):
+        if found_resource is None or isinstance(found_resource, NoResource):
             return self.no_resource_cls()
         else:
-            return resource
+            return found_resource
 
 
