@@ -11,6 +11,7 @@ from twisted.web import resource
 from twisted.web import server
 from twisted.web.server import Request
 from twisted.web.resource import NoResource
+from twisted.web import static
 
 # Werkzeug routing import
 from werkzeug import routing as wz_routing
