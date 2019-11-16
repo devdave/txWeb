@@ -1,4 +1,5 @@
 import inspect
+import typing as T
 
 from twisted.web import resource
 from twisted.internet import defer
@@ -23,16 +24,15 @@ def get_thing_name(thing: object) -> str:
         return thing_name
 
 
-def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteString]:
+def sanitize_render_output(output: T.Any) -> T.Union[int, T.ByteString]:
     """
         Attempt to sanitize output and return a value safe for twisted.web.server.Site to process
 
     :param output: the result of calling either a ViewClassResource or ViewFunctionResources render method
-    :return:
+    :return: Returns either a byte string or NOT_DONE_YET (has always been an int)
     """
 
     returnValue = None
-    import warnings
 
     if isinstance(output, defer.Deferred):
         returnValue = NOT_DONE_YET
@@ -43,7 +43,7 @@ def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteS
     elif isinstance(output, int):
         returnValue = str(output).encode("utf-8")
     elif isinstance(output, bytes):
-        returnValue = str(output).encode("utf-8")
+        returnValue = output
     else:
         raise RuntimeError(f"render outputted {type(output)}, expected bytes,str,int, or NOT_DONE_YET")
 
