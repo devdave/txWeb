@@ -39,6 +39,7 @@ class StrRequest(Request):
         return Request.write(self, data)
 
     def setHeader(self, name, value):
+        # TODO check if this is redundant
         if isinstance(name, str):
             name = name.encode("utf-8")
 
@@ -49,7 +50,9 @@ class StrRequest(Request):
 
     def requestReceived(self, command, path, version):
         """
-            Add's POST'ed file data to args
+            Looks for POST'd arguments in form format (eg multipart).
+            Allows for file uploads and adds them to .args
+
             TODO add a files attribute to StrRequest?
         """
 
