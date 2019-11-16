@@ -32,6 +32,8 @@ class StrRequest(Request):
 
         if isinstance(data, str):
             data = data.encode("utf-8")
+        elif isinstance(data, bytes):
+            pass
         else:
             raise ValueError(f"Attempting to write to transport {type(data)}-{data!r}"
                              " must be ByteString or Str")
