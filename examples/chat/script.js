@@ -116,40 +116,30 @@ class WebChat {
 
     }
 
-    onError(data) {
-        console.log(`Handling new error event ${JSON.stringify(data)}`);
+    printMessage(who, what){
+        let timestamp = Date.now().toString();
 
         let newLineBody = `
-            <span class="timestamp">12345</span>
-            <span class="postedby">Server</span>
-            <span class="message">${data.reason}</span>
+            <span class="timestamp">${timestamp}</span>
+            <span class="postedby">${who}</span>
+            <span class="message">${what}</span>
         `;
         let div = document.createElement("div");
         div.classList.add("line");
         div.classList.add("error");
         div.innerHTML = newLineBody;
         this.bodyDiv.append(div);
+        this.bodyDiv.scrollTop = this.bodyDiv.scrollHeight;
+    }
+
+    onError(data) {
+        console.log(`Handling new error event ${JSON.stringify(data)}`);
+        this.printMessage("Server", data.reason);
     }
 
     onNewEvent(data) {
         console.log(`Handling new server event ${JSON.stringify(data)}`);
-
-        let newLineBody = `                
-                    <span class="timestamp">
-                        12345
-                    </span>
-                    <span class="postedby">
-                        ${data.username}
-                    </span>
-                    <span class="message">
-                        ${data.message}
-                    </span>                            
-        `
-        let div = document.createElement("div");
-        div.classList.add("line");
-        div.innerHTML = newLineBody;
-
-        this.bodyDiv.append(div);
+        this.printMessage(data.username, data.message);
     }
 
     handleKeyUp(evt) {
