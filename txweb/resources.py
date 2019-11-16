@@ -3,37 +3,12 @@ from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
 from twisted.web import resource
 
+from txweb.util.basic import sanitize_render_output
 # stdlib
 import typing
 
 
-def sanitize_render_output(output: typing.Any) -> typing.Union[int, typing.ByteString]:
-    """
-        Attempt to sanitize output and return a value safe for twisted.web.server.Site to process
 
-    :param output: the result of calling either a ViewClassResource or ViewFunctionResources render method
-    :return:
-    """
-
-    returnValue = None
-    import warnings
-
-    if isinstance(output, defer.Deferred):
-        returnValue = NOT_DONE_YET
-    elif output is NOT_DONE_YET:
-        returnValue = NOT_DONE_YET
-    elif isinstance(output, str):
-        returnValue = output.encode("utf-8")
-    elif isinstance(output, int):
-        returnValue = str(output).encode("utf-8")
-    elif isinstance(output, bytes):
-        returnValue = str(output).encode("utf-8")
-    else:
-        raise RuntimeError(f"render outputted {type(output)}, expected bytes,str,int, or NOT_DONE_YET")
-
-    assert isinstance(returnValue, bytes) or returnValue == NOT_DONE_YET, f"Bad response data {type(returnValue)}-{returnValue!r}"
-
-    return returnValue
 
 
 class ViewClassResource(resource.Resource):
