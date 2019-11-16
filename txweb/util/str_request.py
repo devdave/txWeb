@@ -16,7 +16,9 @@
 
 
 from twisted.web.server import Request
+# noinspection PyProtectedMember
 from twisted.web.http import _parseHeader
+# noinspection PyProtectedMember
 from twisted.python.compat import _PY3, _PY37PLUS
 
 import cgi
@@ -26,11 +28,13 @@ from urllib.parse import parse_qs
 
 class StrRequest(Request):
 
-
     def write(self, data):
 
         if isinstance(data, str):
             data = data.encode("utf-8")
+        else:
+            raise ValueError(f"Attempting to write to transport {type(data)}-{data!r}"
+                             " must be ByteString or Str")
 
         return Request.write(self, data)
 
@@ -43,17 +47,15 @@ class StrRequest(Request):
 
         return Request.setHeader(self, name, value)
 
-
     def requestReceived(self, command, path, version):
         """
-            Hold off on this just yet, I need to walk up twisted.web to see how the server is
-            storing self.content.
-
+            Add's POST'ed file data to args
+            TODO add a files attribute to StrRequest?
         """
 
         # Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
 
-        self.content.seek(0,0)
+        self.content.seek(0, 0)
 
         self.args = {}
 
@@ -65,9 +67,8 @@ class StrRequest(Request):
         if len(x) == 1:
             self.path = self.uri
         else:
-            self.path, argstring = x
-            self.args = parse_qs(argstring.decode())
-
+            self.path, arg_string = x
+            self.args = parse_qs(arg_string.decode())
 
         args = self.args
         ctype = self.requestHeaders.getRawHeaders(b'content-type')
@@ -88,11 +89,11 @@ class StrRequest(Request):
             elif key == mfd:
                 try:
                     if _PY37PLUS:
-                        cgiArgs = cgi.parse_multipart(
+                        cgi_args = cgi.parse_multipart(
                             self.content, pdict, encoding='utf8',
                             errors="surrogateescape")
                     else:
-                        cgiArgs = cgi.parse_multipart(self.content, pdict)
+                        cgi_args = cgi.parse_multipart(self.content, pdict)
 
                     if not _PY37PLUS and _PY3:
                         # The parse_multipart function on Python 3
@@ -100,22 +101,23 @@ class StrRequest(Request):
                         # returns a str key -- we want bytes so encode
                         # it back
                         self.args.update({x.encode('iso-8859-1'): y
-                                          for x, y in cgiArgs.items()})
+                                          for x, y in cgi_args.items()})
                     elif _PY37PLUS:
                         # The parse_multipart function on Python 3.7+
                         # decodes the header bytes as iso-8859-1 and
                         # decodes the body bytes as utf8 with
                         # surrogateescape -- we want bytes
                         self.args.update({
-                            x.encode('iso-8859-1'): \
+                            x.encode('iso-8859-1'):
                                 [z.encode('utf8', "surrogateescape")
                                  if isinstance(z, str) else z for z in y]
-                            for x, y in cgiArgs.items()})
+                            for x, y in cgi_args.items()})
 
                     else:
-                        self.args.update(cgiArgs)
+                        self.args.update(cgi_args)
                 except Exception as e:
                     # It was a bad request, or we got a signal.
+                    # noinspection PyProtectedMember
                     self.channel._respondToBadRequestAndDisconnect()
                     if isinstance(e, (TypeError, ValueError, KeyError)):
                         return
@@ -127,10 +129,11 @@ class StrRequest(Request):
 
         self.process()
 
-
     @property
     def json(self):
         if self.getHeader("Content-Type") not in ["application/json", "text/json"]:
-            raise RuntimeError(f"Request content-type is not JSON content type {self.getHeader('Content-Type')!r}")
+            raise RuntimeError(
+                "Request content-type is not JSON content type "
+                f"{self.getHeader('Content-Type')!r}")
 
         return json.loads(self.content.read())
