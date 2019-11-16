@@ -253,11 +253,24 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
         return self.resource.add(route_str, **kwargs)
 
-    def expose(self, route_str, **route_kwargs):
-        return vca.expose(route_str, **route_kwargs)
+    def add_file(self, route_str: str, filepath, default_type="text/html"):
+        """
+        Just a simple helper for a common task of serving individual files
+
+        :param route_str: A valid URI route string
+        :param filepath: An absolute or relative path to a file to be served over HTTP
+        :param default_type: What content type should a file be served as
+        :return: twisted.web.static.File
+        """
+        return self.add_resource(route_str, static.File(filepath, defaultType=default_type))
 
     def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
         return self.resource.add(route_str, **kwargs)(rsrc)
+
+    def expose(self, route_str, **route_kwargs):
+        return vca.expose(route_str, **route_kwargs)
+
+
 
     def getResourceFor(self, request):
         found_resource = super().getResourceFor(request)

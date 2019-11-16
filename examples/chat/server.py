@@ -51,8 +51,9 @@ registerAdapter(DictSession, server.Session, IDictSession)
 Site = WebSite()
 #TODO Allow these to become class vars
 
-Site.add_resource("/", File("./index.html"))
-Site.add_resource("/index.js", File("./script.js", defaultType="text/javascript"))
+
+Site.add_file("/", "./index.html")
+Site.add_file("/index.js", "./script.js", default_type="text/javascript")
 
 class EventTypes(Enum):
     USER_SAYS = 1
