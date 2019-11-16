@@ -38,6 +38,7 @@ class GenericError(resource.Resource):
 
     isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
 
+    # noinspection PyMissingConstructor
     def __init__(self, message: str, error_code: typing.Optional[int] = 500):
         self.message = message  # type: typing.Text
         self.error_code = error_code  #type: int
