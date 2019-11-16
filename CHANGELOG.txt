@@ -1,3 +1,8 @@
+
+2019-11-16
+    There are still a lot of features to add (eg. File directory support) but I am happy with the refactor
+
+
 2019
    Removed all of the other resource classes and went with a more simplified werkzeug routing resource.
 
