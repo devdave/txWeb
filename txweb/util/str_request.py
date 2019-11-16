@@ -85,54 +85,58 @@ class StrRequest(Request):
             clength = clength[0]
 
         if self.method == b"POST" and ctype and clength:
-            mfd = b'multipart/form-data'
-            key, pdict = _parseHeader(ctype)
-            pdict["CONTENT-LENGTH"] = clength
-
-            if key == b'application/x-www-form-urlencoded':
-                args.update(parse_qs(self.content.read(), 1))
-            elif key == mfd:
-                try:
-                    if _PY37PLUS:
-                        cgi_args = cgi.parse_multipart(
-                            self.content, pdict, encoding='utf8',
-                            errors="surrogateescape")
-                    else:
-                        cgi_args = cgi.parse_multipart(self.content, pdict)
-
-                    if not _PY37PLUS and _PY3:
-                        # The parse_multipart function on Python 3
-                        # decodes the header bytes as iso-8859-1 and
-                        # returns a str key -- we want bytes so encode
-                        # it back
-                        self.args.update({x.encode('iso-8859-1'): y
-                                          for x, y in cgi_args.items()})
-                    elif _PY37PLUS:
-                        # The parse_multipart function on Python 3.7+
-                        # decodes the header bytes as iso-8859-1 and
-                        # decodes the body bytes as utf8 with
-                        # surrogateescape -- we want bytes
-                        self.args.update({
-                            x.encode('iso-8859-1'):
-                                [z.encode('utf8', "surrogateescape")
-                                 if isinstance(z, str) else z for z in y]
-                            for x, y in cgi_args.items()})
-
-                    else:
-                        self.args.update(cgi_args)
-                except Exception as e:
-                    # It was a bad request, or we got a signal.
-                    # noinspection PyProtectedMember
-                    self.channel._respondToBadRequestAndDisconnect()
-                    if isinstance(e, (TypeError, ValueError, KeyError)):
-                        return
-                    else:
-                        # If it's not a userspace error from CGI, reraise
-                        raise
-
+            self._processFormData(args, ctype,  clength)
+            
             self.content.seek(0, 0)
 
         self.process()
+
+    def _processFormData(self, args, ctype, clength):
+
+        mfd = b'multipart/form-data'
+        key, pdict = _parseHeader(ctype)
+        pdict["CONTENT-LENGTH"] = clength
+
+        if key == b'application/x-www-form-urlencoded':
+            args.update(parse_qs(self.content.read(), 1))
+        elif key == mfd:
+            try:
+                if _PY37PLUS:
+                    cgi_args = cgi.parse_multipart(
+                        self.content, pdict, encoding='utf8',
+                        errors="surrogateescape")
+                else:
+                    cgi_args = cgi.parse_multipart(self.content, pdict)
+
+                if not _PY37PLUS and _PY3:
+                    # The parse_multipart function on Python 3
+                    # decodes the header bytes as iso-8859-1 and
+                    # returns a str key -- we want bytes so encode
+                    # it back
+                    self.args.update({x.encode('iso-8859-1'): y
+                                      for x, y in cgi_args.items()})
+                elif _PY37PLUS:
+                    # The parse_multipart function on Python 3.7+
+                    # decodes the header bytes as iso-8859-1 and
+                    # decodes the body bytes as utf8 with
+                    # surrogateescape -- we want bytes
+                    self.args.update({
+                        x.encode('iso-8859-1'):
+                            [z.encode('utf8', "surrogateescape")
+                             if isinstance(z, str) else z for z in y]
+                        for x, y in cgi_args.items()})
+
+                else:
+                    self.args.update(cgi_args)
+            except Exception as e:
+                # It was a bad request, or we got a signal.
+                # noinspection PyProtectedMember
+                self.channel._respondToBadRequestAndDisconnect()
+                if isinstance(e, (TypeError, ValueError, KeyError)):
+                    return
+                else:
+                    # If it's not a userspace error from CGI, reraise
+                    raise
 
     @property
     def json(self):
