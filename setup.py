@@ -4,20 +4,16 @@ META_DATA = dict(
     name            = "txweb",
     version         = '0.11.2017.1.1',
     author          = "David W.",
-    author_email    = "txwebpypi@ominian.net",
+    author_email    = "devdave@ominian.net",
     url             = "https://github.com/devdave/txWeb",
-    packages        = ['txweb',"txweb.sugar","txweb.util"],
+    packages        = ['txweb',"txweb.util"],
     package_data    = {
-        'txweb': ['LICENSE.txt',
-            'tests/test_data/a.txt',
-            'tests/test_data/c.txt',
-            'tests/test_data/subdir/b.txt'
-            ]
+        'txweb': ['LICENSE.txt']
         },
     license         = "MIT License",
     keywords = "twisted web alternative routing",
     description = "An alternative routing system for use with twisted.web",
-    requires = ["decorator", "twisted"]
+    requires = ["decorator", "twisted", "werkzeug"]
 )
 
 if __name__ == '__main__':
