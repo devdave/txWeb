@@ -108,6 +108,15 @@ class MessageBoard(object):
         return username
 
     def _set_username(self, request, username):
+        """
+            TODO replace/refactor how twisted.web does sessions
+                as there is a hardset 900 second time out that I
+                can't see any easy way to override.
+
+        :param request:
+        :param username:
+        :return:
+        """
         if username in self.users:
             raise ValueError(f"{username} is already registered")
 
