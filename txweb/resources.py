@@ -1,23 +1,20 @@
+
 # twisted imports
-from twisted.internet import defer
-from twisted.web.server import NOT_DONE_YET
 from twisted.web import resource
 
 from txweb.util.basic import sanitize_render_output
 # stdlib
-import typing
-
-
-
+import typing as T
 
 
 class ViewClassResource(resource.Resource):
 
-    isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
+    isLeaf: T.ClassVar[T.Union[bool, int]] = True
 
+    # noinspection PyMissingConstructor
     def __init__(self, kls_view, instance=None):
         self.kls_view = kls_view
-        self.instance = instance # TODO is this needed?
+        self.instance = instance  # TODO is this needed?
 
     def getChildWithDefault(self, path, request):
         if hasattr(self.instance, "prefilter"):
@@ -25,14 +22,13 @@ class ViewClassResource(resource.Resource):
         else:
             return self
 
-    def render(self, request)->bytes:
-        str_request_kwargs = request.path.decode()
-
+    def render(self, request) -> T.Union[bytes, int]:
         request_kwargs = getattr(request, "_view_args", {})
         request_method = getattr(request, "method").decode("utf-8").toupper()
 
-        prefilter_result = getattr(self.instance, "prefilter", lambda r,v: None)(request, self)
+        prefilter_result = getattr(self.instance, "prefilter", lambda r, v: None)(request, self)
 
+        # noinspection PyUnusedLocal
         render_target = None
 
         if isinstance(prefilter_result, resource.Resource):
@@ -42,7 +38,8 @@ class ViewClassResource(resource.Resource):
         else:
             render_target = getattr(self.instance, f"render_{request_method}", None)
 
-        assert render_target is not None, f"Unable to find render|render_{request_method} method for {self.kls_view} - {self.instance}"
+        assert render_target is not None, \
+            f"Unable to find render|render_{request_method} method for {self.kls_view} - {self.instance}"
 
         result = render_target(request, **request_kwargs)
 
@@ -56,21 +53,19 @@ class ViewClassResource(resource.Resource):
 
 class ViewFunctionResource(resource.Resource):
 
-    isLeaf: typing.ClassVar[typing.Union[bool, int]] = True
+    isLeaf: T.ClassVar[T.Union[bool, int]] = True
 
-    def __init__(self, func: typing.Callable):
-        self.func = func # rework to callable
+    # noinspection PyMissingConstructor
+    def __init__(self, func: T.Callable):
+        self.func = func
 
-    def render(self, request):
+    def render(self, request) -> T.Union[int, T.ByteString]:
 
         request_view_kwargs = getattr(request, "route_args", {})
 
         result = self.func(request, **request_view_kwargs)
 
-
         return sanitize_render_output(result)
-
 
     def getChild(self, child_name, request):
         return self
-
