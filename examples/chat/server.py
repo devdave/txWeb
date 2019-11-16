@@ -167,8 +167,6 @@ class MessageBoard(object):
 
 
         def on_close(reason):
-            print("Handling connection closed")
-            print(repr(reason))
             username = "Unknown"
 
             try:
