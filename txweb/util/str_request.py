@@ -58,7 +58,7 @@ class StrRequest(Request):
             TODO add a files attribute to StrRequest?
         """
 
-        # Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
+
 
         self.content.seek(0, 0)
 
@@ -75,7 +75,6 @@ class StrRequest(Request):
             self.path, arg_string = x
             self.args = parse_qs(arg_string.decode())
 
-        args = self.args
         ctype = self.requestHeaders.getRawHeaders(b'content-type')
         clength = self.requestHeaders.getRawHeaders(b'content-length')
         if ctype is not None:
@@ -85,20 +84,30 @@ class StrRequest(Request):
             clength = clength[0]
 
         if self.method == b"POST" and ctype and clength:
-            self._processFormData(args, ctype,  clength)
-            
+            self._processFormData(ctype,  clength)
+
             self.content.seek(0, 0)
 
         self.process()
 
-    def _processFormData(self, args, ctype, clength):
+    def _processFormData(self, ctype, clength):
+        """
+        Processes POST requests and puts POST'd arguments into args.
+
+        Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
+
+        :param args:
+        :param ctype:
+        :param clength:
+        :return:
+        """
 
         mfd = b'multipart/form-data'
         key, pdict = _parseHeader(ctype)
         pdict["CONTENT-LENGTH"] = clength
 
         if key == b'application/x-www-form-urlencoded':
-            args.update(parse_qs(self.content.read(), 1))
+            self.args.update(parse_qs(self.content.read(), 1))
         elif key == mfd:
             try:
                 if _PY37PLUS:
