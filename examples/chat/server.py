@@ -17,6 +17,9 @@ from twisted.python import log
 
 
 class NoValue:
+    """
+        Sentinel variable for use with DictSession.get's default argument
+    """
     pass
 
 class IDictSession(Interface):
@@ -46,6 +49,8 @@ registerAdapter(DictSession, server.Session, IDictSession)
 
 
 Site = WebSite()
+#TODO Allow these to become class vars
+
 Site.add_resource("/", File("./index.html"))
 Site.add_resource("/index.js", File("./script.js", defaultType="text/javascript"))
 
@@ -59,7 +64,6 @@ class EventTypes(Enum):
 class MessageBoard(object):
     """
     Provides a web message board via the connections: register, logoff, tell, and listen
-
 
     """
 
@@ -150,23 +154,43 @@ class MessageBoard(object):
             print("Unable to find username for request")
             return json.dumps(dict(result="ERROR", reason="Unable to post message as username is not set!"))
         else:
-            self._announce(msg_type, response['message'], username)
+            if response['message'].startswith("/debug"):
+                self.users[username][0](EventTypes.USER_SAYS, repr(self.users), "server")
+            else:
+                self._announce(msg_type, response['message'], username)
+
             return json.dumps(dict(result="OK"))
 
     @Site.expose("/listen")
     def listen(self, request:server.Request):
+        """
+        Sets up a persistent Server Sent Event connection to the client browser.
+
+        """
+
 
         def write_response(msg_type: EventTypes, message: str, username: str = None):
+            """
+            Just a helper function that could be part of the MessageBoard class but
+            I put it inline as it is only used in the listen method
+
+            """
             data = json.dumps(dict(type=msg_type.value, message=message, username=username))
             print("Sending: ", data)
             request.write(f"data: {data}\n\n".encode("utf-8"))
 
 
         def on_event(msg_type: EventTypes, message: str, username=None):
+            """
+            A user specific callback that sends a new SSEvent message to the connected client
+            """
             write_response(msg_type, message, username)
 
 
         def on_close(reason):
+            """
+            Handles cleanup when a user/client disconnects from the message board
+            """
             username = "Unknown"
 
             try:
@@ -185,10 +209,11 @@ class MessageBoard(object):
 
         # Setup Server Side Event headers
         request.setHeader("Cache-control", "no-cache")
+        # This is more important for the browser and verifies an event stream connection has been made
         request.setHeader("Content-Type", "text/event-stream")
 
+        # Catch when a client disconnects (closed browser/tab, connectivity issues, acts of god, etc)
         request.notifyFinish().addErrback(on_close)
-
 
 
         try:
