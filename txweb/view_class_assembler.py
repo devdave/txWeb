@@ -10,26 +10,28 @@ import inspect
 EXPOSED_STR = "__exposed__"
 EXPOSED_RULE = "__sub_rule__"
 
+
 def has_exposed(obj):
     return any([
         True
         for m in getattr(obj, "__dict__", {}).values()
-            if inspect.isfunction(m) and hasattr(m, EXPOSED_STR)
+        if inspect.isfunction(m) and hasattr(m, EXPOSED_STR)
     ])
+
 
 def is_renderable(kls):
     return \
         any([
             hasattr(kls, render_name)
-            for render_name in ['render','render_get','render_post','render_put','render_head']
+            for render_name in ['render', 'render_get', 'render_post', 'render_put', 'render_head']
         ]) \
         or has_exposed(kls)
 
 
-
-
 ExposeSubRule = namedtuple("ExposeSubRule", "method_name,route,route_kwargs")
-def expose(route,**route_kwargs):
+
+
+def expose(route, **route_kwargs):
 
     def processor(func):
         setattr(func, EXPOSED_STR, True)
@@ -38,7 +40,9 @@ def expose(route,**route_kwargs):
 
     return processor
 
+
 ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
+
 
 def view_assembler(prefix, kls, route_args):
     endpoints = {}
@@ -53,9 +57,9 @@ def view_assembler(prefix, kls, route_args):
         attributes = {
             name: getattr(instance, name)
             for name in dir(instance)
-            if name[0] != "_" and
-               inspect.ismethod(getattr(instance, name)) and
-               hasattr(getattr(instance, name), EXPOSED_STR)
+            if name[0] != "_"
+            and inspect.ismethod(getattr(instance, name))
+            and hasattr(getattr(instance, name), EXPOSED_STR)
         }
 
         for name, bound_method in attributes.items():
@@ -69,12 +73,10 @@ def view_assembler(prefix, kls, route_args):
         return ViewAssemblerResult(instance, Submount(prefix, rules), endpoints)
 
     elif is_renderable(kls):
-        endpoint=get_thing_name(instance)
+        endpoint = get_thing_name(instance)
         rule = Rule(prefix, **route_args, endpoint=endpoint)
         endpoints[endpoint] = ViewClassResource(kls, instance)
         return ViewAssemblerResult(instance, rule, endpoints)
 
     else:
         raise UnrenderableException(f"{kls.__name__!r} is missing exposed method(s) or a render method")
-
-
