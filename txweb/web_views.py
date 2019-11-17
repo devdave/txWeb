@@ -265,7 +265,9 @@ class WebSite(server.Site):
         """
         return self.add_resource(route_str, static.File(filepath, defaultType=default_type))
 
-    def add_resource(self, route_str: str, rsrc: resource.Resource, **kwargs: typing.Dict[str, typing.Any]):
+    def add_resource(self, route_str: str,
+                     rsrc: resource.Resource,
+                     **kwargs: typing.Dict[str, typing.Any]) -> resource.Resource:
         return self.resource.add(route_str, **kwargs)(rsrc)
 
     def expose(self, route_str, **route_kwargs):
