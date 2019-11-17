@@ -94,3 +94,4 @@ def test_enumerate_works():
 
     choices = list(map.enumerate())
     assert len(choices) == 1
+    assert choices[0].value == MapCellState.BLANK
