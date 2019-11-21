@@ -14,6 +14,11 @@ from twisted.web.static import File
 from zope.interface import Interface, Attribute, implementer
 from twisted.python.components import registerAdapter
 
+"""
+    The Enums are intended to avoid typo's between client and server 
+    as there are matching constant's on the client side.
+    
+"""
 class ActionTypes(Enum):
     RESET = "RESET"
     MOVE = "MOVE"
@@ -36,6 +41,7 @@ class MapCellState(Enum):
     PLAYER = 1
     CPU = 2
 
+
 Cell = namedtuple("Cell", "pos, x, y, value")
 
 
@@ -44,7 +50,10 @@ class IGameSession(Interface):
 
 @implementer(IGameSession)
 class GameSession(object):
-
+    """
+        To make testing easier, the GameSession only holds a reference to the actual
+        game logic
+    """
     def __init__(self, session):
         self.game = Game()
 
@@ -63,9 +72,9 @@ class Game():
     2   |   6   7   8|
         -------------
     it can be stored like this
-    [012345678]
+    [012345678] (versus, [(0,0),(0,1),(0,2)...] )
 
-    and then XY coords converted to list index position
+    and then XY coords can be converted to list index position
 
     Damn if I remember what this math is called but
         list index position can be found by multiplying x by # of columns plus Y
@@ -90,7 +99,7 @@ class Game():
         index = (x*self.size) + y if y is not None else x
         self.map[index] = state
 
-    def set_list(self, state: MapCellState, cells: T.Union[T.List, int]) -> T.List[MapCellState]:
+    def set_list(self, state: MapCellState, cells: T.List[T.Union[T.Tuple[int, int], int]] ):
         for cell in cells:
             if isinstance(cell, tuple):
                 self.set(state, cell[0], cell[0])
@@ -182,6 +191,22 @@ class RequestArgs(object):
     def __repr__(self):
         return f"<RequestArgs command={self.command} detail={self.detail}>"
 
+
+
+
+class ResponseData:
+    def __init__(self, status, state, detail):
+        self.status = status.value if isinstance(status, ResponseTypes) else status
+        self.state = state.value if isinstance(state, ResponseTypes) else state
+        self.detail = detail
+
+    def _asdict(self):
+        return dict(status=self.status, state=self.state, detail=self.detail)
+
+    @property
+    def json(self):
+        return json.dumps(self._asdict())
+
 def do_cpu_move(map: Game) -> T.Union[None, str]:
     import random
     choices = list(map.enumerate())
@@ -192,6 +217,14 @@ def do_cpu_move(map: Game) -> T.Union[None, str]:
 
     return index
 
+"""
+The actual webserver logic
+==========================
+
+That's a lot of cruft for a simple T3 game but I've written this game so many times
+that I've just found it easier to over engineer as it cuts down on bugs.
+
+"""
 
 Site = WebSite()
 
@@ -199,53 +232,62 @@ index = Site.add_resource("/", File("./index.html"))
 scriptjs = Site.add_resource("/script.js", File("./script.js", defaultType="text/javascript"))
 
 
-ResponseData = namedtuple("ResponseData", "status, state, detail")
+
 
 @Site.add("/do", methods=["POST"])
 def handle_do(request: StrRequest) -> bytes:
+    """
+        Expects JSON {"command": str, "detail": int or str}
+        responds with {"status": str, "state": str, "detail": str or int }
+
+        Checks to see if the game is being reset and if not it records the player move
+        and then makes the cpu move.
+
+    """
+
     map = request.getSession(IGameSession).game # type: GameSession
     order = RequestArgs(request)
-    free_cell_count = map.matching_count(MapCellState.BLANK)
 
     request.setHeader("Content-Type", "application/json")
 
     if order.command == ActionTypes.RESET.value:
         map.clear()
-        response = ResponseData(ResponseTypes.RESET.value, "ok", "")
+        response = ResponseData(ResponseTypes.RESET, ResponseTypes.OK, "")
 
-    # This should be impossible to reach as stalemate checks are done after player & cpu make their moves
-    elif free_cell_count == 0:
-        #stale mate
-        response = ResponseData(ResponseTypes.STALEMATE.value, None, "")
     # Player is making their move
     elif order.command == ActionTypes.MOVE.value:
         # make sure they're not trying to take an occupied cell
         if map.get(int(order.detail)) != MapCellState.BLANK:
-            response = ResponseData(ResponseTypes.ERROR.value, ResponseTypes.MOVE.value, order.detail)
+            response = ResponseData(ResponseTypes.ERROR, ResponseTypes.MOVE, order.detail)
         else:
             # Cell is empty, set it to be owned by the Player
             map.set(MapCellState.PLAYER, int(order.detail))
+
             #Check for player won
             if map.check_winner() == MapCellState.PLAYER:
-                response = ResponseData(ResponseTypes.WIN.value, ResponseTypes.PLAYER.value, order.detail)
+                response = ResponseData(ResponseTypes.WIN, ResponseTypes.PLAYER, order.detail)
+
             #Check if the player created a stale mate
             elif map.matching_count(MapCellState.BLANK) == 0:
-                response = ResponseData(ResponseTypes.STALEMATE.value,ResponseTypes.PLAYER.value, order.detail)
+                response = ResponseData(ResponseTypes.STALEMATE, ResponseTypes.PLAYER, order.detail)
             else:
+
                 # Now it's the CPU's turn
                 move = do_cpu_move(map)
+
                 # Did the CPU win?
                 if map.check_winner() == MapCellState.CPU:
-                    response = ResponseData(ResponseTypes.WIN.value, ResponseTypes.CPU.value, move)
+                    response = ResponseData(ResponseTypes.WIN, ResponseTypes.CPU, move)
+
                 # Did they use the last free cell?
                 elif map.matching_count(MapCellState.BLANK) == 0:
-                    response = ResponseData(ResponseTypes.STALEMATE.value, ResponseTypes.CPU.value, move)
+                    response = ResponseData(ResponseTypes.STALEMATE, ResponseTypes.CPU, move)
+
                 # They didn't win and there isn't a stalemate
                 else:
-                    response = ResponseData(ResponseTypes.MOVE.value, ResponseTypes.CPU.value, move)
+                    response = ResponseData(ResponseTypes.MOVE, ResponseTypes.CPU, move)
 
-
-    return json.dumps(response._asdict()).encode("utf-8")
+    return response.json.encode("utf-8")
 
 
 

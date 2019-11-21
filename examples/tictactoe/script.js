@@ -34,6 +34,7 @@ function post_ajax(url, data){
     return handler;
 
 }
+
 const ActionTypes = {
     RESET: "RESET"
     , MOVE: "MOVE"
