@@ -1,11 +1,6 @@
-
-# twisted imports
-from twisted.web import resource
-
-from txweb.util.basic import sanitize_render_output
-# stdlib
 import typing as T
-
+from twisted.web import resource
+from txweb.util.basic import sanitize_render_output
 
 class ViewClassResource(resource.Resource):
 
@@ -49,23 +44,3 @@ class ViewClassResource(resource.Resource):
             assert post_result is not None, f"post_filter for {self.kls_view} must not return None"
 
         return sanitize_render_output(result)
-
-
-class ViewFunctionResource(resource.Resource):
-
-    isLeaf: T.ClassVar[T.Union[bool, int]] = True
-
-    # noinspection PyMissingConstructor
-    def __init__(self, func: T.Callable):
-        self.func = func
-
-    def render(self, request) -> T.Union[int, T.ByteString]:
-
-        request_view_kwargs = getattr(request, "route_args", {})
-
-        result = self.func(request, **request_view_kwargs)
-
-        return sanitize_render_output(result)
-
-    def getChild(self, child_name, request):
-        return self
