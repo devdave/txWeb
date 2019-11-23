@@ -228,9 +228,8 @@ that I've just found it easier to over engineer as it cuts down on bugs.
 
 Site = WebSite()
 
-index = Site.add_resource("/", File("./index.html"))
-scriptjs = Site.add_resource("/script.js", File("./script.js", defaultType="text/javascript"))
-
+index = Site.add_file("/", "./index.html", defaultType="text/html")
+scriptjs = Site.add_file("/script.js", "./script.js", defaultType="text/javascript")
 
 
 
