@@ -35,13 +35,15 @@ class SimpleFile(File):
         self.isLeaf = True
 
     def render(self, request:StrRequest):
-        if request.method.lower() == "get":
+        method = request.method.lower().decode("utf-8")
+
+        if method == "get":
             return self.render_GET(request)
-        elif request.method.lower() == "head":
+        elif method == "head":
             return self.render_HEAD(request)
         else:
             log.err(request.method, "SimpleFile.render was given a bad HTTP method")
-            raise RuntimeError(f"{request.method} is not available for this resource")
+            raise RuntimeError(f"{method} is not available for this resource")
 
 
     def render_GET(self, request:StrRequest):
