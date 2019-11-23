@@ -254,7 +254,7 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
         return self.resource.add(route_str, **kwargs)
 
-    def add_file(self, route_str: str, filepath, default_type="text/html"):
+    def add_file(self, route_str: str, filepath, defaultType="text/html"):
         """
         Just a simple helper for a common task of serving individual files
 
@@ -263,7 +263,7 @@ class WebSite(server.Site):
         :param default_type: What content type should a file be served as
         :return: twisted.web.static.File
         """
-        return self.add_resource(route_str, static.File(filepath, defaultType=default_type))
+        return self.add_resource(route_str, txw_resources.SimpleFile(filepath, defaultType=defaultType))
 
     def add_resource(self, route_str: str,
                      rsrc: resource.Resource,

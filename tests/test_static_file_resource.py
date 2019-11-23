@@ -24,9 +24,7 @@ def test_serves_a_file():
 
     request = MockRequest(["LICENSE.txt"], "/LICENSE.txt")
 
-    file_resource = getChildForRequest(resource, request)
-
-    response = file_resource.render(request)
+    response = resource.render(request)
     actual = license.read_bytes()
 
 
