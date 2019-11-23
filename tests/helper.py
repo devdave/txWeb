@@ -4,6 +4,8 @@ import unittest
 
 from twisted.web.test.test_web import DummyRequest
 
+from txweb.util.str_request import StrRequest
+
 class Helper(unittest.TestCase):
     def runTest(self):
         pass
@@ -40,3 +42,10 @@ class MockRequest(DummyRequest):# prama: no cover
 
     def isSecure(self):
         return False
+
+    def getHeader(self, name):
+
+        if isinstance(name, str):
+            name = name.encode("utf-8")
+
+        return super().getHeader(name)
