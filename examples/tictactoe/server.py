@@ -167,12 +167,12 @@ class Game():
                 if self.check_cells(who, list(range(step, self.size**2+step, self.size))) == self.size:
                     return who
             #  Diagonals
-            if self.check_cells(who, [(i,i,) for i in range(self.size)]) == self.size:
+            if self.check_cells(who, [(i, i,) for i in range(self.size)]) == self.size:
                 return who
             # These is a programmatic way to do this but I am too lazy/tired/blah to pull up my other implementation
             #  to see how I did it.   Probably with vectors but I don't want to do that as it's even more
             #  unreadable than the other checks
-            elif self.check_cells(who, [(2,0),(1,1),(0,2)]) == self.size:
+            elif self.check_cells(who, [(2, 0), (1, 1), (0, 2)]) == self.size:
                 return who
 
         return None
