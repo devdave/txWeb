@@ -28,6 +28,12 @@ from urllib.parse import parse_qs
 
 class StrRequest(Request):
 
+
+    def __init__(self, *args, **kwargs):
+
+        Request.__init__(self, *args, **kwargs)
+
+
     def write(self, data):
 
         if isinstance(data, str):
