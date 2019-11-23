@@ -158,15 +158,15 @@ class Game():
     def check_winner(self):
         # Brute force this as I am drunk and can't remember the easy way
         for who in [MapCellState.PLAYER, MapCellState.CPU]:
-            #horizontals
+            #  horizontals
             for step in range(self.size):
                 if self.check_cells(who, list(range(self.size*step, self.size*(step+1)))) == self.size:
                     return who
-            #Vertiicals
+            #  Verticals
             for step in range(self.size):
                 if self.check_cells(who, list(range(step, self.size**2+step, self.size))) == self.size:
                     return who
-            #Diagonals
+            #  Diagonals
             if self.check_cells(who, [(i,i,) for i in range(self.size)]) == self.size:
                 return who
             # These is a programmatic way to do this but I am too lazy/tired/blah to pull up my other implementation
