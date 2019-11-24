@@ -68,7 +68,7 @@ def test_full_suite_with_routed_site_to_added_directory(static_dir):
     resource = site.getResourceFor(request)
     assert isinstance(resource, SimpleFile)
 
-    
+
 
 
 # TODO so many more tests needed

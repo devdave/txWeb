@@ -162,6 +162,18 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
+
+    def add_directory(self, route_str, dir_path):
+
+        directoryResource = txw_resources.Directory(dir_path)
+        fixed_route = route_str + "<path:path>"
+        endpoint = get_thing_name(directoryResource)
+        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"], defaults={"path":"/"})
+        self._endpoints[endpoint] = directoryResource
+        self._route_map.add(newRule)
+
+
+
     def _build_map(self, pathEl, request):
 
         from twisted.web.wsgi import _wsgiString
@@ -254,7 +266,7 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
         return self.resource.add(route_str, **kwargs)
 
-    def add_file(self, route_str: str, filepath: str, defaultType="text/html"):
+    def add_file(self, route_str: str, filePath: str, defaultType="text/html"):
         """
         Just a simple helper for a common task of serving individual files
 
@@ -263,7 +275,13 @@ class WebSite(server.Site):
         :param default_type: What content type should a file be served as
         :return: twisted.web.static.File
         """
-        return self.add_resource(route_str, txw_resources.SimpleFile(filepath, defaultType=defaultType))
+        return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
+
+    def add_directory(self, route_str, dirPath: str):
+
+        return self.resource.add_directory(route_str, dirPath)
+
+
 
     def add_resource(self, route_str: str,
                      rsrc: resource.Resource,
