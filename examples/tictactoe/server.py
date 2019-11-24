@@ -3,6 +3,7 @@ from collections import namedtuple
 import typing as T
 import json
 import sys
+from pathlib import Path
 
 from txweb.web_views import WebSite
 from txweb.util.str_request import StrRequest
@@ -99,8 +100,10 @@ that I've just found it easier to over engineer as it cuts down on bugs.
 
 Site = WebSite()
 
-index = Site.add_file("/", "./index.html", defaultType="text/html")
-scriptjs = Site.add_file("/script.js", "./script.js", defaultType="text/javascript")
+static_dir = Path(__file__).parent / "static"
+
+index = Site.add_file("/", static_dir / "index.html", defaultType="text/html")
+scriptjs = Site.add_file("/script.js", static_dir / "script.js", defaultType="text/javascript")
 
 
 
