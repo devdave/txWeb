@@ -28,7 +28,7 @@ class SimpleFile(File):
     def __init__(self, path:T.Union[str, Path], defaultType = "text/plain"):
 
         if False in [Path(path).is_file(), Path(path).exists()]:
-            raise ValueError(f"{self.path} is not a file and or does not exist")
+            raise ValueError(f"{path} is not a file and or does not exist")
 
         File.__init__(self, str(path), defaultType=defaultType)
 

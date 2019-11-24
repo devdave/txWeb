@@ -254,7 +254,7 @@ class WebSite(server.Site):
     def add(self, route_str: str, **kwargs: typing.Dict[str, typing.Any]) -> typing.Callable:
         return self.resource.add(route_str, **kwargs)
 
-    def add_file(self, route_str: str, filepath, defaultType="text/html"):
+    def add_file(self, route_str: str, filepath: str, defaultType="text/html"):
         """
         Just a simple helper for a common task of serving individual files
 
