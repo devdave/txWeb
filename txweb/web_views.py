@@ -220,7 +220,7 @@ class RoutingResource(resource.Resource):
             request.rule = rule
             request.route_args = kwargs
             if "postpath" in kwargs:
-                request.postpath = kwargs['postpath'].encode("utf-8").split(b"/")
+                request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
             return self._endpoints[rule.endpoint]
         else:
             return NoResource()
