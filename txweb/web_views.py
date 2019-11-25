@@ -2,8 +2,10 @@
 from txweb import resources as txw_resources
 from txweb.util.basic import get_thing_name
 from txweb.util.str_request import StrRequest
+from txweb.util.url_converter import DirectoryPath
 from txweb import view_class_assembler as vca
 from txweb.errors import UnrenderableException
+
 
 # twisted imports
 from twisted.python import compat
@@ -63,6 +65,8 @@ class RoutingResource(resource.Resource):
         self._instances = OrderedDict() # type: typing.Dict[str, object]
         self._route_map = wz_routing.Map() # type: wz_routing.Map
         self._error_resource = self.FAILURE_RSRC_CLS if on_error is None else on_error # type: resource.Resource
+
+        self._route_map.converters['directory'] = DirectoryPath
 
     def setErrorResource(self, error_resource: resource.Resource):
         self._error_resource = error_resource
@@ -166,9 +170,9 @@ class RoutingResource(resource.Resource):
     def add_directory(self, route_str, dir_path):
 
         directoryResource = txw_resources.Directory(dir_path)
-        fixed_route = route_str + "<path:path>"
+        fixed_route = route_str + "/<directory:postPath>"
         endpoint = get_thing_name(directoryResource)
-        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"], defaults={"path":"/"})
+        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"], defaults={"postPath":""})
         self._endpoints[endpoint] = directoryResource
         self._route_map.add(newRule)
 
@@ -215,6 +219,8 @@ class RoutingResource(resource.Resource):
         if rule:
             request.rule = rule
             request.route_args = kwargs
+            if "postpath" in kwargs:
+                request.postpath = kwargs['postpath'].encode("utf-8").split(b"/")
             return self._endpoints[rule.endpoint]
         else:
             return NoResource()
