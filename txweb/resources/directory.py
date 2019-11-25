@@ -37,7 +37,7 @@ class Directory(Resource):
     def getChild(self, path:bytes, request: StrRequest):
 
         path = path.decode("utf-8")
-        if path == "/" or path == "":
+        if path in ["/", ""]:
             return self
 
         if path in self.allowedFiles():
