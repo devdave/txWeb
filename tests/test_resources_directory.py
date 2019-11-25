@@ -2,6 +2,8 @@
 from txweb.resources import Directory, SimpleFile
 from txweb.web_views import WebSite
 
+from twisted.web.resource import NoResource
+
 from pathlib import Path
 import typing as T
 from txweb.util.str_request import StrRequest
@@ -41,17 +43,17 @@ def test_sketch_out(static_dir):
 
 def test_hybrid_leaf_and_branch(static_dir):
 
-    request = MockRequest([], "/")
+    request = MockRequest([], b"/")
     request.method = b"GET"
     resource = Directory(static_dir)
 
-    child = resource.getChild("", request)
+    child = resource.getChild(b"", request)
     assert child == resource
 
     request = MockRequest([], "")
     request.method = b"GET"
     resource = Directory(static_dir)
-    child = resource.getChild("LICENSE.txt", request) # type: SimpleFile
+    child = resource.getChild(b"LICENSE.txt", request) # type: SimpleFile
 
 
     assert child.path == str(static_dir / "LICENSE.txt")
@@ -67,6 +69,27 @@ def test_full_suite_with_routed_site_to_added_directory(static_dir):
 
     resource = site.getResourceFor(request)
     assert isinstance(resource, SimpleFile)
+
+def test_full_suite_with_empty_url(static_dir):
+
+    site = WebSite()
+    site.add_directory("/some/path", static_dir)
+
+    request = MockRequest([], "/some/path/")
+
+    resource = site.getResourceFor(request)
+    assert isinstance(resource, Directory)
+
+
+def test_full_suite_with_bad_url(static_dir):
+    site = WebSite()
+    site.add_directory("/some/path", static_dir)
+
+    request = MockRequest([], "/some/path/FOO.bar")
+
+    resource = site.getResourceFor(request)
+
+    assert isinstance(resource, NoResource)
 
 
 
