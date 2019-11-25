@@ -170,9 +170,9 @@ class RoutingResource(resource.Resource):
     def add_directory(self, route_str, dir_path):
 
         directoryResource = txw_resources.Directory(dir_path)
-        fixed_route = route_str + "/<directory:postPath>"
+        fixed_route = route_str + "/<directory:postpath>"
         endpoint = get_thing_name(directoryResource)
-        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"], defaults={"postPath":""})
+        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"])
         self._endpoints[endpoint] = directoryResource
         self._route_map.add(newRule)
 
