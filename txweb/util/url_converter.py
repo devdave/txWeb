@@ -17,4 +17,6 @@ class DirectoryPath(BaseConverter):
         return value.split("/")
 
     def to_url(self, value: T.List[str]):
+        if isinstance(value, str):
+            value = [value]
         return "/".join(value)
