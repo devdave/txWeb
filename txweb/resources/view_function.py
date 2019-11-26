@@ -19,5 +19,3 @@ class ViewFunctionResource(resource.Resource):
 
         return sanitize_render_output(result)
 
-    def getChild(self, child_name, request):
-        return self
