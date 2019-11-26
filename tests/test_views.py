@@ -71,3 +71,17 @@ def test_website__returns_no_resource_if_added_resource_is_not_a_leaf():
     assert isinstance(rsrc, tw_resource.NoResource)
 
 
+def test_website__adds_resource_class():
+
+    test_website = web_views.WebSite()
+
+    test_website.add("/foo")(tw_resource.NoResource)
+
+
+    request = MockRequest([], "/foo")
+    rsrc = test_website.getResourceFor(request)
+
+    assert isinstance(rsrc, tw_resource.NoResource)
+
+
+

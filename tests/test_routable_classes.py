@@ -15,9 +15,9 @@ def test_basic_idea():
     class PersistentObject(object):
 
         def __init__(self):
-            self._site = None
+            self._number = 0
 
-    
+
         @app.expose("/number")
         def respond_number(self, request):
             return 1234
@@ -36,7 +36,13 @@ def test_basic_idea():
 
             return input + 1
 
-    assert len(app.resource._route_map._rules) == 3
+        @app.expose("/counter")
+        def increments_persistant_value(self, request):
+            self._number += 1
+            return self._number
+
+
+    assert len(app.resource._route_map._rules) == 4
 
     number_request = MockRequest([], "/nexus/number")
     number_resource = app.getResourceFor(number_request)
@@ -51,6 +57,12 @@ def test_basic_idea():
     expected = b"6"
     actual = resource.render(add_request)
     assert actual == expected
+
+    incrementer = MockRequest([], "/nexus/counter")
+    assert app.getResourceFor(incrementer).render(incrementer) == 1 #This is a bug because NOT_DONE_YET =='s 1
+    assert app.getResourceFor(incrementer).render(incrementer) == b"2"
+    assert app.getResourceFor(incrementer).render(incrementer) == b"3"
+
 
 
 
