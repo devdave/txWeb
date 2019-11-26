@@ -17,14 +17,7 @@ def test_basic_idea():
         def __init__(self):
             self._site = None
 
-        def needsSite(self, site):
-            self._site = site
-
-        @property
-        def site(self):
-            return self._site
-
-
+    
         @app.expose("/number")
         def respond_number(self, request):
             return 1234
