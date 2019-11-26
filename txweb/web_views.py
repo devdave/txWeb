@@ -24,6 +24,7 @@ import typing as T
 import inspect
 from collections import OrderedDict
 import warnings
+from pathlib import Path
 
 # given
 #    website.add("/<foo:str>/<bar:int")
@@ -166,15 +167,27 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
+    def add_directory(self, route_str: str, dir_path: T.Union[str, Path]):
 
-    def add_directory(self, route_str, dir_path):
+        if route_str.endswith("/") is False:
+            route_str += "/"
 
-        directoryResource = txw_resources.Directory(dir_path)
-        fixed_route = route_str + "/<directory:postpath>"
-        endpoint = get_thing_name(directoryResource)
-        newRule = wz_routing.Rule(fixed_route, endpoint=endpoint, methods=["GET","HEAD"])
-        self._endpoints[endpoint] = directoryResource
-        self._route_map.add(newRule)
+        directory_resource = txw_resources.Directory(dir_path)
+        endpoint = get_thing_name(directory_resource)
+        self._endpoints[endpoint] = directory_resource
+
+        fixed_rule = wz_routing.Rule(route_str,
+                                     endpoint=endpoint,
+                                     methods=["GET", "HEAD"],
+                                     defaults={"postpath":""})
+        instrumented_rule = wz_routing.Rule(route_str + "<directory:postpath>",
+                                            endpoint=endpoint,
+                                            methods=["GET","HEAD"])
+
+        self._route_map.add(fixed_rule)
+        self._route_map.add(instrumented_rule)
+
+        return directory_resource
 
 
 
