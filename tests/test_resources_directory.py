@@ -92,6 +92,10 @@ def test_full_suite_with_bad_url(static_dir):
     assert isinstance(resource, NoResource)
 
 
+def test_simple_security_check_ensure_allowedfiles_is_limited(static_dir):
+
+    resource = Directory(static_dir)
+    assert len(resource.allowedFiles()) == 2
 
 
 # TODO so many more tests needed
