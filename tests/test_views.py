@@ -84,4 +84,24 @@ def test_website__adds_resource_class():
     assert isinstance(rsrc, tw_resource.NoResource)
 
 
+def test_website__able_to_access_routing_rules():
+
+    site = web_views.WebSite()
+
+    @site.add("/foo")
+    def foo_view(request):
+        pass
+
+    @site.add("/bar")
+    def bar_view(request):
+        pass
+
+    rules = list(site.resource.iter_rules())
+
+    assert len(rules) == 2
+    assert rules[0].rule == "/foo"
+
+
+
+
 
