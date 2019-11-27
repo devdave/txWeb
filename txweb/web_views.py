@@ -11,25 +11,9 @@ from txweb.resources import RoutingResource
 from twisted.web import resource
 from twisted.web import server
 from twisted.web.resource import NoResource
-from twisted.web import static
-
-
-
 
 # stdlib
 import typing as T
-import inspect
-from collections import OrderedDict
-import warnings
-from pathlib import Path
-
-
-
-
-
-
-
-
 
 
 class WebSite(server.Site):
