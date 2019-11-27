@@ -63,9 +63,6 @@ class StrRequest(Request):
 
             TODO add a files attribute to StrRequest?
         """
-
-
-
         self.content.seek(0, 0)
 
         self.args = {}
@@ -94,6 +91,13 @@ class StrRequest(Request):
 
             self.content.seek(0, 0)
 
+        # Args are going to userland, switch bytes back to str
+        post_args = self.args
+        self.args = {x.decode("utf-8") if isinstance(x, bytes) else x:
+                         [z.decode("utf8") if isinstance(z, bytes) else z for z in y]
+                     for x, y in post_args.items()
+                     }
+
         self.process()
 
     def _processFormData(self, ctype, clength):
@@ -102,10 +106,7 @@ class StrRequest(Request):
 
         Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
 
-        :param args:
-        :param ctype:
-        :param clength:
-        :return:
+        TODO this can be problematic if a binary file is being uploaded
         """
 
         mfd = b'multipart/form-data'
@@ -118,28 +119,28 @@ class StrRequest(Request):
             try:
                 if _PY37PLUS:
                     cgi_args = cgi.parse_multipart(
-                        self.content, pdict, encoding='utf8',
+                        self.content, pdict,
                         errors="surrogateescape")
                 else:
                     cgi_args = cgi.parse_multipart(self.content, pdict)
 
                 if not _PY37PLUS and _PY3:
-                    # The parse_multipart function on Python 3
-                    # decodes the header bytes as iso-8859-1 and
-                    # returns a str key -- we want bytes so encode
-                    # it back
-                    self.args.update({x.encode('iso-8859-1'): y
-                                      for x, y in cgi_args.items()})
+                    self.args.update(cgi_args)
+                    # self.args.update({x.encode('iso-8859-1'): y
+                    #                   for x, y in cgi_args.items()})
+                    pass
                 elif _PY37PLUS:
+                    self.args.update(cgi_args)
                     # The parse_multipart function on Python 3.7+
                     # decodes the header bytes as iso-8859-1 and
                     # decodes the body bytes as utf8 with
                     # surrogateescape -- we want bytes
-                    self.args.update({
-                        x.encode('iso-8859-1'):
-                            [z.encode('utf8', "surrogateescape")
-                             if isinstance(z, str) else z for z in y]
-                        for x, y in cgi_args.items()})
+                    # self.args.update({
+                    #     x.encode('iso-8859-1'):
+                    #         [z.encode('utf8', "surrogateescape")
+                    #          if isinstance(z, str) else z for z in y]
+                    #     for x, y in cgi_args.items()})
+                    pass
 
                 else:
                     self.args.update(cgi_args)
