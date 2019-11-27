@@ -24,13 +24,18 @@ class Directory(Resource):
 
         self._render_GET = self.render_GET
 
+    def handleGet(self, func):
+        self._render_GET = func
+
+        return func
+
 
     def show_files(self, func):
         self._render_GET = func
         return func
 
     def allowedFiles(self) -> T.List[str]:
-        return [file.name for file in self.path.glob("*") if file.exists() and file.is_file()]
+        return [file for file in self.path.glob("*") if file.exists() and file.is_file()]
 
 
 
@@ -40,7 +45,7 @@ class Directory(Resource):
         if path in ["/", ""]:
             return self
 
-        if path in self.allowedFiles():
+        if path in [f.name for f in self.allowedFiles()]:
             # TODO find mimetype
             return SimpleFile(self.path / path, defaultType="text/blah")
 
@@ -54,6 +59,6 @@ class Directory(Resource):
         else:
             raise ValueError(f"Unable to process {request.method!r}")
 
-
-    def render_GET(request, files):
+    @staticmethod
+    def render_GET(parent, request, files):
         raise NotImplementedError("TODO")

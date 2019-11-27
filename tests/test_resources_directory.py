@@ -97,6 +97,25 @@ def test_simple_security_check_ensure_allowedfiles_is_limited(static_dir):
     resource = Directory(static_dir)
     assert len(resource.allowedFiles()) == 2
 
+def test_render_Get_is_called_correctly(static_dir):
+    import json
+
+    directory = Directory(static_dir)
+    request = MockRequest([],"/")
+    with pytest.raises(NotImplementedError):
+        response = directory.render(request)
+
+    @directory.handleGet
+    def render(parent, request, allowedFiles):
+        response = {}
+        response['count'] = len(allowedFiles)
+        response['names'] = [x.name for x in allowedFiles]
+        return json.dumps(response)
+
+    response = directory.render(request)
+
+
+
 
 # TODO so many more tests needed
 # I already know that getChild is going to break
