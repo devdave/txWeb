@@ -10,15 +10,16 @@ from .helper import ensureBytes, MockRequest
 def test_override_404_resource():
 
     class My404(tw_resource.Resource):
-
-        isLeaf = True
-
-        def render(self, request):
-            return "This is a 404"
+        def render(self):
+            return "There was an error"
 
 
     website = web_views.WebSite()
-    website.setNoResourceCls(My404)
+
+    @website.onError
+    def handle_error(site, exc):
+        return My404()
+
 
     request = MockRequest("/not/real")
     response = website.getResourceFor(request)

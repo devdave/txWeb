@@ -148,7 +148,7 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def add_directory(self, route_str: str, dir_path: T.Union[str, Path]):
+    def add_directory(self, route_str: str, dir_path: T.Union[str, Path]) -> txw_resources.Directory:
 
         if route_str.endswith("/") is False:
             route_str += "/"
@@ -161,6 +161,7 @@ class RoutingResource(resource.Resource):
                                      endpoint=endpoint,
                                      methods=["GET", "HEAD"],
                                      defaults={"postpath":""})
+
         instrumented_rule = wz_routing.Rule(route_str + "<directory:postpath>",
                                             endpoint=endpoint,
                                             methods=["GET","HEAD"])
@@ -217,4 +218,5 @@ class RoutingResource(resource.Resource):
                 request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
             return self._endpoints[rule.endpoint]
         else:
-            return resource.NoResource()
+            from txweb import errors as HTTP_Errors
+            raise HTTP_Errors.HTTP404()
