@@ -61,7 +61,11 @@ class SimpleFile(File):
         except IOError as exc:
             if exc.erno == errno.EACCESS:
                 # TODO Replace with a 500 exception
-                raise RuntimeError(f"Unable to read {self.path!r} due to permission error.")
+                request.setResponseCode(500, f"Unable to read {self.path!r} due to permission error".encode("utf-8"))
+            else:
+                request.setResponseCode(500, f"Unknown error".encode("utf-8"))
+            return ""
+
 
         if request.setLastModified(self.getModificationTime()) is http.CACHED:
             # TODO research

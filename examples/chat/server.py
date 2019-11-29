@@ -11,6 +11,7 @@ from twisted.python.components import registerAdapter
 
 from twisted.web.static import File
 from twisted.web import server
+from twisted.web import http
 from twisted.internet import reactor, defer
 from twisted.web.server import NOT_DONE_YET
 from twisted.python import log
@@ -130,6 +131,18 @@ class MessageBoard(object):
         """
         self.users.pop(username, None)
         self.announce(EventTypes.USER_LEFT, f"{username} has logged out")
+
+    @Site.expose("/ping/<user_name:str>", methods=["POST","GET"])
+    def handle_ping(self, request:server.Request, username):
+        try:
+            session = request.GetSession(IDictSession)
+            if username in session:
+                session.touch()
+        except ValueError:
+            request.setResponseCode(http.SERVICE_UNAVAILABLE)
+            return f"{username} is unknown"
+        else:
+            return f"{username} pinged"
 
 
     @Site.expose("/register", methods=["POST"])
