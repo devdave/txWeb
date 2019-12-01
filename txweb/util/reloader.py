@@ -35,6 +35,11 @@ import os
 import sys
 import time
 
+from logging import getLogger
+
+log = getLogger(__name__)
+
+
 try:
     import thread
 except ImportError:
@@ -118,7 +123,7 @@ def file_changed():
             change_detected = True
 
         if change_detected:
-            print(f"RELOADING - {pathobj} changed")
+            log.debug(f"RELOADING - {pathobj} changed")
             break
 
     return change_detected
@@ -144,7 +149,8 @@ def run_reloader():
 
         new_env = os.environ.copy()
         new_env[SENTINEL_NAME] = "true"
-        print("Running reloader process")
+        log.info("Starting reloader process")
+        # print("Running reloader process")
         exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_env)
         if exit_code != SENTINEL_CODE:
             return exit_code
