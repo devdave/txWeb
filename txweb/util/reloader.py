@@ -50,6 +50,7 @@ except ImportError:
                 print("Alright... so I tried importing thread, that failed, so I tried _thread, that failed too")
                 print("..so then I tried dummy_thread, then _dummy_thread.  All failed")
                 print(", at this point I am out of ideas here")
+                raise RuntimeError("Failed to import threading library")
                 sys.exit(-1)
 
 RUN_RELOADER = True
