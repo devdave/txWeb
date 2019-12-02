@@ -264,5 +264,5 @@ def main():
 
 if __name__ == "__main__":
     from txweb.util.reloader import reloader
-    reloader(main)
+    reloader(main, watch_self=True)
 
