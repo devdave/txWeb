@@ -5,34 +5,26 @@
  * @param data
  * @returns {{addError: (function(*)), addSuccess: (function(*)), go: (function())}}
  */
-function post_ajax(url, data){
+async function post_ajax(url, data){
 
-    var xhr = new XMLHttpRequest(),
-        handler = {
-            addError:function(cb) {
-                xhr.addEventListener("error",evt=>{
-                    cb(evt, xhr);
-                });
-                return handler;
-            }
-            , addSuccess:function(cb) {
-                xhr.addEventListener("load", evt=>{
-                    if(xhr.readyState == xhr.DONE) {
-                        cb(JSON.parse(xhr.responseText))
-                    }
-                });
-                return handler;
-            }
-            , go: function() {
-                xhr.open("POST", url);
-                xhr.setRequestHeader("Content-Type", "application/json");
-                xhr.send(JSON.stringify(data));
-                return handler;
-            }
-        };
+    return new Promise((resolve,reject)=>{
+        var xhr = new XMLHttpRequest();
+        xhr.onerror = function(evt){
+            reject(evt, xhr);
+        }
 
-    return handler;
+        xhr.onload = function(evt) {
+            if(xhr.readyState == xhr.DONE) {
+                resolve(JSON.parse(xhr.responseText));
+            } else {
+                reject(evt, xhr);
+            }
+        }
 
+        xhr.open("POST", url);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify(data));
+    })
 
 }
 
@@ -74,19 +66,26 @@ class WebChat {
         this.sendRegister(this.usernameInput.value);
     }
 
-    sendRegister(username, on_success) {
+    async sendRegister(username, on_success) {
         console.log(`Sending ${username} to server for registration`);
 
-        post_ajax("/messageboard/register", {"type": EventTypes.USER_JOINED,"username":username})
-            .addSuccess(response=>{
-                if(response['result'] == "OK") {
-                    this.startListening();
-                } else{
-                    alert(`Failed to register username\n${response['reason']}`);
-                    console.error(response);
-                    this.getUsername();
-                }
-            }).go()
+        try {
+            let response = await post_ajax(
+                "/messageboard/register",
+                {"type": EventTypes.USER_JOINED,"username":username}
+                )
+            if(response['result'] == "OK") {
+                this.startListening();
+            } else {
+                alert(`Failed to register username\n${response['reason']}`);
+                console.error(response);
+                this.getUsername();
+            }
+        } catch (e) {
+            alert(`Failed to register: ${e}`);
+            console.log(e);
+        }
+
     }
 
     startListening() {
@@ -157,7 +156,7 @@ class WebChat {
         this.sendMessage();
     }
 
-    sendMessage() {
+    async sendMessage() {
         let username = this.usernameInput.value,
             message = this.messageInput.value;
 
@@ -166,31 +165,26 @@ class WebChat {
         }
 
 
-        this.tellServer(EventTypes.USER_SAYS, message);
+        await this.tellServer(EventTypes.USER_SAYS, message);
 
         this.messageInput.value = "";
         this.messageInput.focus();
     }
 
-    tellServer(msg_code, message) {
+    async tellServer(msg_code, message) {
         console.log(`Telling server ${msg_code} ${message}`);
 
-        post_ajax("/messageboard/tell",{"type":msg_code, "message":message})
-            .addError((evt,xhr) => {
-                console.log(evt,xhr);
-            })
-            .addSuccess(response => {
-                console.log(response);
-                //
-                if(response.result == "ERROR") {
-                    this.onError(response);
-                } else {
-                    //Ignore the response and assume everything is good
-                }
-
-
-            })
-            .go();
+        try {
+            let response = await post_ajax("/messageboard/tell",{"type":msg_code, "message":message});
+            console.log(response);
+            if(response.result == "ERROR") {
+                this.onError(response);
+            } else {
+                //Assume everything is good
+            }
+        } catch(e) {
+            console.log(e);
+        }
     }
 
 
@@ -205,5 +199,6 @@ function main() {
     chat.run()
 }
 
-window.addEventListener("load", main);
+
 console.log("Waiting for document load")
+window.addEventListener("load", main);
