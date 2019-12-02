@@ -54,7 +54,7 @@ Site = WebSite()
 
 
 Site.add_file("/", "./index.html")
-Site.add_file("/index.js", "./script.js", default_type="text/javascript")
+Site.add_file("/index.js", "./script.js", defaultType="text/javascript")
 
 class EventTypes(Enum):
     USER_SAYS = 1
