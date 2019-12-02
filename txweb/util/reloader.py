@@ -86,16 +86,16 @@ def build_list(root_dir, watch_self=False):
         so just roll with it.
 
     :param root_dir: pathlib.Path current working dir to search
-    :param watch_self: bool Watch the reloader script for changes, some insane dogfooding going on
+    :param watch_self: bool Watch all of txweb for changes
     :return: None
     """
 
     global _watch_list
 
     if watch_self is True:
-        selfpath = pathlib.Path(__file__)
-        stat = selfpath.stat()
-        _watch_list[selfpath] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+        import txweb
+        build_list(pathlib.Path(txweb.__file__).parent.absolute())
+
 
     for pathobj in root_dir.iterdir():
         if pathobj.is_dir():
