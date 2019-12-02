@@ -22,6 +22,10 @@ class SimpleFile(File):
     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
     https://tools.ietf.org/html/rfc7233#section-4.2
 
+    TODO There is a transient bug I am running into where the last few bytes
+    TODO - of the file is being truncated between server and client.
+    TODO - I feel like this might be part of a memory leak I am still trying to track down.
+
     """
     isLeaf = True # type: T.Union[bool, int]
 
