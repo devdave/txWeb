@@ -4,6 +4,7 @@ from txweb.util.basic import get_thing_name
 from txweb.util.str_request import StrRequest
 from txweb import resources as txw_resources
 from txweb import view_class_assembler as vca
+from txweb import errors as HTTP_Errors
 
 from twisted.web import resource
 from twisted.python import compat
@@ -202,7 +203,7 @@ class RoutingResource(resource.Resource):
 
 
 
-    def getChildWithDefault(self, pathEl, request):
+    def getChildWithDefault(self, pathEl, request: StrRequest):
 
         map = self._build_map(pathEl, request)
 
@@ -211,6 +212,13 @@ class RoutingResource(resource.Resource):
         except wz_routing.NotFound:
             rule = None
 
+        except wz_routing.MethodNotAllowed:
+            # TODO finish error handling
+            print(f"Could not find match for: {request.path!r}")
+            request.setResponseCode(405, b"Method not allowed")
+            raise HTTP_Errors.HTTP405()
+
+
         if rule:
             request.rule = rule
             request.route_args = kwargs
@@ -218,5 +226,4 @@ class RoutingResource(resource.Resource):
                 request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
             return self._endpoints[rule.endpoint]
         else:
-            from txweb import errors as HTTP_Errors
             raise HTTP_Errors.HTTP404()

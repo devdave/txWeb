@@ -44,6 +44,7 @@ class StrRequest(Request):
             raise ValueError(f"Attempting to write to transport {type(data)}-{data!r}"
                              " must be ByteString or Str")
 
+
         return Request.write(self, data)
 
     def setHeader(self, name, value):
