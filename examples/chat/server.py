@@ -132,8 +132,8 @@ class MessageBoard(object):
         self.users.pop(username, None)
         self.announce(EventTypes.USER_LEFT, f"{username} has logged out")
 
-    @Site.expose("/ping/<user_name:str>", methods=["POST","GET"])
-    def handle_ping(self, request:server.Request, username):
+    @Site.expose("/ping/<username>", methods=["POST","GET"])
+    def do_ping(self, request:server.Request, username):
         try:
             session = request.GetSession(IDictSession)
             if username in session:
@@ -146,7 +146,7 @@ class MessageBoard(object):
 
 
     @Site.expose("/register", methods=["POST"])
-    def register(self, request:server.Request):
+    def do_register(self, request:server.Request):
         response = request.json
         try:
             self._set_username(request, response['username'])
@@ -158,7 +158,7 @@ class MessageBoard(object):
 
 
     @Site.expose("/logoff")
-    def logoff(self, request:server.Request):
+    def do_logoff(self, request:server.Request):
         username = self._get_username(request)
 
         self._remove_user(username)
@@ -167,7 +167,7 @@ class MessageBoard(object):
 
 
     @Site.expose("/tell", methods=["POST"])
-    def tell(self, request):
+    def do_tell(self, request):
         response = request.json
         msg_type = EventTypes(response['type'])
         try:
@@ -185,7 +185,7 @@ class MessageBoard(object):
             return json.dumps(dict(result="OK"))
 
     @Site.expose("/listen")
-    def listen(self, request:server.Request):
+    def do_listen(self, request:server.Request):
         """
         Sets up a persistent Server Sent Event connection to the client browser.
 
@@ -263,5 +263,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from txweb.util.reloader import reloader
+    reloader(main)
 
