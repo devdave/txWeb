@@ -13,30 +13,15 @@ from twisted.web import server
 from twisted.web.resource import NoResource
 
 import typing as T
+if T.TYPE_CHECKING:
+    # No executable intended for type hints only
+    import pathlib
 
 
-class WebSite(server.Site):
+class _RoutingSiteConnectors(server.Site):
     """
-        Overloads/overrides the twisted.web.server.Site classes routing logic
-
-            standard logic for /foo/bar/widget/thing is
-                site()->resource == /
-                    ._children[foo resource]._children[bar resource] and etc until reaching widget or thing resource
-
-            New logic
-                callable_name = WerkZeug.map.match(route string) -> str
-                self._view_map[callable](request, *args, **kwargs)
-
+        Purpose: provide hooks to the RoutingResource assigned to self.resource
     """
-
-    def __init__(self):
-
-        server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
-
-        self._errorHandler = self._genericErrorHandler
-
-    def setNoResourceCls(self, no_resource_cls):
-        self.no_resource_cls = no_resource_cls
 
     def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]) -> T.Callable:
         return self.resource.add(route_str, **kwargs)
@@ -52,7 +37,7 @@ class WebSite(server.Site):
         """
         return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
 
-    def add_directory(self, route_str, dirPath: str) -> txw_resources.Directory:
+    def add_directory(self, route_str: str, dirPath: T.Union[str, pathlib.Path]) -> txw_resources.Directory:
 
         return self.resource.add_directory(route_str, dirPath)
 
@@ -65,6 +50,22 @@ class WebSite(server.Site):
 
     def expose(self, route_str, **route_kwargs):
         return vca.expose(route_str, **route_kwargs)
+
+class WebSite(_RoutingSiteConnectors):
+    """
+        Public side of the web_views class collection.
+
+        Purpose: Hook into the resource|getResourceFor
+
+    """
+
+    def __init__(self):
+
+        server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
+        self._errorHandler = self._genericErrorHandler
+
+    def setNoResourceCls(self, no_resource_cls):
+        self.no_resource_cls = no_resource_cls
 
 
     def _getResourceFor(self, request):
