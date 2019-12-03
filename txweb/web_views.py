@@ -1,3 +1,4 @@
+from __future__ import annotations
 # txweb imports
 from txweb import resources as txw_resources
 from txweb.util.str_request import StrRequest
@@ -11,7 +12,6 @@ from twisted.web import resource
 from twisted.web import server
 from twisted.web.resource import NoResource
 
-# stdlib
 import typing as T
 
 
@@ -31,29 +31,9 @@ class WebSite(server.Site):
 
     def __init__(self):
 
-        self.double_slash_warning = True
-        self.jinja2_env = None  # type: jinja2.Environment
-
         server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
 
         self._errorHandler = self._genericErrorHandler
-
-    def setTemplateDir(self, path):
-        import jinja2
-
-        if self.jinja2_env is None:
-            self.jinja2_env = jinja2.Environment(
-                loader=jinja2.FileSystemLoader(path)
-                , autoescape=jinja2.select_autoescape(["html"])
-            )
-        else:
-            raise RuntimeError(f"website.setTemplateDir already set {self.jinja2_env}")
-
-    def render_template(self, template_name, **context):
-        if self.jinja2_env is not None:
-            return self.jinja2_env.get_template(template_name).render(**context)
-        else:
-            raise RuntimeError(f"render_template called without using setTemplateDir first")
 
     def setNoResourceCls(self, no_resource_cls):
         self.no_resource_cls = no_resource_cls
