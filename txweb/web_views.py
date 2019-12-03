@@ -17,13 +17,20 @@ if T.TYPE_CHECKING:
     # No executable intended for type hints only
     import pathlib
 
+ResourceView = T.Type["_ResourceThing"]
 
 class _RoutingSiteConnectors(server.Site):
     """
         Purpose: provide hooks to the RoutingResource assigned to self.resource
     """
 
-    def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]) -> T.Callable:
+    def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]) -> ResourceView:
+        """
+
+        :param route_str: A valid werkzeug routing url
+        :param kwargs: optional keyword arguments for werkzeug routing
+        :return:
+        """
         return self.resource.add(route_str, **kwargs)
 
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> txw_resources.SimpleFile:
@@ -45,11 +52,12 @@ class _RoutingSiteConnectors(server.Site):
 
     def add_resource(self, route_str: str,
                      rsrc: resource.Resource,
-                     **kwargs: T.Dict[str, T.Any]) -> resource.Resource:
+                     **kwargs: T.Dict[str, T.Any]) -> ResourceView:
         return self.resource.add(route_str, **kwargs)(rsrc)
 
-    def expose(self, route_str, **route_kwargs):
+    def expose(self, route_str, **route_kwargs) -> T.Callable:
         return vca.expose(route_str, **route_kwargs)
+
 
 class WebSite(_RoutingSiteConnectors):
     """
