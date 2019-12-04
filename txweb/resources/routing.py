@@ -210,12 +210,13 @@ class RoutingResource(resource.Resource):
         try:
             (rule, kwargs) = map.match(return_rule=True)
         except wz_routing.NotFound:
-            rule = None
+            # TODO remove print
+            print(f"Unable to find match for: {request.path!r}")
+            raise HTTP_Errors.HTTP404()
 
         except wz_routing.MethodNotAllowed:
             # TODO finish error handling
             print(f"Could not find match for: {request.path!r}")
-            request.setResponseCode(405, b"Method not allowed")
             raise HTTP_Errors.HTTP405()
 
 
