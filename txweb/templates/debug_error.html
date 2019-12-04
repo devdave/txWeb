@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HTTP Error: {{code}}</title>
+</head>
+<body>
+    <h1>{{code}} - {{message}}</h1>
+    {% if traceback %}
+
+        <pre><code>
+        {{ traceback }}
+        </code></pre>
+    {% endif %}
+
+
+</body>
+</html>
