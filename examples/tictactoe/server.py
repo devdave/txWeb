@@ -10,54 +10,11 @@ from txweb.util.str_request import StrRequest
 
 from twisted.internet import reactor
 from twisted.python import log
-from twisted.web import server
-from twisted.web.static import File
-from zope.interface import Interface, Attribute, implementer
-from twisted.python.components import registerAdapter
+
 
 from game import Game, MapCellState, Cell
-
-"""
-    The Enums are intended to avoid typo's between client and server 
-    as there are matching constant's on the client side.
-    
-"""
-class ActionTypes(Enum):
-    RESET = "RESET"
-    MOVE = "MOVE"
-
-class ResponseTypes(Enum):
-    OK = "OK"
-    ERROR = "ERROR"
-    WIN = "WIN"
-    STALEMATE = "STALEMATE"
-    RESET = "RESET"
-    MOVE = "MOVE"
-
-    # Details
-    PLAYER = "player"
-    CPU = "cpu"
-    WTF = "WTF"
-
-
-
-class IGameSession(Interface):
-    game = Attribute("A simple list that defaults to len of nine 0's")
-
-@implementer(IGameSession)
-class GameSession(object):
-    """
-        To make testing easier, the GameSession only holds a reference to the actual
-        game logic
-    """
-    def __init__(self, session):
-        self.game = Game()
-
-registerAdapter(GameSession, server.Session, IGameSession)
-
-
-
-
+from response_request_types import ActionTypes, ResponseTypes
+from game_session import IGameSession
 
 
 class RequestArgs(object):
@@ -70,8 +27,6 @@ class RequestArgs(object):
 
     def __repr__(self):
         return f"<RequestArgs command={self.command} detail={self.detail}>"
-
-
 
 
 class ResponseData:
@@ -166,10 +121,12 @@ def handle_do(request: StrRequest) -> bytes:
 
 def main():
     print("Main called, starting reactor")
+    Site.displayTracebacks = True
     log.startLogging(sys.stdout)
     reactor.listenTCP(8123, Site)
     reactor.run()
 
 
 if __name__ == "__main__":
-    main()
+    from txweb.util.reloader import reloader
+    reloader(main, watch_self=True)
