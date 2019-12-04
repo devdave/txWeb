@@ -1,16 +1,28 @@
 from __future__ import annotations
 # txweb imports
+import txweb
 from txweb import resources as txw_resources
 from txweb.util.str_request import StrRequest
 from txweb import view_class_assembler as vca
 from txweb.resources import RoutingResource
 from txweb import errors as HTTP_Errors
 
+#Third party
+############
+import jinja2
 
 # twisted imports
 from twisted.web import resource
+from twisted.python import failure
 from twisted.web import server
 from twisted.web.resource import NoResource
+
+#stdlib
+from logging import getLogger
+import pathlib
+
+
+log = getLogger(__name__)
 
 import typing as T
 if T.TYPE_CHECKING:
@@ -19,12 +31,17 @@ if T.TYPE_CHECKING:
 
 ResourceView = T.Type["_ResourceThing"]
 
+LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
+
 class _RoutingSiteConnectors(server.Site):
     """
         Purpose: provide hooks to the RoutingResource assigned to self.resource
     """
+    resource: RoutingResource
 
-    def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]) -> ResourceView:
+
+
+    def add(self, route_str: str, **kwargs: T.Optional[T.Dict[str, T.Any]]) -> ResourceView:
         """
 
         :param route_str: A valid werkzeug routing url
@@ -59,49 +76,79 @@ class _RoutingSiteConnectors(server.Site):
         return vca.expose(route_str, **route_kwargs)
 
 
-class WebSite(_RoutingSiteConnectors):
+class WebSite(_RoutingSiteConnectors, object):
     """
         Public side of the web_views class collection.
 
         Purpose: Hook into the resource|getResourceFor
 
     """
+    _errorHandler: T.Callable[['Website', StrRequest, failure.Failure], None]
 
     def __init__(self):
+        super(WebSite, self).__init__(RoutingResource(self), requestFactory=StrRequest)
+        self._errorHandler = WebSite.defaultSiteErrorHandler
+        self._lastError = None
 
-        server.Site.__init__(self, RoutingResource(self), requestFactory=StrRequest)
-        self._errorHandler = self._genericErrorHandler
+    def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
-    def setNoResourceCls(self, no_resource_cls):
-        self.no_resource_cls = no_resource_cls
+        self._lastError = reason
+        try:
+            self._errorHandler(self, request, reason)
+        except Exception as exc:
+            #Dear god wtf went wrong?
+            log.exception(f"Exception occurred while handling {reason}")
 
+            if not request.finished:
+                request.setResponseCode(500)
+                request.finish()
 
-    def _getResourceFor(self, request):
-        found_resource = super().getResourceFor(request)
-        if found_resource is None:
-            raise HTTP_Errors.HTTP404()
-        else:
-            return found_resource
-
-
-    def onError(self, func):
-        self._errorHandler = func
 
     @staticmethod
-    def _genericErrorHandler(site, exc):
-        if isinstance(exc, HTTP_Errors.HTTP404):
-            return resource.NoResource()
+    def defaultSiteErrorHandler(site: 'WebSite', request: StrRequest, reason: failure.Failure):
+
+        template_path = (LIBRARY_TEMPLATE_PATH / "debug_error.html")  # type: pathlib.Path
+        assert template_path.exists and template_path.is_file(), f"Unable to find library template: {template_path}"
+        template = jinja2.Template(template_path.read_text())
+
+        traceback = reason.getTraceback() if site.displayTracebacks else None
+
+        if issubclass(reason.type, HTTP_Errors.HTTP3xx):
+            code = reason.value.code
+            message = "HTTP Redirect"
+            buffer = b""
+            request.setHeader("Location", reason.value.redirect)
+        elif traceback is not None and isinstance(reason.type, HTTP_Errors.HTTP405):
+            traceback = None
+        elif issubclass(reason.type, HTTP_Errors.HTTPCode):
+            code = reason.value.code
+            message = reason.value.message if traceback else "Error"
+            buffer = template.render(code=code, message=message, traceback=traceback)
         else:
-            return resource.ErrorPage(brief="Unhandled error", detail=repr(exc), status=500)
+            code = 500
+            message = "Processing aborted"
+            buffer = template.render(code=code, message=message, traceback=traceback)
 
-    def getResourceFor(self, request):
+        request.setHeader(b'content-type', b"text/html")
+        request.setHeader(b'content-length', str(len(buffer)).encode("utf-8"))
+        request.setResponseCode(code)
+        request.write(buffer)
+        request.finish()
 
-        try:
-            return self._getResourceFor(request)
-        except HTTP_Errors.HTTP303:
-            raise RuntimeError("This should have been caught by RoutingResource")
-        except HTTP_Errors.HTTPCode as exc:
-            return self._errorHandler(self, exc)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
