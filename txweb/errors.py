@@ -11,8 +11,7 @@ class HTTP3xx(HTTPCode):
 
 class HTTP303(HTTP3xx):
     def __init__(self, redirect):
-        self.code = 303
-        self.redirect = redirect
+        super(HTTP303, self).__init__(303, redirect)
 
 
 class HTTP4xx(HTTPCode):
@@ -29,6 +28,7 @@ class HTTP405(HTTP4xx):
 
 class HTTP5xx(HTTPCode):
     pass
+
 
 
 class UnrenderableException(HTTP5xx):
