@@ -155,6 +155,10 @@ class StrRequest(Request):
                     # If it's not a userspace error from CGI, reraise
                     raise
 
+
+    def processingFailed(self, reason):
+        self.site.processingFailed(self, reason)
+
     @property
     def json(self):
         if self.getHeader("Content-Type") not in ["application/json", "text/json"]:
