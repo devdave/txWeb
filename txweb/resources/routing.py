@@ -39,9 +39,7 @@ class RoutingResource(resource.Resource):
 
     def __init__(self, site, on_error: T.Optional[resource.Resource] = None):
 
-        # TODO - Type hinting site is kind of a chicken vs egg thing as site is declared afterwards
-
-        resource.Resource.__init__(self) #this basically just ensures that children is added to self
+        resource.Resource.__init__(self)
 
         self.site = site # type: WebSite
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
@@ -197,7 +195,7 @@ class RoutingResource(resource.Resource):
         map_bind_kwargs['url_scheme'] = "https" if request.isSecure() else "http"
         map_bind_kwargs['default_method'] = request.method
 
-        map_bind_kwargs = {k:v.decode("utf-8") for k,v in map_bind_kwargs.items() if isinstance(v, bytes)}
+        map_bind_kwargs = {k: v.decode("utf-8") for k, v in map_bind_kwargs.items() if isinstance(v, bytes)}
 
         return self._route_map.bind(**map_bind_kwargs)
 
