@@ -1,6 +1,7 @@
 
 from txweb.resources import Directory, SimpleFile
 from txweb.web_views import WebSite
+from txweb.errors import HTTP404
 
 from twisted.web.resource import NoResource
 
@@ -87,9 +88,10 @@ def test_full_suite_with_bad_url(static_dir):
 
     request = MockRequest([], "/some/path/FOO.bar")
 
-    resource = site.getResourceFor(request)
+    with pytest.raises(HTTP404):
+        resource = site.getResourceFor(request)
 
-    assert isinstance(resource, NoResource)
+
 
 
 def test_simple_security_check_ensure_allowedfiles_is_limited(static_dir):
