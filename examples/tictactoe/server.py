@@ -43,7 +43,6 @@ class ResponseData:
         return json.dumps(self._asdict())
 
 
-
 """
 The actual webserver logic
 ==========================
