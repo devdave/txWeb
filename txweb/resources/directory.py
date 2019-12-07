@@ -48,6 +48,8 @@ class Directory(Resource):
         if path in [f.name for f in self.allowedFiles()]:
             # TODO find mimetype
             return SimpleFile(self.path / path, defaultType="text/blah")
+        from txweb.errors import HTTP404
+        raise HTTP404()
 
 
     def render(self, request):
