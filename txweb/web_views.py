@@ -99,9 +99,9 @@ class WebSite(_RoutingSiteConnectors, object):
             #Dear god wtf went wrong?
             log.exception(f"Exception occurred while handling {reason}")
 
-            if not request.finished:
-                request.setResponseCode(500)
-                request.finish()
+        if not request.finished:
+            request.setResponseCode(500)
+            request.finish()
 
 
     @staticmethod
