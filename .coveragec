@@ -1,0 +1,4 @@
+[run]
+omit =
+    txweb/tests/*
+    txweb/util/reloader.py
