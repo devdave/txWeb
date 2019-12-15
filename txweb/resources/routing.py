@@ -18,7 +18,6 @@ from collections import OrderedDict
 import typing as T
 import inspect
 import warnings
-from pathlib import Path
 
 # given
 #    website.add("/<foo:str>/<bar:int")
@@ -170,14 +169,12 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def add_directory(self, route_str: str, dir_path: T.Union[str, Path]) -> txw_resources.Directory:
+    def add_directory(self, route_str: str, directory_resource: txw_resources.Directory) -> txw_resources.Directory:
 
-        if route_str.endswith("/") is False:
-            route_str += "/"
+        endpoint = repr(directory_resource)
+        if endpoint not in self._endpoints:
+            self._endpoints[endpoint] = directory_resource
 
-        directory_resource = txw_resources.Directory(dir_path)
-        endpoint = get_thing_name(directory_resource)
-        self._endpoints[endpoint] = directory_resource
 
         fixed_rule = wz_routing.Rule(route_str,
                                      endpoint=endpoint,
@@ -196,8 +193,6 @@ class RoutingResource(resource.Resource):
 
 
     def _build_map(self, pathEl, request):
-
-        from twisted.web.wsgi import _wsgiString
 
         map_bind_kwargs = {}
 
