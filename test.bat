@@ -1,1 +1,1 @@
-pytest --cov txweb --cov-report=html --cov-report=term --cov-report=html --cov-config=.coveragec txweb
+pytest --cov-config=.coveragec --cov=txweb --cov-report=html --cov-report=term txweb/tests
