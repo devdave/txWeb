@@ -11,24 +11,20 @@ class ViewClassResource(resource.Resource):
         self.kls_view = kls_view
         self.instance = instance  # TODO is this needed?
 
-    def getChildWithDefault(self, path, request):
-        if hasattr(self.instance, "prefilter"):
-            return self.instance.pre_filter(request, path, self)
-        else:
-            return self
-
     def render(self, request) -> T.Union[bytes, int]:
         request_kwargs = getattr(request, "_view_args", {})
-        request_method = getattr(request, "method").decode("utf-8").toupper()
+        request_method = getattr(request, "method").decode("utf-8").upper()
 
-        prefilter_result = getattr(self.instance, "prefilter", lambda r, v: None)(request, self)
+        if hasattr(self.instance, "prefilter"):
+            prefilter = getattr(self.instance, "prefilter")
+            prefilter_result = prefilter(request, self)
+        else:
+            prefilter_result = None
 
         # noinspection PyUnusedLocal
         render_target = None
 
-        if isinstance(prefilter_result, resource.Resource):
-            render_target = getattr(prefilter_result, "render")
-        elif hasattr(self.instance, "render"):
+        if hasattr(self.instance, "render"):
             render_target = getattr(self.instance, "render", None)
         else:
             render_target = getattr(self.instance, f"render_{request_method}", None)
