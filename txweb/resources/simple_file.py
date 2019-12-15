@@ -1,4 +1,4 @@
-from txweb.util.str_request import StrRequest
+from txweb.lib.str_request import StrRequest
 
 from twisted.web.static import File, getTypeAndEncoding
 from twisted.web.server import NOT_DONE_YET
@@ -84,3 +84,6 @@ class SimpleFile(File):
     def render_HEAD(self, request:StrRequest):
         self._setContentHeaders(request)
         return b""
+
+    def __repr__(self):
+        return f"<SimpleFile path={self.path!r} />"
