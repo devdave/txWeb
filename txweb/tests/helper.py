@@ -4,7 +4,6 @@ import unittest
 
 from twisted.web.test.test_web import DummyRequest
 
-from txweb.util.str_request import StrRequest
 
 class Helper(unittest.TestCase):
     def runTest(self):

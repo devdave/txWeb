@@ -2,7 +2,7 @@ import json
 import io
 
 from twisted.web.test import requesthelper
-from txweb.util.str_request import StrRequest
+from txweb.lib.str_request import StrRequest
 
 from pathlib import Path
 
