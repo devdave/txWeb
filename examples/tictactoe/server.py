@@ -9,7 +9,7 @@ from twisted.internet import reactor
 from twisted.python import log
 
 
-from game import Game, MapCellState, Cell
+from game import Game, MapCellState
 from response_request_types import ActionTypes, ResponseTypes
 from game_session import IGameSession
 
