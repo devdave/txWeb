@@ -1,6 +1,8 @@
 
 from txweb.lib.str_request import StrRequest
 from txweb.resources import SimpleFile
+from txweb.errors import HTTP404
+
 from twisted.web.resource import Resource
 
 from pathlib import Path
@@ -46,9 +48,9 @@ class Directory(Resource):
             return self
 
         if path in [f.name for f in self.allowedFiles()]:
-            # TODO find mimetype
             return SimpleFile(self.path / path, defaultType="text/blah")
-        from txweb.errors import HTTP404
+
+
         raise HTTP404()
 
 
@@ -64,3 +66,7 @@ class Directory(Resource):
     @staticmethod
     def render_GET(parent, request, files):
         raise NotImplementedError("TODO")
+
+
+    def __repr__(self):
+        return f"<Directory path={self.path!r}/>"
