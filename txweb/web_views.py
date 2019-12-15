@@ -12,10 +12,8 @@ from txweb import errors as HTTP_Errors
 import jinja2
 
 # twisted imports
-from twisted.web import resource
 from twisted.python import failure
 from twisted.web import server
-from twisted.web.resource import NoResource
 
 #stdlib
 from logging import getLogger
@@ -30,6 +28,7 @@ if T.TYPE_CHECKING:
     import pathlib
 
 ResourceView = T.Type["_ResourceThing"]
+ErrorHandler = T.NewType("ErrorHandler", T.Callable[['Website', StrRequest, failure.Failure], None])
 
 LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
 
@@ -38,8 +37,6 @@ class _RoutingSiteConnectors(server.Site):
         Purpose: provide hooks to the RoutingResource assigned to self.resource
     """
     resource: RoutingResource
-
-
 
     def add(self, route_str: str, **kwargs: T.Optional[T.Dict[str, T.Any]]) -> ResourceView:
         """
@@ -62,7 +59,7 @@ class _RoutingSiteConnectors(server.Site):
         return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
 
     def add_directory(self, route_str: str, dirPath: T.Union[str, pathlib.Path]) -> txw_resources.Directory:
-
+        # TODO pull add_directory OUT of RoutingResource
         return self.resource.add_directory(route_str, dirPath)
 
 
@@ -80,14 +77,17 @@ class WebSite(_RoutingSiteConnectors, object):
     """
         Public side of the web_views class collection.
 
-        Purpose: Hook into the resource|getResourceFor
+        Purpose: provide a hook for error handling and maybe a global template system
 
     """
-    _errorHandler: T.Callable[['Website', StrRequest, failure.Failure], None]
+    _errorHandler: ErrorHandler
 
-    def __init__(self):
-        super(WebSite, self).__init__(RoutingResource(self), requestFactory=StrRequest)
-        self._errorHandler = WebSite.defaultSiteErrorHandler
+    def __init__(self, routing_resource=None, request_factory=StrRequest, siteErrorHandler=None):
+        routing_resource = routing_resource or RoutingResource()
+        request_factory = request_factory or StrRequest
+
+        super(WebSite, self).__init__(routing_resource, requestFactory=request_factory)
+        self._errorHandler = siteErrorHandler or WebSite.defaultSiteErrorHandler
         self._lastError = None
 
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
@@ -103,6 +103,9 @@ class WebSite(_RoutingSiteConnectors, object):
             request.setResponseCode(500)
             request.finish()
 
+    def addErrorHandler(self, func: ErrorHandler):
+        self._errorHandler = func
+        return func
 
     @staticmethod
     def defaultSiteErrorHandler(site: 'WebSite', request: StrRequest, reason: failure.Failure):
@@ -116,7 +119,7 @@ class WebSite(_RoutingSiteConnectors, object):
         if issubclass(reason.type, HTTP_Errors.HTTP3xx):
             code = reason.value.code
             message = "HTTP Redirect"
-            buffer = b""
+            buffer = template.render(code=code, message=message, traceback=traceback)
             request.setHeader("Location", reason.value.redirect)
         elif traceback is not None and isinstance(reason.type, HTTP_Errors.HTTP405):
             traceback = None
