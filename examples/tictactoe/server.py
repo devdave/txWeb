@@ -1,12 +1,9 @@
-from enum import Enum
-from collections import namedtuple
-import typing as T
 import json
 import sys
 from pathlib import Path
 
 from txweb.web_views import WebSite
-from txweb.util.str_request import StrRequest
+from txweb.lib.str_request import StrRequest
 
 from twisted.internet import reactor
 from twisted.python import log

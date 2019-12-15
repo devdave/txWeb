@@ -1,5 +1,5 @@
 
-from txweb.util.str_request import StrRequest
+from txweb.lib.str_request import StrRequest
 from txweb.resources import SimpleFile
 from twisted.web.resource import Resource
 

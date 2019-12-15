@@ -15,7 +15,7 @@
 """
 
 
-from twisted.web.server import Request
+from twisted.web.server import Request, NOT_DONE_YET
 # noinspection PyProtectedMember
 from twisted.web.http import _parseHeader
 # noinspection PyProtectedMember
@@ -24,17 +24,18 @@ from twisted.python.compat import _PY3, _PY37PLUS
 import cgi
 import json
 from urllib.parse import parse_qs
-
+import typing as T
 
 class StrRequest(Request):
 
+    NOT_DONE_YET: T.Union[int, bool]  = NOT_DONE_YET
 
     def __init__(self, *args, **kwargs):
 
         Request.__init__(self, *args, **kwargs)
 
 
-    def write(self, data):
+    def write(self, data:T.Union[bytes, str]):
 
         if isinstance(data, str):
             data = data.encode("utf-8")
@@ -44,8 +45,13 @@ class StrRequest(Request):
             raise ValueError(f"Attempting to write to transport {type(data)}-{data!r}"
                              " must be ByteString or Str")
 
-
         return Request.write(self, data)
+
+    def writeJSON(self, data:T.Dict):
+        """
+            Utility to take a dictionary and convert it to a JSON string
+        """
+        return self.write(json.dumps(data))
 
     def setHeader(self, name, value):
         # TODO check if this is redundant
