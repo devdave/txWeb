@@ -14,8 +14,8 @@ index = site.add_file("/", "./index.html")
 def handle_simple_form(request):
     buffer = \
     f"""
-    {request.args[b'word']}<br>
-    {request.args[b'checked']}<br>
+    {request.form.get('word')}<br>
+    {request.form.get('checked')}<br>
     """
     return buffer
 
@@ -26,22 +26,39 @@ def handle_complicated_form(request):
     f"""
     
     <h2>Raw request</h2>
-    <pre>{request.content.read().decode("utf-8")}</pre>
+    <dl>
+        <dt>Content type</dt>
+        <dd>{request.getHeader("content-type")}
+
+        <dt>Content length</dt>
+        <dd>{request.getHeader("content-length")}
+    </dl>
+
+    <textarea cols=80>{request.content.read().decode("utf-8")}</textarea>
+
     <h2>Form results</h2>
-    {request.args.get(b'word')}<br>
-    <br>
-    {request.args.get(b'checked','off')}<br>
-    <br>
-    <pre>
-    {request.args[b'a_file'][0].decode("utf-8")}
-    </pre>
+    <ol>
+        <li>
+            <label>Word</label>&nbsp;<span>{request.form.get('word')!r}</span>
+        </li>
+        <li>
+            <label>Checked</label>&nbsp;<span>{request.args.get('checked','off')!r}</span>
+        </li>
+        <li><label>a_file</label><br>
+            <textarea cols=80 rows=-1>
+            {request.files['a_file'].stream.read().decode("utf-8")}
+            </textarea>
+        </li>   
+    </ol>
     """
+
     return buffer
 
 
 
 def main():
     log.startLogging(sys.stdout)
+    site.displayTracebacks = True
     reactor.listenTCP(8345, site)
     reactor.run()
 
