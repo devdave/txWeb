@@ -2,6 +2,7 @@ import json
 import io
 
 from twisted.web.test import requesthelper
+from twisted.python.compat import intToBytes
 from txweb.lib.str_request import StrRequest
 
 from pathlib import Path
@@ -31,23 +32,24 @@ def test_request_processes_get_args():
 
 def test_request_processes_a_simple_form():
 
-    test = b"word=test&checked=on"
+    test = b"word=test&checked=on&word=test2"
 
     dummy = requesthelper.DummyChannel()
     r = StrRequest(dummy)
     r.content = io.BytesIO(test)
     r.requestHeaders.setRawHeaders(b"Content-Type", [b"application/x-www-form-urlencoded"])
-    r.requestHeaders.setRawHeaders(b"Content-Length", [b"20"])
+    r.requestHeaders.setRawHeaders(b"Content-Length", [b"31"])
 
     r.requestReceived(b"POST", b"/foo", b"HTTP/1.1")
-    assert "word" in r.args
-    assert "checked" in r.args
+    assert "word" in r.form
+    assert r.form['word'] == "test"
+    assert "checked" in r.form
+    assert r.form["checked"] == "on"
 
 def test_request_processes_a_multipart_form():
 
     test = \
-b"""
------------------------------8693289853609
+b"""-----------------------------8693289853609
 Content-Disposition: form-data; name="word"
 
 test
@@ -81,8 +83,9 @@ THE SOFTWARE.
     r = StrRequest(dummy)
     r.content = io.BytesIO(test)
     r.requestHeaders.setRawHeaders("Content-Type", [b"multipart/form-data; boundary=---------------------------8693289853609"])
-    r.requestHeaders.setRawHeaders("Content-Length", [b"2589"])
+    r.requestHeaders.setRawHeaders("Content-Length", [intToBytes(len(test))])
 
     r.requestReceived(b"POST", b"/foo", b"HTTP/1.1")
-    assert "a_file" in r.args
-    r.args['a_file'][0] == (Path(__file__).parent / "fixture" / "static" / "LICENSE.txt").read_bytes()
+    assert "a_file" in r.files
+    assert r.form["a_file"] is None
+    r.files['a_file'].stream.read() == (Path(__file__).parent / "fixture" / "static" / "LICENSE.txt").read_bytes()
