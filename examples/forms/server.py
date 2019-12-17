@@ -10,6 +10,14 @@ site = WebSite()
 
 index = site.add_file("/", "./index.html")
 
+@site.add("/get_form", methods=["GET"])
+def handle_get_args(request):
+    return f"""
+    {request.args.get('word')!r}<br>
+    {request.args.get('number')!r}<br>
+    {request.args.get('checked', False, type=bool)!r}<br>
+    """
+
 @site.add("/simple", methods=["POST"])
 def handle_simple_form(request):
     buffer = \

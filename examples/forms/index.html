@@ -5,6 +5,15 @@
     <title>Forms example</title>
 </head>
 <body>
+<h2>Get Query args</h2>
+<form action="/get_form" method="get">
+    <label>A Word</label><input type="text" name="word"><br>
+    <label>A number</label><input type="number" name="number"><br>
+    <label>A checkbox</label><input type="checkbox" name="checked" value="1"><br>
+    <input type="submit">
+</form>
+
+<h2>Simple form</h2>
 <form action="/simple" method="post">
     <label>A Word</label><input type="text" name="word"><br>
     <label>A checkbox</label><input type="checkbox" name="checked"><br>

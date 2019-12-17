@@ -123,11 +123,18 @@ class StrRequest(Request):
             self.content.seek(0, 0)
 
         # Args are going to userland, switch bytes back to str
-        post_args = self.args
-        self.args = {x.decode("utf-8") if isinstance(x, bytes) else x:
-                         [z.decode("utf8") if isinstance(z, bytes) else z for z in y]
-                     for x, y in post_args.items()
-                     }
+        query_args = self.args.copy()
+
+        def query_iter(arguments):
+            for key, values in arguments.items():
+                key = key.decode("utf-8") if isinstance(key, bytes) else key
+                for val in values:
+                    val = val.decode("utf-8") if isinstance(val, bytes) else val
+                    yield (key, val,)
+
+        self.args = MultiDict(list(query_iter(query_args)))
+
+
 
         self.process()
 
