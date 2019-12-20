@@ -86,4 +86,4 @@ class SimpleFile(File):
         return b""
 
     def __repr__(self):
-        return f"<SimpleFile path={self.path!r} />"
+        return f"<{self.__class__.__name__} at {id(self)!r} path={self.path!r}/>"

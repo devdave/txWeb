@@ -40,3 +40,8 @@ class ViewClassResource(resource.Resource):
             assert post_result is not None, f"post_filter for {self.kls_view} must not return None"
 
         return sanitize_render_output(result)
+
+
+    def __repr__(self):
+        instance_repr = f"<{self.instance.__class__.__name__} {self.instance!r}/>"
+        return f"<{self.__class__.__name__} at {id(self)!r} instance={instance_repr}/>"

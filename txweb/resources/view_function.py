@@ -19,3 +19,6 @@ class ViewFunctionResource(resource.Resource):
 
         return sanitize_render_output(result)
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {id(self)!r} func={self.func!r}/>"
+

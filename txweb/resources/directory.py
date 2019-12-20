@@ -69,4 +69,5 @@ class Directory(Resource):
 
 
     def __repr__(self):
-        return f"<Directory path={self.path!r}/>"
+        return f"<{self.__class__.__name__} at {id(self)!r} path={self.path!r}/>"
+
