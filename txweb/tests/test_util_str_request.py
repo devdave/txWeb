@@ -27,8 +27,8 @@ def test_request_processes_get_args():
 
     assert "hello" in r.args
     assert "number" in r.args
-    assert r.args["hello"][0] == "world"
-    assert r.args["number"][0] == "123"
+    assert r.args["hello"] == "world"
+    assert r.args["number"] == "123"
 
 def test_request_processes_a_simple_form():
 
@@ -87,5 +87,20 @@ THE SOFTWARE.
 
     r.requestReceived(b"POST", b"/foo", b"HTTP/1.1")
     assert "a_file" in r.files
-    assert r.form["a_file"] is None
     r.files['a_file'].stream.read() == (Path(__file__).parent / "fixture" / "static" / "LICENSE.txt").read_bytes()
+
+
+def test_query_args():
+    test = b"/foo?word=abc&num=123&word=def"
+    dummy = requesthelper.DummyChannel()
+    r = StrRequest(dummy)
+    r.content = io.BytesIO(b"")
+    r.requestHeaders.setRawHeaders("Content-Length", [b"0"])
+
+    r.requestReceived(b"GET", test, b"HTTP/1.1")
+
+    assert r.args.get("num", type=int) == 123
+
+    assert r.args.get('word') == "abc"
+    assert r.args.getlist("word") == ["abc", "def"]
+
