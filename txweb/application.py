@@ -55,6 +55,48 @@ class _ApplicationRoutingHelperMixin(object):
         # TODO make route_str optional somehow
         return expose_method(route_str, **kwargs)
 
+class _ApplicationErrorHandlingMixin(object):
+
+    def __init__(self, enable_debug: bool =False, **kwargs):
+        """
+
+        """
+        self.error_handlers = {}
+        self.enable_debug = enable_debug
+
+        self.site.addErrorHandler(self.processingFailed)
+
+
+    def default_error_handler(self, request: StrRequest, reason: failure.Failure)->bool:
+        # Check if this is a HTTPCode error
+        if isinstance(HTTPCode, reason.type) or issubclass(reason.type, HTTPCode):
+            exc = reason.value  # type: HTTPCode
+            request.setResponseCode(exc.code, exc.message)
+        else:
+            request.setResponseCode(500, b"General error")
+
+        if self.enable_debug is True and request.method.lower() != b"head":
+            #TODO return error resource
+            pass
+        else:
+            pass
+
+        request.write(f"Something bad happened with {reason!r}".encode("utf-8"))
+        request.finish()
+        return
+
+    def handle_error(self, error_type: T.Union[HTTPCode, int, Exception]) -> T.Callable:
+
+        def processor(func: ErrorHandler) -> ErrorHandler:
+            if error_type in self.error_handlers:
+                old_func = self.error_handlers[error_type]
+                raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {func}")
+
+            self.error_handlers[error_type] = func
+            return func
+
+        return processor
+
 
 class Application(_ApplicationRoutingHelperMixin):
     """
