@@ -25,8 +25,8 @@ class _ApplicationRoutingHelperMixin(object):
         Proxies to RoutingResource to facilitate easier debugging
     """
 
-    def add(self, route_str, **kwargs) -> CallableToResourceDecorator:
-        self.router.add(route_str, **kwargs)
+    def add(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+        return self.router.add(route_str, **kwargs)
 
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> SimpleFile:
         """
