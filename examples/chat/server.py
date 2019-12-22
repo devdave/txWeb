@@ -5,6 +5,7 @@ import json
 import typing as T
 
 from txweb.web_views import WebSite, StrRequest
+from txweb import Application
 
 from zope.interface import Interface, Attribute, implementer
 from twisted.python.components import registerAdapter
@@ -49,12 +50,13 @@ class DictSession(object):
 registerAdapter(DictSession, server.Session, IDictSession)
 
 
-Site = WebSite()
+# Site = WebSite()
+app = Application(__name__)
 #TODO Allow these to become class vars
 
 
-Site.add_file("/", "./index.html")
-Site.add_file("/index.js", "./script.js", defaultType="text/javascript")
+app.add_file("/", "./index.html")
+app.add_file("/index.js", "./script.js", defaultType="text/javascript")
 
 class EventTypes(Enum):
     USER_SAYS = 1
@@ -62,7 +64,7 @@ class EventTypes(Enum):
     USER_LEFT = 3
     CONNECTION_CLOSED = 4
 
-@Site.add("/messageboard")
+@app.add("/messageboard")
 class MessageBoard(object):
     """
     Provides a web message board via the connections: register, logoff, tell, and listen
@@ -132,7 +134,7 @@ class MessageBoard(object):
         self.users.pop(username, None)
         self.announce(EventTypes.USER_LEFT, f"{username} has logged out")
 
-    @Site.expose("/ping/<username>", methods=["POST","GET"])
+    @app.expose("/ping/<username>", methods=["POST","GET"])
     def do_ping(self, request:server.Request, username):
         try:
             session = request.GetSession(IDictSession)
@@ -145,7 +147,7 @@ class MessageBoard(object):
             return f"{username} pinged"
 
 
-    @Site.expose("/register", methods=["POST"])
+    @app.expose("/register", methods=["POST"])
     def do_register(self, request:server.Request):
         response = request.json
         try:
@@ -157,7 +159,7 @@ class MessageBoard(object):
         return json.dumps(dict(result="OK",username=repr(username)))
 
 
-    @Site.expose("/logoff")
+    @app.expose("/logoff")
     def do_logoff(self, request:server.Request):
         username = self._get_username(request)
 
@@ -166,7 +168,7 @@ class MessageBoard(object):
         return json.dumps(dict(result="OK", username=repr(username)))
 
 
-    @Site.expose("/tell", methods=["POST"])
+    @app.expose("/tell", methods=["POST"])
     def do_tell(self, request):
         response = request.json
         msg_type = EventTypes(response['type'])
@@ -184,7 +186,7 @@ class MessageBoard(object):
 
             return json.dumps(dict(result="OK"))
 
-    @Site.expose("/listen")
+    @app.expose("/listen")
     def do_listen(self, request:server.Request):
         """
         Sets up a persistent Server Sent Event connection to the client browser.
@@ -258,7 +260,9 @@ class MessageBoard(object):
 def main():
     print("Main called, starting reactor")
     log.startLogging(sys.stdout)
-    reactor.listenTCP(8123, Site)
+    app.reactor = reactor
+    app.listenTCP(8123)
+    # reactor.listenTCP(8123, Site)
     reactor.run()
 
 
