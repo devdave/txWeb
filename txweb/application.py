@@ -51,9 +51,9 @@ class _ApplicationRoutingHelperMixin(object):
 
         return directory_resource
 
-    def expose(self, route_str, **kwargs ):
+    def expose(self, route_str, **kwargs):
         # TODO make route_str optional somehow
-        return expose_method(route_str, kwargs)
+        return expose_method(route_str, **kwargs)
 
 
 class Application(_ApplicationRoutingHelperMixin):
