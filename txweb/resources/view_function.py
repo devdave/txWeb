@@ -11,6 +11,10 @@ class ViewFunctionResource(resource.Resource):
     def __init__(self, func: T.Callable):
         self.func = func
 
+    @classmethod
+    def Wrap(cls, func):
+        return cls(func)
+
     def render(self, request) -> T.Union[int, T.ByteString]:
 
         request_view_kwargs = getattr(request, "route_args", {})
