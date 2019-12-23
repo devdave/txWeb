@@ -1,10 +1,10 @@
+from __future__ import annotations
 from .log import getLogger
 log = getLogger(__name__)
 
 from pathlib import Path
 import typing as T
 
-from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet.tcp import Port
 from twisted.internet import reactor # type: PosixReactorBase
 log.debug(f"Loaded reactor: {reactor!r}")
@@ -13,10 +13,18 @@ from .resources import RoutingResource, SimpleFile, Directory
 from .lib import StrRequest, expose_method
 from .web_views import WebSite
 
-ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
 
-WebCallable = T.NewType("WebCallable", T.Callable[[StrRequest, ArbitraryListArg], T.Union[str, bytes]])
-CallableToResourceDecorator = T.NewType("CallableToResourceDecorator", T.Callable[[WebCallable], WebCallable])
+if T.TYPE_CHECKING:
+    from twisted.python import failure
+    from twisted.internet.posixbase import PosixReactorBase
+
+    ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
+    ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
+
+    WebCallable = T.NewType("WebCallable", T.Callable[[StrRequest, ArbitraryListArg], T.Union[str, bytes]])
+    CallableToResourceDecorator = T.NewType("CallableToResourceDecorator", T.Callable[[WebCallable], WebCallable])
+
+    ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], bool])
 
 class _ApplicationRoutingHelperMixin(object):
     """
