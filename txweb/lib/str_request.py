@@ -30,7 +30,6 @@ import json
 from urllib.parse import parse_qs
 import typing as T
 
-if T.TYPE_CHECKING:
 from ..log import getLogger
 
 log = getLogger(__name__)

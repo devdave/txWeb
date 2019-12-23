@@ -7,7 +7,7 @@ from txweb.lib.str_request import StrRequest
 
 from pathlib import Path
 
-
+import pytest
 
 def test_request_has_json_property():
 
@@ -104,3 +104,22 @@ def test_query_args():
     assert r.args.get('word') == "abc"
     assert r.args.getlist("word") == ["abc", "def"]
 
+
+def test_write_handles_str_to_bytes(dummy_request):
+
+    dummy_request.request.finished = 0
+
+    dummy_request.request.write("Hello world")
+
+    with pytest.raises(ValueError):
+        dummy_request.request.write([1,2,3])
+
+
+def test_writes_json(dummy_request):
+
+    dummy_request.request.writeJSON(dict(number=123, word="bar"))
+
+
+def test_writes_str_headers(dummy_request):
+
+    dummy_request.request.setHeader("x-thing", "123")
