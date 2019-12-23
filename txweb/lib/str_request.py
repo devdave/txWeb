@@ -31,7 +31,12 @@ from urllib.parse import parse_qs
 import typing as T
 
 if T.TYPE_CHECKING:
+from ..log import getLogger
+
+log = getLogger(__name__)
+if T.TYPE_CHECKING: # pragma: no cover
     from werkzeug import FileStorage
+
 
 class StrRequest(Request):
 
