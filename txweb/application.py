@@ -12,6 +12,7 @@ log.debug(f"Loaded reactor: {reactor!r}")
 from .resources import RoutingResource, SimpleFile, Directory
 from .lib import StrRequest, expose_method
 from .web_views import WebSite
+from .errors import HTTPCode
 
 
 if T.TYPE_CHECKING:
@@ -116,7 +117,27 @@ class _ApplicationErrorHandlingMixin(object):
         return processor
 
 
-class Application(_ApplicationRoutingHelperMixin):
+    def processingFailed(self, request:StrRequest, reason: failure.Failure):
+
+
+        if reason.type in self.error_handlers:
+            return self.error_handlers[reason.type](request, reason)
+        elif isinstance(reason.value, HTTPCode) and reason.value.code in self.error_handlers:
+            return self.error_handlers[reason.value.code](request, reason)
+        else:
+            self.default_error_handler(request, reason)
+
+        if request.finished != True:
+            request.finish()
+
+        return True
+
+
+
+
+
+
+class Application(_ApplicationRoutingHelperMixin, _ApplicationErrorHandlingMixin):
     """
         Similar to Klein and its influence Flask, the goal is to consolidate
         technical debt into one God module antipattern class.
@@ -156,6 +177,20 @@ class Application(_ApplicationRoutingHelperMixin):
         self._before_render_handlers = []
         self._after_render_handlers = []
 
+
+    @staticmethod
+    def request_factory_partial(app:'Application', request_kls:StrRequest):
+
+        def partial(*args, **kwargs):
+            request = request_kls(*args, **kwargs)
+            request.add_before_render(app._call_before_render)
+            request.add_after_render(app._call_after_render)
+            request.site = app.site
+            return request
+
+        return partial
+
+
     def __call__(self, namespace):
         self.name = namespace
 
@@ -171,9 +206,35 @@ class Application(_ApplicationRoutingHelperMixin):
     def reactor(self) -> PosixReactorBase:
         return self._reactor
 
+    @reactor.setter
+    def reactor(self, reactor: PosixReactorBase):
+        self._reactor = reactor
+
     def listenTCP(self, port, interface= "127.0.0.1") -> Port:
          self._listening_port = self.reactor.listenTCP(port, self.site, interface=interface)
          return self._listening_port
+
+    def before_render(self, func: T.Callable[[StrRequest], None]):
+        self._before_render_handlers.append(func)
+        return func
+
+    def after_render(self, func: T.Callable[[StrRequest], None]):
+        self._after_render_handlers.append(func)
+        return func
+
+    def _call_before_render(self, request: StrRequest):
+        for func in self._before_render_handlers:
+            try:
+                func(request)
+            except Exception:
+                log.exception(f"Before render failed {func}")
+
+    def _call_after_render(self, request: StrRequest, body:T.Union[bytes,str,int]):
+        for func in self._after_render_handlers:
+            try:
+                func(request)
+            except Exception:
+                log.exception(f"After render failed {func}")
 
 
 
