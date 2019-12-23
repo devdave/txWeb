@@ -33,6 +33,7 @@ import typing as T
 from ..log import getLogger
 
 log = getLogger(__name__)
+
 if T.TYPE_CHECKING: # pragma: no cover
     from werkzeug import FileStorage
 
@@ -56,6 +57,7 @@ class StrRequest(Request):
     def add_before_render(self, func):
         self._call_before_render = func
         return func
+
 
     def add_after_render(self, func):
         self._call_after_render = func
@@ -137,8 +139,6 @@ class StrRequest(Request):
                     yield (key, val,)
 
         self.args = MultiDict(list(query_iter(query_args)))
-
-
 
         self.process()
 
