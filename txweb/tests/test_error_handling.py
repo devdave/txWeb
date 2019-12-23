@@ -1,8 +1,57 @@
 from twisted.web import resource as tw_resource
+from twisted.web.test import requesthelper
 
 import pytest
+from collections import namedtuple
 
-from txweb import web_views
-from .helper import ensureBytes, MockRequest
+from unittest.mock import MagicMock
+from txweb import Application
+from .helper import ensureBytes, MockRequest, RequestRetval
+from ..lib import StrRequest
+
+import typing as T
+from io import BytesIO
+
+
+
+
+def test_basic_idea(dummy_request:RequestRetval):
+    app = Application(namespace=__name__)
+
+    dummy_request.channel.site = app.site
+    dummy_request.request.channel = dummy_request.channel
+
+
+    handle404 = MagicMock(return_value=3)
+
+    app.handle_error(404)(handle404)
+
+    dummy_request.channel.site = app.site
+    dummy_request.request.content = BytesIO()
+    dummy_request.request.channel = dummy_request.channel
+
+    dummy_request.request.requestReceived(b"GET", b"/favicon.ico", b"HTTP1/1")
+
+    handle404.assert_called_once()
+
+def test_naturally_handle_404(dummy_request:RequestRetval):
+
+    app = Application()
+
+    request = dummy_request.request
+    dummy_request.channel.site = app.site
+    request.channel = dummy_request.channel
+
+    request.requestReceived(b"GET", b"/favicon.ico", b"HTTP1/1")
+    assert request.finished in [True, 1]
+    assert request.code == 404
+    assert request.code_message == b"Resource not found"
+    assert request is not None
+
+
+
+
+
+
 
 

@@ -88,6 +88,7 @@ def test_full_suite_with_bad_url(static_dir):
 
     request = MockRequest([], "/some/path/FOO.bar")
 
+    assert test_app.site._lastError is None
     with pytest.raises(HTTP404):
         resource = test_app.site.getResourceFor(request)
 

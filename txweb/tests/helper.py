@@ -1,15 +1,27 @@
 
 
 import unittest
+import typing as T
+from unittest.mock import MagicMock
+
+import pytest
+
+from txweb.lib.str_request import StrRequest
 
 from twisted.web.test.test_web import DummyRequest
-
+from twisted.web.test import requesthelper
 
 class Helper(unittest.TestCase):
     def runTest(self):
         pass
 
 helper = Helper()
+
+
+class RequestRetval(T.NamedTuple):
+    request: StrRequest
+    channel: requesthelper.DummyChannel
+
 
 
 
