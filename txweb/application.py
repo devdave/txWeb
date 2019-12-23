@@ -26,6 +26,16 @@ if T.TYPE_CHECKING:
 
     ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], bool])
 
+
+
+class _ApplicationTemplateSupportMixin(object):
+    def __init__(self):
+        self.template_base = None
+
+    def set_basedir(self, base_path:T.Union[Path, str]):
+        self.template_base = base_path
+
+
 class _ApplicationRoutingHelperMixin(object):
     """
         Assumes self.router provides a RoutingResource reference/object
