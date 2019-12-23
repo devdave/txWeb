@@ -7,6 +7,7 @@ from txweb.lib import view_class_assembler as vca
 from txweb.resources import RoutingResource
 from txweb import errors as HTTP_Errors
 
+
 #Third party
 ############
 import jinja2
@@ -18,6 +19,7 @@ from twisted.web import server
 #stdlib
 from logging import getLogger
 import pathlib
+import copy
 
 
 log = getLogger(__name__)
@@ -90,25 +92,26 @@ class WebSite(_RoutingSiteConnectors, object):
         self._errorHandler = siteErrorHandler or WebSite.defaultSiteErrorHandler
         self._lastError = None
 
+        self._before_request_render = None
+        self._after_request_render = None
+
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
         self._lastError = reason
         try:
-            self._errorHandler(self, request, reason)
+            self._errorHandler(request, reason)
         except Exception as exc:
             #Dear god wtf went wrong?
             log.exception(f"Exception occurred while handling {reason}")
-
-        if not request.finished:
-            request.setResponseCode(500)
-            request.finish()
 
     def addErrorHandler(self, func: ErrorHandler):
         self._errorHandler = func
         return func
 
     @staticmethod
-    def defaultSiteErrorHandler(site: 'WebSite', request: StrRequest, reason: failure.Failure):
+    def defaultSiteErrorHandler(request: StrRequest, reason: failure.Failure):
+
+        site = request.site
 
         template_path = (LIBRARY_TEMPLATE_PATH / "debug_error.html")  # type: pathlib.Path
         assert template_path.exists and template_path.is_file(), f"Unable to find library template: {template_path}"
@@ -137,6 +140,32 @@ class WebSite(_RoutingSiteConnectors, object):
         request.setResponseCode(code)
         request.write(buffer)
         request.finish()
+
+    def call_before_request_render(self, func):
+        self._before_request_render = func
+        return func
+
+    def after_resource_fetch(self, func):
+        self._after_request_render = func
+        return func
+
+    def getResourceFor(self, request: StrRequest):
+        """
+        This is probably the least convoluted way to manipulate the
+        current http request.
+        """
+
+        if self._before_request_render is not None:
+            request.add_before_render(self._before_request_render)
+
+        if self._after_request_render is not None:
+            request.add_after_render(self._after_request_render)
+
+        return server.Site.getResourceFor(self, request)
+
+
+
+
 
 
 
