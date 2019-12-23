@@ -161,7 +161,12 @@ class StrRequest(Request):
         @see: L{IResource.render()<twisted.web.resource.IResource.render()>}
         """
         try:
+            if self._call_before_render is not None:
+                self._call_before_render(self)
             body = resrc.render(self)
+            if self._call_after_render is not None:
+                self._call_after_render(self, body)
+
         except UnsupportedMethod as e:
             allowedMethods = e.allowedMethods
             if (self.method == b"HEAD") and (b"GET" in allowedMethods):
