@@ -118,24 +118,43 @@ class _ApplicationErrorHandlingMixin(object):
 
 class Application(_ApplicationRoutingHelperMixin):
     """
-        Similar to Klein and its influecer Flask, the goal is to consolidate
+        Similar to Klein and its influence Flask, the goal is to consolidate
         technical debt into one God module antipattern class.
 
         Purposes:
             Provides a public API to Site, HTTPErrors, RoutingResource, and additional helpers.
     """
 
-    def __init__(self, twisted_reactor: PosixReactorBase = None, namespace=None):
+    def __init__(self,
+                 twisted_reactor: PosixReactorBase = None,
+                 namespace:str=None,
+                 request_factory:StrRequest=StrRequest,
+                 enable_debug:bool=False                 ):
         """
         @param twisted_reactor: Intended for debugging purposes
+        @param namespace: placeholder intended for debugging
+        @param request_factory: Used by Website(twisted.web.server.Site), for debugging purposes
+        @param debug: Placeholder to enable extended debugging
         """
         self._router = RoutingResource()
-        self._site = WebSite(self._router)
+        self._site = WebSite(self._router, request_factory=Application.request_factory_partial)
         self._router.site = self._site
-        self._reactor = twisted_reactor or reactor  # type: PosixReactorBase
+        self._reactor = twisted_reactor or None  # type: PosixReactorBase
 
         self.name = namespace
         self._listening_port = None
+
+        _ApplicationRoutingHelperMixin.__init__(self)
+        # _ApplicationTemplateSupportMixin.__init__(self)
+        _ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
+
+
+
+
+
+        #Hooks
+        self._before_render_handlers = []
+        self._after_render_handlers = []
 
     def __call__(self, namespace):
         self.name = namespace
