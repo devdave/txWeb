@@ -42,6 +42,6 @@ class ViewClassResource(resource.Resource):
         return sanitize_render_output(result)
 
 
-    def __repr__(self):
+    def __repr__(self): # pragma: no cover
         instance_repr = f"<{self.instance.__class__.__name__} {self.instance!r}/>"
         return f"<{self.__class__.__name__} at {id(self)!r} instance={instance_repr}/>"
