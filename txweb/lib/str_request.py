@@ -24,6 +24,7 @@ from twisted.web.http import _parseHeader
 from twisted.python.compat import _PY3, _PY37PLUS, nativeString, escape, intToBytes
 
 from werkzeug.formparser import FormDataParser
+from werkzeug import MultiDict
 
 import cgi
 import json
