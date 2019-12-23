@@ -92,6 +92,12 @@ class StrRequest(Request):
 
         return Request.setHeader(self, name, value)
 
+    def setResponseCode(self, code:int=500, message:T.Optional[T.Union[str,bytes]]=b"Failure processing request"):
+        if message and not isinstance(message,bytes):
+            message = message.encode("utf-8")
+
+        return Request.setResponseCode(self, code, message)
+
     def requestReceived(self, command, path, version):
         """
             Looks for POST'd arguments in form format (eg multipart).
