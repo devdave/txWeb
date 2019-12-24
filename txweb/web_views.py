@@ -98,11 +98,13 @@ class WebSite(_RoutingSiteConnectors, object):
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
         self._lastError = reason
+        log.debug(f"Handling exception: {reason!r}")
+
         try:
             self._errorHandler(request, reason)
         except Exception as exc:
             #Dear god wtf went wrong?
-            log.exception(f"Exception occurred while handling {reason}")
+            log.exception(f"Exception occurred while handling {reason!r}")
 
     def addErrorHandler(self, func: ErrorHandler):
         self._errorHandler = func
