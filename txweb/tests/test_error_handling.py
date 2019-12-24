@@ -11,6 +11,7 @@ from ..lib import StrRequest
 
 import typing as T
 from io import BytesIO
+import logging
 
 
 
@@ -49,6 +50,24 @@ def test_naturally_handle_404(dummy_request:RequestRetval):
     assert request is not None
 
 
+def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog):
+
+    app = Application(__name__)
+
+    dummy_request.channel.site = app.site
+
+    @app.add("/foo")
+    def handle_foo(request):
+        raise RuntimeError("Where is this caught?")
+
+    with caplog.at_level(logging.DEBUG):
+        dummy_request.request.requestReceived(B"GET", b"/foo", b"HTTTP 1/1")
+
+    assert dummy_request.request.code == 500
+
+    # This isn't a really fair assertion because content could already be written
+    assert len(dummy_request.request.content.read()) == 0
+    debug = 1
 
 
 
