@@ -92,7 +92,8 @@ class _ApplicationErrorHandlingMixin(object):
             exc = reason.value  # type: HTTPCode
             request.setResponseCode(exc.code, exc.message)
         else:
-            request.setResponseCode(500, b"General error")
+            request.setResponseCode(500, b"Internal server error")
+            log.debug(f"None HTTPCode error was caught: {reason.type} - {reason.value}")
 
         if self.enable_debug is True and request.method.lower() != b"head":
             #TODO return error resource
