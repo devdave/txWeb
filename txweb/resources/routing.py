@@ -232,6 +232,8 @@ class RoutingResource(resource.Resource):
         map = self._build_map(pathEl, request)
 
         try:
+            # TODO refactor to handle HEAD requests when the only valid match support GET
+            # - one bad idea is to hack on werkzeug to append the URI matching rule to MethodNotAllowed
             (rule, kwargs) = map.match(return_rule=True)
         except wz_routing.NotFound:
             # TODO remove print
