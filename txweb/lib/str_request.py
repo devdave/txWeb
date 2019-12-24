@@ -175,12 +175,6 @@ class StrRequest(Request):
         if body is NOT_DONE_YET:
             return
         if not isinstance(body, bytes):
-            body = resource.ErrorPage(
-                http.INTERNAL_SERVER_ERROR,
-                "Request did not return bytes",
-                "Request: " + util._PRE(reflect.safe_repr(self)) + "<br />" +
-                "Resource: " + util._PRE(reflect.safe_repr(resrc)) + "<br />" +
-                "Value: " + util._PRE(reflect.safe_repr(body))).render(self)
 
         if self.method == b"HEAD":
             if len(body) > 0:
