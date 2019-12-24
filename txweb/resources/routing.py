@@ -19,6 +19,8 @@ import typing as T
 import inspect
 import warnings
 
+log = getLogger(__name__)
+
 # given
 #    website.add("/<foo:str>/<bar:int")
 #    view_function(request, foo, bar)
@@ -229,13 +231,14 @@ class RoutingResource(resource.Resource):
             (rule, kwargs) = map.match(return_rule=True)
         except wz_routing.NotFound:
             # TODO remove print
-            print(f"Unable to find match for: {request.path!r}")
             raise HTTP_Errors.HTTP404()
+            log.debug(f"Failed to find match for: {request.path!r}")
 
         except wz_routing.MethodNotAllowed:
             # TODO finish error handling
             print(f"Could not find match for: {request.path!r}")
             raise HTTP_Errors.HTTP405()
+            log.debug(f"Unable to find a valid match for {request.path!r} with {request.method!r}")
 
 
         if rule:
