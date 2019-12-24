@@ -167,60 +167,10 @@ class StrRequest(Request):
             body = resrc.render(self)
             if self._call_after_render is not None:
                 self._call_after_render(self, body)
+        except:
+            log.exception(f"While processing {self.method!r} {self.uri}")
+            raise HTTP500()
 
-        except UnsupportedMethod as e:
-            allowedMethods = e.allowedMethods
-            if (self.method == b"HEAD") and (b"GET" in allowedMethods):
-                # We must support HEAD (RFC 2616, 5.1.1).  If the
-                # resource doesn't, fake it by giving the resource
-                # a 'GET' request and then return only the headers,
-                # not the body.
-                self._log.info(
-                    "Using GET to fake a HEAD request for {resrc}",
-                    resrc=resrc
-                )
-                self.method = b"GET"
-                self._inFakeHead = True
-                body = resrc.render(self)
-
-                if body is NOT_DONE_YET:
-                    self._log.info(
-                        "Tried to fake a HEAD request for {resrc}, but "
-                        "it got away from me.", resrc=resrc
-                    )
-                    # Oh well, I guess we won't include the content length.
-                else:
-                    self.setHeader(b'content-length', intToBytes(len(body)))
-
-                self._inFakeHead = False
-                self.method = b"HEAD"
-                self.write(b'')
-                self.finish()
-                return
-
-            if self.method in (supportedMethods):
-                # We MUST include an Allow header
-                # (RFC 2616, 10.4.6 and 14.7)
-                self.setHeader(b'Allow', b', '.join(allowedMethods))
-                s = ('''Your browser approached me (at %(URI)s) with'''
-                     ''' the method "%(method)s".  I only allow'''
-                     ''' the method%(plural)s %(allowed)s here.''' % {
-                         'URI': escape(nativeString(self.uri)),
-                         'method': nativeString(self.method),
-                         'plural': ((len(allowedMethods) > 1) and 's') or '',
-                         'allowed': ', '.join(
-                            [nativeString(x) for x in allowedMethods])
-                     })
-                epage = resource.ErrorPage(http.NOT_ALLOWED,
-                                           "Method Not Allowed", s)
-                body = epage.render(self)
-            else:
-                epage = resource.ErrorPage(
-                    http.NOT_IMPLEMENTED, "Huh?",
-                    "I don't know how to treat a %s request." %
-                    (escape(self.method.decode("charmap")),))
-                body = epage.render(self)
-        # end except UnsupportedMethod
 
         if body is NOT_DONE_YET:
             return
