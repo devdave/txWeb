@@ -1,3 +1,25 @@
+"""
+    Provides processing for View classes which
+        connects multiple bound methods across multiple ViewFunction resources
+
+    @app.add_class("/thing")
+    class ViewContainer(object):
+        def __init__(self):
+            self.count = 0
+
+        @app.expose("/add", methods=["POST"]) # /thing/add
+        def handle_add(self, request):
+            self.count = request.form.get('number', type=int, default=0)
+
+        @app.expose("/add/<int:number>", methods=["GET"])  #  /thing/add/123
+        def handle_get_add(request, number):
+            self.count += number
+
+        @app.expose("/show", methods=["GET"]) # /thing/show
+        def handle_show(self, request):
+            return compat.IntToBytes(self.count)
+
+"""
 from txweb.resources import ViewFunctionResource, ViewClassResource
 from txweb.errors import UnrenderableException
 
