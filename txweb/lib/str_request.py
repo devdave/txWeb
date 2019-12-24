@@ -199,7 +199,7 @@ class StrRequest(Request):
             self.write(body)
         self.finish()
 
-    def _processFormData(self, ctype, clength):
+    def _processFormData(self, content_type, content_length):
         """
         Processes POST requests and puts POST'd arguments into args.
 
@@ -211,25 +211,27 @@ class StrRequest(Request):
         options = {}
 
 
-        ctype = ctype.decode("utf-8")  # type: str
-        if ";" in ctype:
+        if isinstance(content_type, bytes):
+            content_type = content_type.decode("utf-8")  # type: str
+
+
+        if ";" in content_type:
             """
                 TODO Possible need to replace some of the header processing logic as boundary part of content-type 
                 leaks through.
                 eg "Content-type": "some/mime_type;boundary=----BLAH"
             """
-            ctype, boundary = ctype.split(";", 1)
+            content_type, boundary = content_type.split(";", 1)
             if "=" in boundary:
                 _, boundary = boundary.split("=", 1)
 
             options['boundary'] = boundary
 
-
-        clength = int(clength)
+        content_length = int(content_length)
 
         self.content.seek(0,0)
         parser = FormDataParser()
-        _, self.form, self.files = parser.parse(self.content, ctype, clength, options=options)
+        _, self.form, self.files = parser.parse(self.content, content_type, content_length, options=options)
         self.content.seek(0, 0)
 
     def processingFailed(self, reason):
