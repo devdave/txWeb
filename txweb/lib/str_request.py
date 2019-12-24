@@ -171,10 +171,15 @@ class StrRequest(Request):
             log.exception(f"While processing {self.method!r} {self.uri}")
             raise HTTP500()
 
+        # TODO deal with HEAD requests or leave it to the Application developer to deal with?
 
         if body is NOT_DONE_YET:  #TODO replace NOT_DONE_YET with a sentinel versus integer
             return
+
         if not isinstance(body, bytes):
+            log.error(f"<{type(resrc)} {resrc}> - uri={self.uri} returned {type(body)}:{len(body)} but MUST return a byte string")
+            # TODO I can't remember if it is too late to throw a HTTPCode at this point
+            raise HTTP500()
 
         if self.method == b"HEAD":
             if len(body) > 0:
@@ -201,6 +206,7 @@ class StrRequest(Request):
         Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
 
         TODO this can be problematic if a binary file is being uploaded
+        TODO verify Twisted HTTP channel/transport blows up if file upload size is "too big"
         """
         options = {}
 
@@ -210,6 +216,7 @@ class StrRequest(Request):
             """
                 TODO Possible need to replace some of the header processing logic as boundary part of content-type 
                 leaks through.
+                eg "Content-type": "some/mime_type;boundary=----BLAH"
             """
             ctype, boundary = ctype.split(";", 1)
             if "=" in boundary:
