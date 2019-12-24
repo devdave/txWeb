@@ -1,8 +1,9 @@
 
 class HTTPCode(RuntimeError):
-    def __init__(self, code, message):
+    def __init__(self, code, message, exc=None):
         self.code = code
         self.message = message
+        self.exc = exc
 
 class HTTP3xx(HTTPCode):
     def __init__(self, code, redirect):
@@ -18,12 +19,12 @@ class HTTP4xx(HTTPCode):
     pass
 
 class HTTP404(HTTP4xx):
-    def __init__(self):
-        super().__init__(404, "Resource not found")
+    def __init__(self, exc=None):
+        super().__init__(404, "Resource not found", exc=exc)
 
 class HTTP405(HTTP4xx):
-    def __init__(self):
-        super().__init__(405, "Method not allowed")
+    def __init__(self, exc=None):
+        super().__init__(405, "Method not allowed", exc=exc)
 
 
 class HTTP5xx(HTTPCode):
