@@ -229,49 +229,7 @@ class StrRequest(Request):
         self.content.seek(0,0)
         parser = FormDataParser()
         _, self.form, self.files = parser.parse(self.content, ctype, clength, options=options)
-        self.content.seek(0,0)
-
-        # mfd = b'multipart/form-data'
-        # key, pdict = _parseHeader(ctype)
-        # pdict["CONTENT-LENGTH"] = clength
-        #
-        # if key == b'application/x-www-form-urlencoded':
-        #     self.form.update(parse_qs(self.content.read(), 1))
-        # elif key == mfd:
-        #     try:
-        #         if _PY37PLUS:
-        #             cgi_args = cgi.parse_multipart(
-        #                 self.content, pdict,
-        #                 errors="surrogateescape")
-        #         else:
-        #             cgi_args = cgi.parse_multipart(self.content, pdict)
-        #
-        #         if not _PY37PLUS and _PY3:
-        #             self.form.update({x.encode('iso-8859-1'): y for x, y in cgi_args.items()})
-        #         elif _PY37PLUS:
-        #             # The parse_multipart function on Python 3.7+
-        #             # decodes the header bytes as iso-8859-1 and
-        #             # decodes the body bytes as utf8 with
-        #             # surrogateescape -- we want bytes
-        #             self.form.update({
-        #                 x.encode('iso-8859-1'):
-        #                     [z.encode('utf8', "surrogateescape")
-        #                      if isinstance(z, str) else z for z in y]
-        #                 for x, y in cgi_args.items()})
-        #             pass
-        #
-        #         else:
-        #             self.form.update(cgi_args)
-        #     except Exception as e:
-        #         # It was a bad request, or we got a signal.
-        #         # noinspection PyProtectedMember
-        #         self.channel._respondToBadRequestAndDisconnect()
-        #         if isinstance(e, (TypeError, ValueError, KeyError)):
-        #             return
-        #         else:
-        #             # If it's not a userspace error from CGI, reraise
-        #             raise
-
+        self.content.seek(0, 0)
 
     def processingFailed(self, reason):
         self.site.processingFailed(self, reason)
