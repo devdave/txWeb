@@ -13,6 +13,7 @@ from twisted.python import compat
 from werkzeug import routing as wz_routing
 
 from .generic import GenericError
+from ..log import getLogger
 
 from collections import OrderedDict
 import typing as T
@@ -250,6 +251,7 @@ class RoutingResource(resource.Resource):
             request.rule = rule
             request.route_args = kwargs
             if "postpath" in kwargs:
+                # Intended to help with nested Directory resources
                 request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
             return self._endpoints[rule.endpoint]
         else:
