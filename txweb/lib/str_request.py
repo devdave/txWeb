@@ -32,6 +32,7 @@ from urllib.parse import parse_qs
 import typing as T
 
 from ..log import getLogger
+from ..errors import HTTP500
 
 log = getLogger(__name__)
 
