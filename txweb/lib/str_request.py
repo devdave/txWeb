@@ -179,7 +179,6 @@ class StrRequest(Request):
 
         if not isinstance(body, bytes):
             log.error(f"<{type(resrc)} {resrc}> - uri={self.uri} returned {type(body)}:{len(body)} but MUST return a byte string")
-            # TODO I can't remember if it is too late to throw a HTTPCode at this point
             raise HTTP500()
 
         if self.method == b"HEAD":
