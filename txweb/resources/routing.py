@@ -235,16 +235,15 @@ class RoutingResource(resource.Resource):
             # TODO refactor to handle HEAD requests when the only valid match support GET
             # - one bad idea is to hack on werkzeug to append the URI matching rule to MethodNotAllowed
             (rule, kwargs) = map.match(return_rule=True)
-        except wz_routing.NotFound:
+        except wz_routing.NotFound as exc:
             # TODO remove print
-            raise HTTP_Errors.HTTP404()
             log.debug(f"Failed to find match for: {request.path!r}")
+            raise HTTP_Errors.HTTP404(exc)
 
-        except wz_routing.MethodNotAllowed:
+        except wz_routing.MethodNotAllowed as exc:
             # TODO finish error handling
-            print(f"Could not find match for: {request.path!r}")
-            raise HTTP_Errors.HTTP405()
             log.debug(f"Unable to find a valid match for {request.path!r} with {request.method!r}")
+            raise HTTP_Errors.HTTP405(exc)
 
 
         if rule:
