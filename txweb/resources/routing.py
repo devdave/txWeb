@@ -223,7 +223,11 @@ class RoutingResource(resource.Resource):
 
 
 
-    def getChildWithDefault(self, pathEl, request: StrRequest):
+    def getChildWithDefault(self, pathEl: T.Union[bytes,str], request: StrRequest):
+        """
+            Routing resource is mostly ignorant of the larger ecosystem so it either
+            returns a resource OR it throws up an errors.HTTPCode
+        """
 
         map = self._build_map(pathEl, request)
 
