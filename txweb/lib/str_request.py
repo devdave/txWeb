@@ -172,7 +172,7 @@ class StrRequest(Request):
             raise HTTP500()
 
 
-        if body is NOT_DONE_YET:
+        if body is NOT_DONE_YET:  #TODO replace NOT_DONE_YET with a sentinel versus integer
             return
         if not isinstance(body, bytes):
 
