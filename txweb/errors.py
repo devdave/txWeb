@@ -30,6 +30,9 @@ class HTTP405(HTTP4xx):
 class HTTP5xx(HTTPCode):
     pass
 
+class HTTP500(HTTP5xx):
+    def __init__(self, message="Internal Server Error"):
+        super().__init__(message)
 
 
 class UnrenderableException(HTTP5xx):
