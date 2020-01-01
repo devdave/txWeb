@@ -174,7 +174,6 @@ class StrRequest(Request):
                 self._call_after_render(self, body)
         except:
             log.exception(f"While processing {self.method!r} {self.uri}")
-            raise HTTP500()
             raise
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
