@@ -80,10 +80,11 @@ class _ApplicationErrorHandlingMixin(object):
         """
 
         """
-        self.error_handlers = {}
+        self.error_handlers = dict(default=self.default_error_handler)
         self.enable_debug = enable_debug
 
         self.site.addErrorHandler(self.processingFailed)
+
 
 
     def default_error_handler(self, request: StrRequest, reason: failure.Failure)->bool:
@@ -105,7 +106,6 @@ class _ApplicationErrorHandlingMixin(object):
         request.finish()
         return
 
-    def handle_error(self, error_type: T.Union[HTTPCode, int, Exception]) -> T.Callable:
 
         def processor(func: ErrorHandler) -> ErrorHandler:
             if error_type in self.error_handlers:
@@ -117,19 +117,28 @@ class _ApplicationErrorHandlingMixin(object):
 
         return processor
 
+    def add_error_handler(self, handler:T.Callable, error_type: T.Union[HTTPCode, int, Exception, str], override=False):
+
+        if error_type in self.error_handlers and override is False:
+            old_func = self.error_handlers[error_type]
+            raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {handler}")
+
+        self.error_handlers[error_type] = handler
+
 
     def processingFailed(self, request:StrRequest, reason: failure.Failure):
 
 
         if reason.type in self.error_handlers:
-            return self.error_handlers[reason.type](request, reason)
-        elif isinstance(reason.value, HTTPCode) and reason.value.code in self.error_handlers:
-            return self.error_handlers[reason.value.code](request, reason)
-        else:
-            self.default_error_handler(request, reason)
+            handler = self.error_handlers[reason.type]
 
-        if request.finished != True:
-            request.finish()
+        elif isinstance(reason.value, HTTPCode) and reason.value.code in self.error_handlers:
+            handler = self.error_handlers[reason.value.code]
+        else:
+            handler = self.error_handlers['default']
+
+        handler(request, reason)
+        request.ensureFinished()
 
         return True
 
