@@ -100,6 +100,10 @@ class StrRequest(Request):
 
         return Request.setResponseCode(self, code, message)
 
+    def ensureFinished(self):
+        if self.finished not in [0, False]:
+            self.finish()
+
     def requestReceived(self, command, path, version):
         """
             Looks for POST'd arguments in form format (eg multipart).
