@@ -1,7 +1,7 @@
 
 from txweb.lib.str_request import StrRequest
 from txweb.resources import SimpleFile
-from txweb.errors import HTTP404
+from txweb.errors import HTTP404, HTTP405
 
 from twisted.web.resource import Resource
 
@@ -59,9 +59,11 @@ class Directory(Resource):
             return self._render_GET(self, request, self.allowedFiles())
 
         elif request.method == b"HEAD":
-            return self._render_GET(self, request, self.allowedFiles())
+            # TODO fix this up
+            self._render_GET(self, request, self.allowedFiles())
+            return b""
         else:
-            raise ValueError(f"Unable to process {request.method!r}")
+            raise HTTP405()
 
     @staticmethod
     def render_GET(parent, request, files):
