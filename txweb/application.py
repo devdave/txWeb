@@ -106,9 +106,10 @@ class _ApplicationErrorHandlingMixin(object):
         request.finish()
         return
 
+    def handle_error(self, error_type: T.Union[HTTPCode, int, Exception, str], override=False) -> T.Callable:
 
         def processor(func: ErrorHandler) -> ErrorHandler:
-            if error_type in self.error_handlers:
+            if error_type in self.error_handlers and override is False:
                 old_func = self.error_handlers[error_type]
                 raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {func}")
 
