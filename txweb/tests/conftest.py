@@ -5,7 +5,7 @@ from .helper import StrRequest
 
 from io import BytesIO
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def dummy_request() -> RequestRetval:
     channel = requesthelper.DummyChannel()
     request = StrRequest(channel)
