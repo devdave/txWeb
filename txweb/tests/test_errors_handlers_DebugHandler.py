@@ -24,7 +24,7 @@ def test_handler_catches_error(dummy_request:RequestRetval):
     def handle_foo(request):
         raise Exception()
 
-    dummy_request.request.requestReceived(b"GET", b"/foo", "HTTP/1.1")
+    dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
 
     dummy_request.request.content.seek(0,0)
     content = dummy_request.request.content.read()
