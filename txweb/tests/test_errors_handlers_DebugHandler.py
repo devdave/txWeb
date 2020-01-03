@@ -26,8 +26,8 @@ def test_handler_catches_error(dummy_request:RequestRetval):
 
     dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
 
-    dummy_request.request.content.seek(0,0)
-    content = dummy_request.request.content.read()
+    dummy_request.request.transport.written.seek(0,0)
+    content = dummy_request.request.transport.written.read()
 
     assert len(content) > 0
     assert dummy_request.request.code == 500
