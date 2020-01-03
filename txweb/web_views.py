@@ -105,6 +105,7 @@ class WebSite(_RoutingSiteConnectors, object):
         except Exception as exc:
             #Dear god wtf went wrong?
             log.exception(f"Exception occurred while handling {reason!r}")
+            raise
 
     def addErrorHandler(self, func: ErrorHandler):
         self._errorHandler = func
