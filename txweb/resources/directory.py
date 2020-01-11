@@ -1,4 +1,8 @@
+"""
+    Clean slate reimplementation of the Directory resource.
 
+
+"""
 from txweb.lib.str_request import StrRequest
 from txweb.resources import SimpleFile
 from txweb.errors import HTTP404, HTTP405
@@ -15,6 +19,14 @@ class Directory(Resource):
 
         Non-recursive directory listing resource.  To clarify, this only serves the files in a given filepath and nothing
         in child directories nor their contents.
+
+        #Goals
+
+        * allow hooking into the directory listing response so that it can be overloaded by user land code.
+        * Instead of trying to take the user supplied input and then scrubbing it for ".." or similar security breaking
+            injects, it uses a prebuilt (Path.iterdir) allowed list of files and compares that to the path info.
+
+
 
     """
 
