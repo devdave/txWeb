@@ -65,7 +65,6 @@ def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog
 
     assert dummy_request.request.code == 500
 
-    # This isn't a really fair assertion because content could already be written
     dummy_request.request.transport.written.seek(0,0)
     response = dummy_request.request.transport.written.read()
     assert response.startswith(b"HTTTP/1.1 500 Internal server error")
