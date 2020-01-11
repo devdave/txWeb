@@ -10,6 +10,13 @@ import typing as T
 
 
 class Directory(Resource):
+    """
+        TODO - This still needs a lot of work
+
+        Non-recursive directory listing resource.  To clarify, this only serves the files in a given filepath and nothing
+        in child directories nor their contents.
+
+    """
 
     def __init__(self, path:T.Union[str, Path], recurse:bool=False):
         """
@@ -37,6 +44,14 @@ class Directory(Resource):
         return func
 
     def allowedFiles(self) -> T.List[str]:
+        """
+            Currently this mechanism is part of the basic security for Directory resource to ensure
+            only the files in a given directory can be served and or listed.
+
+
+        Returns:
+            list: an explicit list of what files can be served from this Directory resource
+        """
         return [file for file in self.path.glob("*") if file.exists() and file.is_file()]
 
 
