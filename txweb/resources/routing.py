@@ -49,7 +49,7 @@ class RoutingResource(resource.Resource):
         self._site = None
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
         self._instances = OrderedDict() # type: typing.Dict[str, object]
-        self._route_map = wz_routing.Map() # type: wz_routing.Map        
+        self._route_map = wz_routing.Map() # type: wz_routing.Map
         self._route_map.converters['directory'] = DirectoryPath
 
     @property
@@ -84,10 +84,10 @@ class RoutingResource(resource.Resource):
                         If a resource doesn't handle getResourceFor correctly, this can lead to always returning a
                         NoResource found error.
                     """
-                    warnings.warn(
-                        f"Added resource {original_thing}.isLeaf is {getattr(original_thing, 'isLeaf')!r}?",
-                        RuntimeWarning
-                    )
+                    # warnings.warn(
+                    #     f"Added resource {original_thing}.isLeaf is {getattr(original_thing, 'isLeaf')!r}?",
+                    #     RuntimeWarning
+                    # )
 
                 self._add_resource_cls(route_str, **common_kwargs)
             elif isinstance(original_thing, resource.Resource):
