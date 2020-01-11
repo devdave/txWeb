@@ -101,7 +101,7 @@ class StrRequest(Request):
         return Request.setResponseCode(self, code, message)
 
     def ensureFinished(self):
-        if self.finished not in [0, False]:
+        if self.finished not in [1, True]:
             self.finish()
 
     def requestReceived(self, command, path, version):
