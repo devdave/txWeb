@@ -1,6 +1,14 @@
+from __future__ import annotations
 import typing as T
 from twisted.web import resource
+from twisted.web.server import NOT_DONE_YET
+
 from txweb.util.basic import sanitize_render_output
+
+if T.TYPE_CHECKING:
+    from txweb.lib.str_request import StrRequest
+
+NotDoneYet = T.TypeVar(int)
 
 class ViewClassResource(resource.Resource):
 
@@ -11,7 +19,25 @@ class ViewClassResource(resource.Resource):
         self.kls_view = kls_view
         self.instance = instance  # TODO is this needed?
 
-    def render(self, request) -> T.Union[bytes, int]:
+    def render(self, request:StrRequest) -> T.Union[bytes, NotDoneYet]:
+        """
+            Relays the request to the wrapped class instance with some caveats.
+
+            If the wrapped instance has a method named "prefilter", that is passed the request first
+
+            If the wrapped instance doesn't have a method named "render", it looks for a method that matches
+                "render_{Request.method}" (eg, render_GET or render_POST).
+
+            Finally it looks for a postfilter method and passes both the output of the render method and the request
+                so that changes can be made if necessary.
+
+        Args:
+            request: The Request object (requesting headers, args, client ip, etc)
+
+        Returns:
+            T.Union[bytes, NOT_DONE_YET]: Content to be sent to the client or if NOT_DONE_YET, hang the connection until
+                the resource closes it.  (or it times out)
+        """
         request_kwargs = getattr(request, "_view_args", {})
         request_method = getattr(request, "method").decode("utf-8").upper()
 
