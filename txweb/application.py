@@ -14,10 +14,12 @@ from .lib import StrRequest, expose_method
 from .web_views import WebSite
 from .errors import HTTPCode
 
+from twisted.python import failure
+from twisted.internet.posixbase import PosixReactorBase
+
 
 if T.TYPE_CHECKING:
-    from twisted.python import failure
-    from twisted.internet.posixbase import PosixReactorBase
+
 
     ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
     ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
