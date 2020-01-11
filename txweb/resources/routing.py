@@ -16,7 +16,6 @@ from twisted.python import compat
 # Werkzeug routing import
 from werkzeug import routing as wz_routing
 
-from .generic import GenericError
 from ..log import getLogger
 
 from collections import OrderedDict
@@ -41,7 +40,6 @@ EndpointCallable = T.NewType("InstanceCallable",
 
 class RoutingResource(resource.Resource):
 
-    FAILURE_RSRC_CLS = GenericError # type: typing.ClassVar[GenericError]
 
     def __init__(self, on_error: T.Optional[resource.Resource] = None):
 
@@ -51,9 +49,7 @@ class RoutingResource(resource.Resource):
         self._site = None
         self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
         self._instances = OrderedDict() # type: typing.Dict[str, object]
-        self._route_map = wz_routing.Map() # type: wz_routing.Map
-        self._error_resource = self.FAILURE_RSRC_CLS if on_error is None else on_error # type: resource.Resource
-
+        self._route_map = wz_routing.Map() # type: wz_routing.Map        
         self._route_map.converters['directory'] = DirectoryPath
 
     @property
@@ -65,8 +61,6 @@ class RoutingResource(resource.Resource):
         self._site = site
         return self._site
 
-    def setErrorResource(self, error_resource: resource.Resource):
-        self._error_resource = error_resource
 
     def iter_rules(self) -> T.Generator:
         return self._route_map.iter_rules()
