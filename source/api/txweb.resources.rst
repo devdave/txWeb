@@ -20,14 +20,6 @@ txweb.resources.error module
    :undoc-members:
    :show-inheritance:
 
-txweb.resources.generic module
-------------------------------
-
-.. automodule:: txweb.resources.generic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 txweb.resources.routing module
 ------------------------------
 
