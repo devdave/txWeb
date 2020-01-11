@@ -2,7 +2,11 @@ from txweb.errors import UnrenderableException
 from txweb.util.url_converter import DirectoryPath
 from txweb.util.basic import get_thing_name
 from txweb.lib.str_request import StrRequest
-from txweb import resources as txw_resources
+
+from .view_function import ViewFunctionResource
+from .view_class import ViewClassResource
+from .directory import Directory
+
 from ..lib import view_class_assembler as vca
 from txweb import errors as HTTP_Errors
 
@@ -124,7 +128,7 @@ class RoutingResource(resource.Resource):
         """
         route_kwargs = route_kwargs if route_kwargs is not None else {}
         new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_kwargs)
-        view_resource = txw_resources.ViewFunctionResource(thing)
+        view_resource = ViewFunctionResource(thing)
         self._endpoints[endpoint] = view_resource
 
         self._route_map.add(new_rule)
@@ -145,7 +149,7 @@ class RoutingResource(resource.Resource):
         else:
             instance = self._instances[endpoint] = thing(**route_kwargs.get("inits_kwargs",{}))
             self._route_map.add(wz_routing.Rule(route_str, endpoint=endpoint))
-            self._endpoints[endpoint] = txw_resources.ViewClassResource(thing, instance)
+            self._endpoints[endpoint] = ViewClassResource(thing, instance)
 
     def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
@@ -174,7 +178,7 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def add_directory(self, route_str: str, directory_resource: txw_resources.Directory) -> txw_resources.Directory:
+    def add_directory(self, route_str: str, directory_resource: Directory) -> Directory:
 
         endpoint = repr(directory_resource)
         if endpoint not in self._endpoints:

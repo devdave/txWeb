@@ -20,7 +20,7 @@
             return compat.IntToBytes(self.count)
 
 """
-from txweb.resources import ViewFunctionResource, ViewClassResource
+from ..resources import ViewFunctionResource, ViewClassResource
 from txweb.errors import UnrenderableException
 
 from collections import namedtuple
