@@ -1,14 +1,33 @@
+"""
+    Should be self-explanatory.   These are used to bubble up various server conditions: errors, missing, I am a teapot
+    , and 3xx redirect directives for the application to handle.
+
+    `HTTPCode` is the base class for all over codes
+    refer to https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+"""
+import typing as T
 
 class HTTPCode(RuntimeError):
-    def __init__(self, code, message, exc=None):
+    """
+    Arguments:
+        code: a valid numeric HTTP code
+        message: the message to be displayed to the remote client
+        exc: optionally attach the exception associated with the HTTPCode.  Useful for debugging various 500
+        errors
+    """
+    def __init__(self, code:int, message:str, exc:T.Optional[Exception]=None):
         self.code = code
         self.message = message
         self.exc = exc
 
 class HTTP3xx(HTTPCode):
+    """
+    Arguments:
+        redirect: either an absolute or relative URL to tell the client to redirect too
+    """
     def __init__(self, code, redirect):
-        self.code = code
         self.redirect = redirect
+        super().__init__(code, f"Redirect {code}")
 
 class HTTP303(HTTP3xx):
     def __init__(self, redirect):
