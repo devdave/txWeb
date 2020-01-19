@@ -25,7 +25,7 @@ if errorlevel 9009 (
 	exit /b 1
 )
 
-sphinx-apidoc -f -o source\api txweb
+sphinx-apidoc -f -o source\api txweb txweb\tests\* tests\*.py test_*.py
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
 
