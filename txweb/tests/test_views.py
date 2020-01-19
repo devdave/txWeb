@@ -52,24 +52,6 @@ def test_website_add__handles_native_resources():
     assert isinstance(rsrc, TestResource)
     assert rsrc.render(request) == b"Rendered TestResource"
 
-def test_website__returns_no_resource_if_added_resource_is_not_a_leaf():
-
-    test_website = web_views.WebSite()
-
-
-    class TestResource(tw_resource.Resource):
-        pass
-
-    with pytest.warns(RuntimeWarning):
-        test_website.add("/rest/add")(TestResource)
-
-    request = MockRequest([], f"/rest/add")
-    request.method = b"POST"
-
-    rsrc = test_website.getResourceFor(request)
-
-    assert isinstance(rsrc, tw_resource.NoResource)
-
 
 def test_website__adds_resource_class():
 

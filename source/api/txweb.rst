@@ -8,7 +8,6 @@ Subpackages
 
    txweb.lib
    txweb.resources
-   txweb.tests
    txweb.util
 
 Submodules

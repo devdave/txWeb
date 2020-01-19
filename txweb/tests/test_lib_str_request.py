@@ -123,3 +123,5 @@ def test_writes_json(dummy_request):
 def test_writes_str_headers(dummy_request):
 
     dummy_request.request.setHeader("x-thing", "123")
+
+
