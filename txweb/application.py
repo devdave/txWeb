@@ -1,3 +1,9 @@
+"""
+    Application is a common interface to Texas's various components
+
+    To keep my sanity I broke the major components of Application into three pieces
+
+"""
 from __future__ import annotations
 from .log import getLogger
 log = getLogger(__name__)
@@ -31,22 +37,18 @@ if T.TYPE_CHECKING:
 
 
 
-class _ApplicationTemplateSupportMixin(object):
-    def __init__(self):
-        self.template_base = None
-
-    def set_basedir(self, base_path:T.Union[Path, str]):
-        self.template_base = base_path
-
-
-class _ApplicationRoutingHelperMixin(object):
+class ApplicationRoutingHelperMixin(object):
     """
         Assumes self.router provides a RoutingResource reference/object
 
         Proxies to RoutingResource to facilitate easier debugging
     """
+    router:RoutingResource
 
     def add(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+        return self.router.add(route_str, **kwargs)
+
+    def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
         return self.router.add(route_str, **kwargs)
 
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> SimpleFile:
@@ -76,7 +78,12 @@ class _ApplicationRoutingHelperMixin(object):
         # TODO make route_str optional somehow
         return expose_method(route_str, **kwargs)
 
-class _ApplicationErrorHandlingMixin(object):
+
+class ApplicationErrorHandlingMixin(object):
+
+    error_handlers: T.Dict[str, ErrorHandler]
+    enable_debug: bool
+    site: WebSite
 
     def __init__(self, enable_debug: bool =False, **kwargs):
         """
@@ -150,40 +157,41 @@ class _ApplicationErrorHandlingMixin(object):
 
 
 
-class Application(_ApplicationRoutingHelperMixin, _ApplicationErrorHandlingMixin):
+class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
     """
         Similar to Klein and its influence Flask, the goal is to consolidate
         technical debt into one God module antipattern class.
 
         Purposes:
             Provides a public API to Site, HTTPErrors, RoutingResource, and additional helpers.
+
+        Arguments:
+            namespace: the base module/package name of the application, currently intended to assist logging and debugging
+            twisted_reactor: currently unused
+            request_factory: currently unused
+            enable_debug: Not implemented yet, switches on extra debugging tools
     """
 
     def __init__(self,
-                 twisted_reactor: PosixReactorBase = None,
-                 namespace:str=None,
+                 namespace: str = None,
+                 twisted_reactor: T.Optional[PosixReactorBase] = None,
                  request_factory:StrRequest=StrRequest,
-                 enable_debug:bool=False                 ):
+                 enable_debug:bool=False
+                 ):
         """
-        @param twisted_reactor: Intended for debugging purposes
-        @param namespace: placeholder intended for debugging
-        @param request_factory: Used by Website(twisted.web.server.Site), for debugging purposes
-        @param debug: Placeholder to enable extended debugging
+
         """
         self._router = RoutingResource()
-        self._site = WebSite(self._router, request_factory=Application.request_factory_partial)
+        self._site = WebSite(self._router, request_factory=Application.request_factory_partial(self, request_factory))
         self._router.site = self._site
         self._reactor = twisted_reactor or None  # type: PosixReactorBase
 
         self.name = namespace
         self._listening_port = None
 
-        _ApplicationRoutingHelperMixin.__init__(self)
+        ApplicationRoutingHelperMixin.__init__(self)
         # _ApplicationTemplateSupportMixin.__init__(self)
-        _ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
-
-
-
+        ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
 
 
         #Hooks
@@ -193,6 +201,10 @@ class Application(_ApplicationRoutingHelperMixin, _ApplicationErrorHandlingMixin
 
     @staticmethod
     def request_factory_partial(app:'Application', request_kls:StrRequest):
+        """
+            A hack to intercept when a new http Request is created deep inside of twisted.web's protocol factory
+
+        """
 
         def partial(*args, **kwargs):
             request = request_kls(*args, **kwargs)
@@ -204,7 +216,13 @@ class Application(_ApplicationRoutingHelperMixin, _ApplicationErrorHandlingMixin
         return partial
 
 
-    def __call__(self, namespace):
+    def __call__(self, namespace:str):
+        """
+            TODO sanity check if this is a good idea
+
+            Allows the application namespace property to be overwritten during run time.
+
+        """
         self.name = namespace
 
     @property
@@ -223,15 +241,29 @@ class Application(_ApplicationRoutingHelperMixin, _ApplicationErrorHandlingMixin
     def reactor(self, reactor: PosixReactorBase):
         self._reactor = reactor
 
-    def listenTCP(self, port, interface= "127.0.0.1") -> Port:
-         self._listening_port = self.reactor.listenTCP(port, self.site, interface=interface)
-         return self._listening_port
+    def listenTCP(self, port:int, interface:str= "127.0.0.1") -> Port:
+        """
+            Convenience helper which adds the HTTP protocol factory to the reactor and set it to listen to the provided
+            interface and port
+        """
+        self._listening_port = self.reactor.listenTCP(port, self.site, interface=interface)
+        return self._listening_port
 
     def before_render(self, func: T.Callable[[StrRequest], None]):
+        """
+        Intended as a convenience decorator to set a global before render handler
+        Arguments:
+            func: a callable that expects to receive the current Request
+        """
         self._before_render_handlers.append(func)
         return func
 
     def after_render(self, func: T.Callable[[StrRequest], None]):
+        """
+        Intended as a convenience decorator to set a global after render handler
+        Arguments:
+            func: a callable that expects to receive the current Request
+        """
         self._after_render_handlers.append(func)
         return func
 
