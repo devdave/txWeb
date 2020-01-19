@@ -79,25 +79,21 @@ class RoutingResource(resource.Resource):
             common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_kwargs":kwargs}
 
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
-                if hasattr(original_thing, "isLeaf") and getattr(original_thing, "isLeaf") not in [True, 1]:
-                    """
-                        If a resource doesn't handle getResourceFor correctly, this can lead to always returning a
-                        NoResource found error.
-                    """
-                    # warnings.warn(
-                    #     f"Added resource {original_thing}.isLeaf is {getattr(original_thing, 'isLeaf')!r}?",
-                    #     RuntimeWarning
-                    # )
 
                 self._add_resource_cls(route_str, **common_kwargs)
+
             elif isinstance(original_thing, resource.Resource):
                 self._add_resource(route_str, **common_kwargs)
+
             elif inspect.isclass(original_thing):
                 self._add_class(route_str, **common_kwargs)
+
             elif inspect.isfunction(original_thing) is True or inspect.ismethod(original_thing) is True:
                 self._add_callable(route_str, **common_kwargs)
+
             elif callable(original_thing):
                 self._add_callable(route_str, **common_kwargs)
+
             else:
                 raise ValueError(f"Received {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 

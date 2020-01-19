@@ -1,6 +1,5 @@
 """
-    Provides processing for View classes which
-        connects multiple bound methods across multiple ViewFunction resources
+    Provides processing for View classes which connects multiple bound methods across multiple ViewFunction resources
 
     @app.add_class("/thing")
     class ViewContainer(object):
