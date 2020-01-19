@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+
+from twisted.python.failure import Failure
+
+
 from txweb.log import getLogger
 from txweb.errors import HTTPCode
 from . import html
+from txweb.lib.str_request import StrRequest
 
 import typing as T
 from pathlib import Path
@@ -51,6 +56,7 @@ class DefaultHandler(Base):
         Goal:  Delegate various errors to templates to make
             a visual error system easier to view.
     """
+
     def process(self, request: StrRequest, reason:Failure) -> None:
 
         if request.startedWriting not in [0, False]:
@@ -70,20 +76,21 @@ class DebugHandler(Base):
     """
         Mimic flask's exception rendering system with some minor caveats.
 
-            Errors are held in resident/session memory if possible.
-            Errors can be reaccessed as necessary
-            Errors time out after 5 minutes of activity
-            No more than 3 errors can be held in memory at one time
-            The same error is not stored more than once to avoid repeats pushing out the other
-                saved errors.
+        Errors are held in resident/session memory if possible.
+        Errors can be reaccessed as necessary
+        Errors time out after 5 minutes of activity
+        No more than 3 errors can be held in memory at one time
+        The same error is not stored more than once to avoid repeats pushing out the other
+        saved errors.
 
-            Cool to have
-                stack trace local/global evaluations similar to flask
-                pycharm integration (no idea if this is possible)
+        ##Cool to have
+        * stack trace local/global evaluations similar to flask
+        * pycharm integration (no idea if this is possible)
 
-            Great to have
-                Trim errors down to JUST application code, so tracebacks don't dive all the way into twisted and
-                txweb beyond the first or second frame.
+        ## Great to have
+        * Trim errors down to JUST application code, so tracebacks don't dive all the way into twisted and
+        * txweb beyond the first or second frame.
+
     """
     def process(self, request: StrRequest, reason:Failure) -> None:
         error_items = []
