@@ -84,8 +84,14 @@ class StrRequest(Request):
         """
         return self.write(json.dumps(data))
 
-    def setHeader(self, name, value):
-        # TODO check if this is redundant
+    def setHeader(self, name:T.Union[str, bytes], value:T.Union[str, bytes]):
+        """
+            A quick wrapper to convert unicode inputs to utf-8 bytes
+
+            Arguments:
+                name: A valid HTTP header
+                value: Syntactically correct value for the header name
+        """
         if isinstance(name, str):
             name = name.encode("utf-8")
 
