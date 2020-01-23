@@ -10,9 +10,7 @@ import pytest
 from .helper import MockRequest
 
 
-@pytest.fixture
-def static_dir():
-    return Path(__file__).parent / "fixture" / "static"
+
 
 
 def test_sketch_out(static_dir):
@@ -114,6 +112,15 @@ def test_render_Get_is_called_correctly(static_dir):
         return json.dumps(response)
 
     response = directory.render(request)
+
+
+
+
+
+
+
+
+
 
 # TODO so many more tests needed
 # I already know that getChild is going to break
