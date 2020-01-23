@@ -13,6 +13,7 @@ import typing as T
 
 from twisted.internet.tcp import Port
 from twisted.internet import reactor # type: PosixReactorBase
+from twisted.python.compat import intToBytes
 log.debug(f"Loaded reactor: {reactor!r}")
 
 from .resources import RoutingResource, SimpleFile, Directory
@@ -101,6 +102,8 @@ class ApplicationErrorHandlingMixin(object):
         if isinstance(HTTPCode, reason.type) or issubclass(reason.type, HTTPCode):
             exc = reason.value  # type: HTTPCode
             request.setResponseCode(exc.code, exc.message)
+            request.setHeader("Content-length", intToBytes(len(exc.message)))
+            request.write(exc.message)
         else:
             request.setResponseCode(500, b"Internal server error")
             log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
@@ -111,7 +114,7 @@ class ApplicationErrorHandlingMixin(object):
         else:
             pass
 
-        request.write(f"Something bad happened with {reason!r}".encode("utf-8"))
+
         request.finish()
         return
 
