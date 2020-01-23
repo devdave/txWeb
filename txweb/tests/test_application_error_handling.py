@@ -72,7 +72,20 @@ def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog
     debug = 1
 
 
+def test_directory_returns_404_on_missing_file(static_dir, dummy_request:RequestRetval):
+    from txweb.application import Application
+    app = Application(__name__)
+    app.displayTracebacks = True
 
+    directory = app.add_staticdir("/", static_dir)
+
+    dummy_request.request.site = app.site
+    dummy_request.request.requestReceived(b"GET", b"/foo.bar", b"HTTP/1.1")
+
+    assert dummy_request.request.code == 404
+    dummy_request.channel.transport.written.seek(0,0)
+    content = dummy_request.channel.transport.written.read()
+    debug = 1
 
 
 
