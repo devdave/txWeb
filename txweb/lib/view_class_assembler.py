@@ -21,10 +21,14 @@
 """
 from ..resources import ViewFunctionResource, ViewClassResource
 from txweb.errors import UnrenderableException
+from txweb.util.basic import get_thing_name
 
 from collections import namedtuple
+import inspect
+
 from werkzeug.routing import Rule, Submount
-from txweb.util.basic import get_thing_name
+
+
 
 import inspect
 
@@ -38,6 +42,20 @@ def has_exposed(obj):
         for m in getattr(obj, "__dict__", {}).values()
         if inspect.isfunction(m) and hasattr(m, EXPOSED_STR)
     ])
+
+def is_exposed(attribute):
+
+
+    return has_exposed(attribute, EXPOSED_STR) and is_valid_callable
+
+def is_viewable(attribute):
+    is_valid_callable = inspect.ismethod(attribute) \
+                        or inspect.isfunction(attribute) \
+                        or inspect.isgenerator(attribute) \
+                        or inspect.iscoroutine(attribute) \
+                        or inspect.iscoroutinefunction(attribute)
+
+    return is_exposed(attribute) and is_valid_callable
 
 
 def is_renderable(kls):
@@ -88,7 +106,10 @@ def view_assembler(prefix, kls, route_args):
             sub_rule = getattr(bound_method, EXPOSED_RULE)
             bound_endpoint = get_thing_name(bound_method)
             rule = Rule(sub_rule.route, **sub_rule.route_kwargs, endpoint=bound_endpoint)
-            endpoints[bound_endpoint] = ViewFunctionResource(bound_method)
+            prefilter = getattr(instance, "_prefilter", None)
+            postfilter = getattr(instance, "_postfilter", None)
+
+            endpoints[bound_endpoint] = ViewFunctionResource(bound_method, prefilter=prefilter, postfilter=postfilter)
             rules.append(rule)
 
         return ViewAssemblerResult(instance, Submount(prefix, rules), endpoints)
