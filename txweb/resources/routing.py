@@ -53,11 +53,11 @@ class RoutingResource(resource.Resource):
         self._route_map.converters['directory'] = DirectoryPath
 
     @property
-    def site(self):
+    def site(self):   # pragma: no cover
         return self._site
 
     @site.setter
-    def site(self, site):
+    def site(self, site):  # pragma: no cover
         self._site = site
         return self._site
 
