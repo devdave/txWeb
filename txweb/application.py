@@ -52,6 +52,9 @@ class ApplicationRoutingHelperMixin(object):
     def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
         return self.router.add(route_str, **kwargs)
 
+    def add_resource(self, route_str:str, resource, **kwargs):
+        return self.router.add(route_str, **kwargs)(resource)
+
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> SimpleFile:
         """
         Just a simple helper for a common task of serving individual files
