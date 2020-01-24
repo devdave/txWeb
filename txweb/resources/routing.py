@@ -240,13 +240,14 @@ class RoutingResource(resource.Resource):
             log.debug(f"Unable to find a valid match for {request.path!r} with {request.method!r}")
             raise HTTP_Errors.HTTP405(exc)
 
+        request.rule = rule
+        request.route_args = kwargs
+        if "postpath" in kwargs:
+            # Intended to help with nested Directory resources
+            request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
+        return self._endpoints[rule.endpoint]
 
-        if rule:
-            request.rule = rule
-            request.route_args = kwargs
-            if "postpath" in kwargs:
-                # Intended to help with nested Directory resources
-                request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
-            return self._endpoints[rule.endpoint]
-        else:
-            raise HTTP_Errors.HTTP404()
+        # if rule:
+        #
+        # else:
+        #     raise HTTP_Errors.HTTP404()
