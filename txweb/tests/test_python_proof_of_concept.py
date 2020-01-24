@@ -61,3 +61,12 @@ def test_decorator_knows_route_str_is_required():
     class Foo():
         pass
 
+
+def test_sanity_check_dict_update():
+
+    actual = dict(a=1, b=2)
+    actual.update(dict(b=3, c=2))
+    expected = dict(a=1, b=3, c=2)
+
+    assert actual == expected
+
