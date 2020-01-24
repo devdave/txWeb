@@ -21,7 +21,7 @@ def test_correctly_adds_classes_to_routing_map():
 
 
 
-def test_provides_pre_and_post_filter_support(dummy_request):
+def test_provides_pre_filter_support(dummy_request):
     """
 
     :return:
@@ -51,5 +51,36 @@ def test_provides_pre_and_post_filter_support(dummy_request):
 
         assert "Prefilter called" in str(excinfo.value)
 
-    debug = 1
+def test_provides_post_filter_support(dummy_request):
+    """
+
+    :return:
+    """
+    branch_result = sentinel.branch_result
+    request = dummy_request.request
+
+    class PreFoo(object):
+
+        @expose("/branch")
+        def do_branch(self, request):
+            return "do_branch's output"
+
+        def _postfilter(self, request, original_body):
+            assert original_body == "do_branch's output"
+            return "post filter replaced output"
+
+    pre_thing = view_assembler("/foo", PreFoo, {})
+
+    #  https://stackoverflow.com/a/39292086/9908
+    branch_key = next(iter(pre_thing.endpoints))
+    branch_key_resource = pre_thing.endpoints[branch_key]
+
+    actual = branch_key_resource.render(request)
+
+    # View* resources convert their output to Byte's
+    assert actual == b'post filter replaced output'
+
+
+
+
 
