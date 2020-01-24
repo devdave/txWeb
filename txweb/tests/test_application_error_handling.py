@@ -68,8 +68,6 @@ def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog
     dummy_request.request.transport.written.seek(0,0)
     response = dummy_request.request.transport.written.read()
     assert response.startswith(b"HTTTP/1.1 500 Internal server error")
-    assert response.index(b"Where is this caught?") > 0
-    debug = 1
 
 
 def test_directory_returns_404_on_missing_file(static_dir, dummy_request:RequestRetval):
