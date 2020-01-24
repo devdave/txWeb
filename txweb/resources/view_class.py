@@ -5,7 +5,7 @@ from twisted.web.server import NOT_DONE_YET
 
 from txweb.util.basic import sanitize_render_output
 
-if T.TYPE_CHECKING:
+if T.TYPE_CHECKING:  # pragma: no cover
     from txweb.lib.str_request import StrRequest
 
 NotDoneYet = T.TypeVar(int)
