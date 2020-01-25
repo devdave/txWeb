@@ -4,11 +4,13 @@ import unittest
 import typing as T
 from unittest.mock import MagicMock
 from dataclasses import dataclass
+from io import BytesIO
 
 
 import pytest
 
 from txweb.lib.str_request import StrRequest
+from txweb import Application
 
 from twisted.web.test.test_web import DummyRequest
 from twisted.web.test import requesthelper
@@ -33,6 +35,12 @@ class RequestRetval(object):
     def site(self, value):
         self.request.site = value
         self.channel.site = value
+
+
+    def setup(self, app:Application):
+        self.site = app.site
+        self.request.channel = self.channel
+        self.request.content = BytesIO()
 
     def read(self):
         self.channel.transport.written.seek(0,0)

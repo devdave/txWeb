@@ -20,35 +20,20 @@ import logging
 def test_basic_idea(dummy_request:RequestRetval):
     app = Application(namespace=__name__)
 
-    dummy_request.channel.site = app.site
-    dummy_request.request.channel = dummy_request.channel
+    dummy_request.setup(app)
 
 
     handle404 = MagicMock(return_value=3)
 
     app.handle_error(404)(handle404)
 
-    dummy_request.channel.site = app.site
-    dummy_request.request.content = BytesIO()
-    dummy_request.request.channel = dummy_request.channel
-
     dummy_request.request.requestReceived(b"GET", b"/favicon.ico", b"HTTP1/1")
 
     handle404.assert_called_once()
-
-def test_naturally_handle_404(dummy_request:RequestRetval):
-
-    app = Application()
-
-    request = dummy_request.request
-    dummy_request.channel.site = app.site
-    request.channel = dummy_request.channel
-
-    request.requestReceived(b"GET", b"/favicon.ico", b"HTTP1/1")
-    assert request.finished in [True, 1]
-    assert request.code == 404
-    assert request.code_message == b"Resource not found"
-    assert request is not None
+    assert dummy_request.request.finished in [True, 1]
+    assert dummy_request.request.code == 404
+    assert dummy_request.request.code_message == b"Resource not found"
+    assert dummy_request.request is not None
 
 
 def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog):
@@ -65,10 +50,7 @@ def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog
         dummy_request.request.requestReceived(B"GET", b"/foo", b"HTTTP/1.1")
 
     assert dummy_request.request.code == 500
-
-    dummy_request.request.transport.written.seek(0,0)
-    response = dummy_request.request.transport.written.read()
-    assert response.startswith(b"HTTTP/1.1 500 Internal server error")
+    assert dummy_request.read().startswith(b"HTTTP/1.1 500 Internal server error")
 
 
 def test_directory_returns_404_on_missing_file(static_dir, dummy_request:RequestRetval):
