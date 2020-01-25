@@ -3,6 +3,8 @@
 import unittest
 import typing as T
 from unittest.mock import MagicMock
+from dataclasses import dataclass
+
 
 import pytest
 
@@ -18,9 +20,27 @@ class Helper(unittest.TestCase):
 helper = Helper()
 
 
-class RequestRetval(T.NamedTuple):
+@dataclass
+class RequestRetval(object):
     request: StrRequest
     channel: requesthelper.DummyChannel
+
+    @property
+    def site(self):
+        return self.request.site
+
+    @site.setter
+    def site(self, value):
+        self.request.site = value
+        self.channel.site = value
+
+    def read(self):
+        self.channel.transport.written.seek(0,0)
+        return self.channel.transport.written.read()
+
+    def response_contains(self, search: str):
+        return search in self.read()
+
 
 
 
