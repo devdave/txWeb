@@ -1,5 +1,6 @@
 from twisted.web import resource as tw_resource
 from twisted.web.test import requesthelper
+from twisted.python.failure import Failure
 
 import pytest
 from collections import namedtuple
@@ -86,4 +87,32 @@ def test_directory_returns_404_on_missing_file(static_dir, dummy_request:Request
     debug = 1
 
 
+def test_catches_and_routes_specific_exceptions(dummy_request):
+
+    class TestException(Exception):
+        pass
+
+
+
+    app = Application(__name__)
+
+    @app.handle_error(TestException)
+    def test_handler(request:StrRequest, reason:Failure):
+        request.setResponseCode(800, "Caught exception")
+        request.ensureFinished()
+
+    @app.add("/foo")
+    def test_view(request):
+        raise TestException("Thrown exception")
+
+
+    dummy_request.request.site = app.site
+    dummy_request.channel.site = app.site
+    dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
+
+    dummy_request.channel.transport.written.seek(0)
+    test_written = dummy_request.channel.transport.written.read()
+
+    assert dummy_request.request.code == 800
+    assert dummy_request.request.code_message == b"Caught exception"
 
