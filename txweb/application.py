@@ -144,6 +144,7 @@ class ApplicationErrorHandlingMixin(object):
 
     def processingFailed(self, request:StrRequest, reason: failure.Failure):
 
+        default_handler = self.error_handlers['default']
 
         if reason.type in self.error_handlers:
             handler = self.error_handlers[reason.type]
@@ -151,9 +152,11 @@ class ApplicationErrorHandlingMixin(object):
         elif isinstance(reason.value, HTTPCode) and reason.value.code in self.error_handlers:
             handler = self.error_handlers[reason.value.code]
         else:
-            handler = self.error_handlers['default']
+            handler = default_handler
 
-        handler(request, reason)
+        if handler(request, reason) False:
+            default_handler(request, reason)
+            
         request.ensureFinished()
 
         return True

@@ -23,7 +23,7 @@ def test_basic_idea(dummy_request:RequestRetval):
     dummy_request.setup(app)
 
 
-    handle404 = MagicMock(return_value=3)
+    handle404 = MagicMock(return_value=False)
 
     app.handle_error(404)(handle404)
 
