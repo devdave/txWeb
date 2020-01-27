@@ -20,6 +20,7 @@ from .resources import RoutingResource, SimpleFile, Directory
 from .lib import StrRequest, expose_method
 from .web_views import WebSite
 from .errors import HTTPCode
+from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
 
 from twisted.python import failure
 from twisted.internet.posixbase import PosixReactorBase
@@ -34,7 +35,7 @@ if T.TYPE_CHECKING:
     WebCallable = T.NewType("WebCallable", T.Callable[[StrRequest, ArbitraryListArg], T.Union[str, bytes]])
     CallableToResourceDecorator = T.NewType("CallableToResourceDecorator", T.Callable[[WebCallable], WebCallable])
 
-    ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], bool])
+    ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], T.Union[bool, None]])
 
 
 
@@ -84,47 +85,41 @@ class ApplicationRoutingHelperMixin(object):
 
 
 class ApplicationErrorHandlingMixin(object):
+    """
+    The Error processing and handling aspect of Application
+    """
+
 
     error_handlers: T.Dict[str, ErrorHandler]
+    default_handler_cls:BaseHandler = DefaultHandler
     enable_debug: bool
     site: WebSite
 
-    def __init__(self, enable_debug: bool =False, **kwargs):
+    def __init__(self, enable_debug: bool =False,  **kwargs):
         """
-
+        :param enable_debug: Flag to decide if to use debugging tools
         """
-        self.error_handlers = dict(default=self.default_error_handler)
+        self.error_handlers = dict(default=self.default_handler_cls(self))
         self.enable_debug = enable_debug
 
         self.site.addErrorHandler(self.processingFailed)
 
 
-
-    def default_error_handler(self, request: StrRequest, reason: failure.Failure)->bool:
-        # Check if this is a HTTPCode error
-        if isinstance(HTTPCode, reason.type) or issubclass(reason.type, HTTPCode):
-            exc = reason.value  # type: HTTPCode
-            request.setResponseCode(exc.code, exc.message)
-            request.setHeader("Content-length", intToBytes(len(exc.message)))
-            request.write(exc.message)
-        else:
-            request.setResponseCode(500, b"Internal server error")
-            log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
-
-        if self.enable_debug is True and request.method.lower() != b"head":
-            #TODO return error resource
-            pass
-        else:
-            pass
+    def handle_error(self, error_type: T.Union[HTTPCode, int, Exception, str], write_over=False) -> T.Callable:
+        """
+        Decorator utility to add a new :param error_type: specific handler.
+        Acceptable types currently is a subclass of Exception (eg error.HTTP404) or
+        a numeric HTTP error code (eg 404,500, etc).
 
 
-        request.finish()
-        return
-
-    def handle_error(self, error_type: T.Union[HTTPCode, int, Exception, str], override=False) -> T.Callable:
+        :param error_type:  The error to catch, either the thrown exception or a numeric HTTP CODE
+        :param write_over:  Used to over ride or replace a currently set error handler.   Currently the only error
+        handler set is the catch all 'default" handler which I don't recommend replacing.
+        :return:
+        """
 
         def processor(func: ErrorHandler) -> ErrorHandler:
-            if error_type in self.error_handlers and override is False:
+            if error_type in self.error_handlers and write_over is False:
                 old_func = self.error_handlers[error_type]
                 raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {func}")
 
@@ -154,9 +149,9 @@ class ApplicationErrorHandlingMixin(object):
         else:
             handler = default_handler
 
-        if handler(request, reason) False:
+        if handler(request, reason) is False:
             default_handler(request, reason)
-            
+
         request.ensureFinished()
 
         return True
