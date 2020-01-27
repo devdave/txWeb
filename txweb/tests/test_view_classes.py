@@ -82,5 +82,40 @@ def test_provides_post_filter_support(dummy_request):
 
 
 
+def test_universal_url_arguments(dummy_request):
+
+    app = Application(__name__)
+
+    @app.add("/article")
+    @app.add("/article/<int:article_id>")
+    class Article:
+
+        @expose("/read")
+        def do_read(self, request, article_id=None):
+            return f"READ:{article_id}"
+
+    dummy_request.site = app.site
+    dummy_request.request.requestReceived(b"GET", b"/article/345/read", b"HTTP/1.1")
+    actual = dummy_request.read()
+
+    assert actual.endswith(b"READ:345")
+
+def test_stacked_adds(dummy_request):
+
+    app = Application(__name__)
+
+    @app.add("/article", defaults={"article_id":None})
+    @app.add("/article/<int:article_id>")
+    class Article:
+
+        @app.expose("/")
+        def do_list(self, article_id=None):
+            return "A,B,C"
+
+    dummy_request.site = app.site
+    dummy_request.request.requestReceived(b"GET", b"/article/", b"HTTP/1.1")
+    actual = dummy_request.read()
+
+    assert actual.strip().endswith(b"A,B,C")
 
 
