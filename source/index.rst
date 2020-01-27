@@ -11,6 +11,8 @@ Welcome to Texas web's documentation!
    :caption: Contents:
 
    api/txweb
+   manual/error_handling
+   manual/quick_start
 
 
 
