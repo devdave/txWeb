@@ -2,19 +2,24 @@ from __future__ import annotations
 
 
 from twisted.python.failure import Failure
+from twisted.python.compat import intToBytes
+from twisted.python.failure import Failure
+
 
 
 from txweb.log import getLogger
-from txweb.errors import HTTPCode
+from ...errors import HTTPCode
 from . import html
+from ..str_request import StrRequest
 from txweb.lib.str_request import StrRequest
 
 import typing as T
 from pathlib import Path
 import linecache
+from dataclasses import dataclass
 
-
-class FormattedFrame(T.NamedTuple):
+@dataclass
+class FormattedFrame(object):
     name: bytes
     file: Path
     line_no: int
@@ -27,16 +32,10 @@ class StackFrame(T.NamedTuple):
     localsItems:T.Dict[str,T.Any]
     globalsItems:T.Dict[str, T.Any]
 
-if T.TYPE_CHECKING:
-    from twisted.python.failure import Failure
-    from ..str_request import StrRequest
-
-
-
 
 log = getLogger(__name__)
 
-class Base(object):
+class BaseHandler(object):
 
     def __init__(self, application):
         self.application = application
@@ -51,7 +50,7 @@ class Base(object):
     def process(self, request: StrRequest, reason:Failure) -> None:
         raise NotImplementedError("Attempting to use Base error handler")
 
-class DefaultHandler(Base):
+class DefaultHandler(BaseHandler):
     """
         Goal:  Delegate various errors to templates to make
             a visual error system easier to view.
@@ -59,20 +58,30 @@ class DefaultHandler(Base):
 
     def process(self, request: StrRequest, reason:Failure) -> None:
 
+        # Check if this is a HTTPCode error
         if request.startedWriting not in [0, False]:
             # We are done, the HTTP stream to client is already tainted
-            request.ensureFinished()
-            return None
+            pass
+        if isinstance(HTTPCode, reason.type) or issubclass(reason.type, HTTPCode):
+            exc = reason.value  # type: HTTPCode
+            request.setResponseCode(exc.code, exc.message)
+            request.setHeader("Content-length", intToBytes(len(exc.message)))
+            request.write(exc.message)
         else:
-            if issubclass(reason.type, HTTPCode):
-                request.setResponseCode(reason.value.code, message=reason.value.message)
-                request.write(html.DEFAULT_BODY.format(message=reason.value.message, code=reason.value.code))
-            else:
-                request.write(html.DEFAULT_BODY.format(message="Internal server error", code=500))
+            request.setResponseCode(500, b"Internal server error")
+            log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
 
-        request.ensureFinished()
+        if self.enable_debug is True and request.method.lower() != b"head":
+            # TODO return error resource
+            pass
+        else:
+            pass
 
-class DebugHandler(Base):
+        request.finish()
+        return True
+
+
+class DebugHandler(BaseHandler):
     """
         Mimic flask's exception rendering system with some minor caveats.
 
@@ -121,10 +130,3 @@ class DebugHandler(Base):
 
         linecache.clearcache()
 
-
-class MissingHandler(Base):
-    """
-        Intended only to handle 4xx errors where the route doesn't match at all or matches
-            url but not method.
-    """
-    pass
