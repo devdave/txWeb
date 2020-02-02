@@ -1,6 +1,6 @@
 from txweb.resources import Directory, SimpleFile
 from txweb import Application
-from txweb.errors import HTTP404
+from txweb.http_codes import HTTP404
 
 from pathlib import Path
 import typing as T

@@ -20,7 +20,7 @@
 
 """
 from ..resources import ViewFunctionResource, ViewClassResource
-from txweb.errors import UnrenderableException
+from txweb.http_codes import UnrenderableException
 from txweb.util.basic import get_thing_name
 
 from collections import namedtuple

@@ -1,4 +1,4 @@
-from txweb.errors import UnrenderableException
+from txweb.http_codes import UnrenderableException
 from txweb.util.url_converter import DirectoryPath
 from txweb.util.basic import get_thing_name
 from txweb.lib.str_request import StrRequest
@@ -8,7 +8,7 @@ from .view_class import ViewClassResource
 from .directory import Directory
 
 from ..lib import view_class_assembler as vca
-from txweb import errors as HTTP_Errors
+from txweb import http_codes as HTTP_Errors
 
 from twisted.web import resource
 from twisted.python import compat

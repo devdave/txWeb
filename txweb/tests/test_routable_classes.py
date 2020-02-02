@@ -4,7 +4,7 @@ import pytest
 from twisted.web.resource import NoResource
 
 from txweb.web_views import WebSite
-from txweb.errors import UnrenderableException
+from txweb.http_codes import UnrenderableException
 from .helper import MockRequest
 
 def test_basic_idea():

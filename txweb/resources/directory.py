@@ -5,7 +5,7 @@
 """
 from txweb.lib.str_request import StrRequest
 from txweb.resources import SimpleFile
-from txweb.errors import HTTP404, HTTP405
+from txweb.http_codes import HTTP404, HTTP405
 
 from twisted.web.resource import Resource
 
