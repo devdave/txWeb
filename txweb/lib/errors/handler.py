@@ -70,7 +70,7 @@ class DefaultHandler(BaseHandler):
             if issubclass(reason.type, http_codes.HTTP3xx):
                 exc = reason.value
                 request.redirect(exc.redirect, exc.code)
-                request.write("TODO put redirect page in here")
+                request.writeTotal(html.REDIRECT_BODY.format(url=exc.redirect))
             else:
                 exc = reason.value  # type: HTTPCode
                 request.setResponseCode(exc.code, exc.message)

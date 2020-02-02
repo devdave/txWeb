@@ -45,3 +45,17 @@ ERROR_ITEM = \
             <div class="detail">{detail}</div>
         </li>
 """
+
+REDIRECT_BODY = \
+"""
+    <html>
+        <head>
+            <title>Redirecting to {url}</title>
+            <meta http-equiv="Refresh" content="7; url={url}" />
+        </head>
+        <body>
+            Redirecting to {url} - <a href="{url}">click here</a>
+            
+        </body>
+    </html>
+"""
