@@ -255,3 +255,18 @@ class StrRequest(Request):
                 f"{self.getHeader('Content-Type')!r}")
 
         return json.loads(self.content.read())
+
+    def redirect(self, url, code = FOUND):
+        """
+        Utility function that does a redirect.
+
+        Set the response code to L{FOUND} and the I{Location} header to the
+        given URL.
+
+        The request should have C{finish()} called after this.
+
+        @param url: I{Location} header value.
+        @type url: L{bytes} or L{str}
+        """
+        self.setResponseCode(code)
+        self.setHeader(b"location", url)
