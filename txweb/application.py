@@ -15,6 +15,7 @@ log = getLogger(__name__)
 
 from pathlib import Path
 import typing as T
+import sys
 
 from twisted.internet.tcp import Port
 from twisted.internet import reactor # type: PosixReactorBase
@@ -190,7 +191,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
                  namespace: str = None,
                  twisted_reactor: T.Optional[PosixReactorBase] = None,
                  request_factory:StrRequest=StrRequest,
-                 enable_debug:bool=False
+                 enable_debug:bool=False,
+                 base_dir = None
                  ):
         """
 
@@ -202,6 +204,14 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
 
         self.name = namespace
         self._listening_port = None
+
+        self._enable_debug = enable_debug
+        if namespace is not None:
+            self._owner_module = sys.modules[namespace]
+        else:
+            self.__owner_module = None
+
+
 
         ApplicationRoutingHelperMixin.__init__(self)
         # _ApplicationTemplateSupportMixin.__init__(self)
