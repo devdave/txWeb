@@ -87,7 +87,7 @@ class DefaultHandler(BaseHandler):
         else:
             pass
 
-        request.finish()
+        request.ensureFinished()
         return True
 
 
