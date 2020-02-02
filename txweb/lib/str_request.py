@@ -16,6 +16,7 @@
 from twisted.python import reflect
 from twisted.web.error import UnsupportedMethod
 from twisted.web.server import Request, NOT_DONE_YET, supportedMethods
+from twisted.web.http import FOUND
 from twisted.web import resource
 from twisted.web import http
 # noinspection PyProtectedMember
@@ -32,7 +33,7 @@ from urllib.parse import parse_qs
 import typing as T
 
 from ..log import getLogger
-from ..errors import HTTP500
+from ..http_codes import HTTP500
 
 log = getLogger(__name__)
 
@@ -179,7 +180,7 @@ class StrRequest(Request):
             if self._call_after_render is not None:
                 self._call_after_render(self, body)
         except:
-            log.exception(f"While processing {self.method!r} {self.uri}")
+            #log.exception(f"While processing {self.method!r} {self.uri}")
             raise
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
