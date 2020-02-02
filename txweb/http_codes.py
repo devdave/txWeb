@@ -25,13 +25,17 @@ class HTTP3xx(HTTPCode):
     Arguments:
         redirect: either an absolute or relative URL to tell the client to redirect too
     """
-    def __init__(self, code, redirect):
+    def __init__(self, code, redirect, message="3xx Choices"):
         self.redirect = redirect
-        super().__init__(code, f"Redirect {code}")
+        super().__init__(code, message=message)
+
+class HTTP302(HTTP3xx):
+    def __init__(self, redirect):
+        super().__init__(302, redirect, "FOUND")
 
 class HTTP303(HTTP3xx):
     def __init__(self, redirect):
-        super(HTTP303, self).__init__(303, redirect)
+        super(HTTP303, self).__init__(303, redirect, message="See Other")
 
 
 class HTTP4xx(HTTPCode):

@@ -19,7 +19,7 @@ log.debug(f"Loaded reactor: {reactor!r}")
 from .resources import RoutingResource, SimpleFile, Directory
 from .lib import StrRequest, expose_method
 from .web_views import WebSite
-from .errors import HTTPCode
+from .http_codes import HTTPCode
 from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
 
 from twisted.python import failure
