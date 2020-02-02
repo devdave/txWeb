@@ -32,7 +32,8 @@ class ViewFunctionResource(resource.Resource):
         if self.prefilter:
             self.prefilter(request)
 
-        result_body = self.func(request, **request_view_kwargs)
+        func = self.func
+        result_body = func(request, **request_view_kwargs)
 
         if self.postfilter:
             result_body = self.postfilter(request, result_body)
