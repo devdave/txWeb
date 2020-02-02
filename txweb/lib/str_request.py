@@ -79,6 +79,27 @@ class StrRequest(Request):
 
         return Request.write(self, data)
 
+    def writeTotal(self, response_body:T.Union[bytes, str], code:T.Union[int, str, bytes] = None,
+                   message:T.Union[bytes, str]=None) -> T.NoReturn:
+        """
+        
+        :param response_body: Content intended for after headers 
+        :param code: Optional HTTP Code to use
+        :param message: Optional HTTP response message to use
+        :return: 
+        """
+
+        content_length = intToBytes(len(response_body))
+        self.setHeader("Content-Length", content_length)
+        self.write(response_body)
+        if code is not None:
+            self.setResponseCode(code, message=messsage)
+
+        self.ensureFinished()
+
+
+
+
     def writeJSON(self, data:T.Dict):
         """
             Utility to take a dictionary and convert it to a JSON string
