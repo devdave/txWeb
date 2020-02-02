@@ -1,7 +1,12 @@
 """
     Application is a common interface to Texas's various components
 
-    To keep my sanity I broke the major components of Application into three pieces
+    The Application object logic has been broken apart into two mixin like classes and the main Application class.
+
+    1. Routing logic (adding new routes/resources to the URL router) `ApplicationRoutingHelperMixin`
+    2. Error handling `ApplicationErrorHandlingMixin`
+    3. General utilities and resources ( website, router, reactor, etc) `Application`
+
 
 """
 from __future__ import annotations
@@ -41,13 +46,18 @@ if T.TYPE_CHECKING:
 
 class ApplicationRoutingHelperMixin(object):
     """
-        Assumes self.router provides a RoutingResource reference/object
+        Provides a wrapping interface around :ref: `RoutingResource`
 
-        Proxies to RoutingResource to facilitate easier debugging
     """
     router:RoutingResource
 
     def add(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+        """
+
+        :param route_str: A valid URI (starts with a forward slash and no spaces)
+        :param kwargs:
+        :return:
+        """
         return self.router.add(route_str, **kwargs)
 
     def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
