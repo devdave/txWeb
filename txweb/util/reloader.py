@@ -156,7 +156,7 @@ def run_reloader():
             return exit_code
 
 
-def reloader_main(main_func, args, kwargs, watch_self=False):
+def reloader_main(main_func, *args, **kwargs):
     """
 
     :param main_func:
@@ -164,6 +164,8 @@ def reloader_main(main_func, args, kwargs, watch_self=False):
     :param kwargs:
     :return:
     """
+
+    watch_self = kwargs.pop("watch_self", False)
 
     # If it is, start watcher thread and then run the main_func in the parent process as thread 0
     if os.environ.get(SENTINEL_NAME) == "true":
@@ -183,7 +185,7 @@ def reloader_main(main_func, args, kwargs, watch_self=False):
             pass
 
 
-def reloader(main_func, args=None, kwargs=None, **more_options):
+def reloader(main_func, *args, **kwargs):
     """
         To avoid fucking with twisted as much as possible, the watcher logic is shunted into
         a thread while the main (twisted) reactor runs in the main thread.
@@ -199,7 +201,7 @@ def reloader(main_func, args=None, kwargs=None, **more_options):
     if kwargs is None:
         kwargs = {}
 
-    reloader_main(main_func, args, kwargs, **more_options)
+    reloader_main(main_func, *args, **kwargs)
 
 
 """
