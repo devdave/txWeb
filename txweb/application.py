@@ -77,7 +77,7 @@ class ApplicationRoutingHelperMixin(object):
         :return: twisted.web.static.File
         """
         file_resource = SimpleFile(filePath, defaultType=defaultType)
-        return self.router.add_resource(route_str, file_resource)
+        return self.router.add(route_str)(file_resource)
 
     def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path]) -> Directory:
 
