@@ -8,7 +8,7 @@ from twisted.python.failure import Failure
 
 
 from txweb.log import getLogger
-from ...errors import HTTPCode
+from ... import http_codes
 from . import html
 from ..str_request import StrRequest
 from txweb.lib.str_request import StrRequest
@@ -56,17 +56,27 @@ class DefaultHandler(BaseHandler):
             a visual error system easier to view.
     """
 
+    def __init__(self, enable_debug = False):
+        self.enable_debug = enable_debug
+
     def process(self, request: StrRequest, reason:Failure) -> None:
 
         # Check if this is a HTTPCode error
         if request.startedWriting not in [0, False]:
             # We are done, the HTTP stream to client is already tainted
             pass
-        if isinstance(HTTPCode, reason.type) or issubclass(reason.type, HTTPCode):
-            exc = reason.value  # type: HTTPCode
-            request.setResponseCode(exc.code, exc.message)
-            request.setHeader("Content-length", intToBytes(len(exc.message)))
-            request.write(exc.message)
+        if isinstance(http_codes.HTTPCode, reason.type) or issubclass(reason.type, http_codes.HTTPCode):
+
+            if issubclass(reason.type, http_codes.HTTP3xx):
+                exc = reason.value
+                request.redirect(exc.redirect, exc.code)
+                request.write("TODO put redirect page in here")
+            else:
+                exc = reason.value  # type: HTTPCode
+                request.setResponseCode(exc.code, exc.message)
+                request.setHeader("Content-length", intToBytes(len(exc.message)))
+                request.write(exc.message)
+
         else:
             request.setResponseCode(500, b"Internal server error")
             log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
