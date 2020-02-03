@@ -207,3 +207,46 @@ def test_setting_postfilter(dummy_request:RequestRetval):
     resource_name, resource = next(iter(decorated.endpoints.items()))
     with pytest.raises(WasCalled):
         result = resource.render(dummy_request.request)
+
+
+def test_prefilter_method_name_is_correct(dummy_request:RequestRetval):
+
+    app = Application(__name__)
+
+    class TestPostfilter(object):
+
+        @app.expose("/foo")
+        def stub(self, request):
+            return ""
+
+        @app.set_postfilter
+        def my_postfilter(self, request, method_name, response):
+            assert method_name == self.stub.__qualname__
+            assert method_name.endswith("stub")
+            return response
+
+    decorated = view_assembler("/test", TestPostfilter, {})
+    resource_name, resource = next(iter(decorated.endpoints.items()))
+    result = resource.render(dummy_request.request)
+
+
+global_test_app = Application(__name__)
+
+class GlobalTestView(object):
+
+    @global_test_app.expose("/foo")
+    def exposed(self, request):
+        return ""
+
+    @global_test_app.set_prefilter
+    def my_prefilter(self, request, method_name):
+        cls, method = method_name.split(".",1)
+        assert cls == "GlobalTestView"
+        assert method == "exposed"
+
+
+def test_verify_method_name_is_correct(dummy_request:RequestRetval):
+
+    decorated = view_assembler("/test", GlobalTestView, {})
+    name, resource = next(iter(decorated.endpoints.items()))
+    result = resource.render(dummy_request.request)
