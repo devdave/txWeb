@@ -91,10 +91,11 @@ class StrRequest(Request):
 
         content_length = intToBytes(len(response_body))
         self.setHeader("Content-Length", content_length)
-        self.write(response_body)
+
         if code is not None:
             self.setResponseCode(code, message=message)
 
+        self.write(response_body)
         self.ensureFinished()
 
 
