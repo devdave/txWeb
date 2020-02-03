@@ -98,3 +98,16 @@ def test_catches_and_routes_specific_exceptions(dummy_request):
     assert dummy_request.request.code == 800
     assert dummy_request.request.code_message == b"Caught exception"
 
+def test_correctly_processes_redirects(dummy_request:RequestRetval):
+
+    app = Application(__name__)
+
+    @app.add("/")
+    def does_redirect(request:StrRequest):
+        raise http_codes.HTTP302("/foo")
+
+    dummy_request.setup(app)
+
+    dummy_request.request.requestReceived(b"GET", b"/", b"HTTP/1.1")
+    response = dummy_request.read()
+    assert dummy_request.response_contains(b"302 FOUND")
