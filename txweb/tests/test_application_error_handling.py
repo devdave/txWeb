@@ -7,8 +7,10 @@ from collections import namedtuple
 
 from unittest.mock import MagicMock
 from txweb import Application
+from txweb.lib import StrRequest
+from txweb import http_codes
 from .helper import ensureBytes, MockRequest, RequestRetval
-from ..lib import StrRequest
+
 
 import typing as T
 from io import BytesIO
