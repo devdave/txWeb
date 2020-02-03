@@ -94,6 +94,13 @@ def set_postfilter(func):
 
 ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
 
+def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
+
+    for name, member in inspect.getmembers(thing, lambda v: hasattr(v, identifier)):
+        return member
+
+    return False
+
 
 def view_assembler(prefix, kls, route_args):
     endpoints = {}
@@ -118,8 +125,8 @@ def view_assembler(prefix, kls, route_args):
             sub_rule = getattr(bound_method, EXPOSED_RULE)
             bound_endpoint = get_thing_name(bound_method)
             rule = Rule(sub_rule.route, **sub_rule.route_kwargs, endpoint=bound_endpoint)
-            prefilter = getattr(instance, "_prefilter", None)
-            postfilter = getattr(instance, "_postfilter", None)
+            prefilter = find_member(instance, PREFILTER_ID)
+            postfilter = find_member(instance, POSTFILTER_ID)
 
             endpoints[bound_endpoint] = ViewFunctionResource(bound_method, prefilter=prefilter, postfilter=postfilter)
             rules.append(rule)
