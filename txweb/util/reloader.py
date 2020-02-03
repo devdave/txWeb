@@ -94,6 +94,7 @@ def build_list(root_dir, watch_self=False):
 
     if watch_self is True:
         import txweb
+        print("RELOADER: Watching self")
         build_list(pathlib.Path(txweb.__file__).parent.absolute())
 
 
@@ -156,7 +157,7 @@ def run_reloader():
             return exit_code
 
 
-def reloader_main(main_func, *args, **kwargs):
+def reloader_main(main_func, *args, watch_self=False, **kwargs):
     """
 
     :param main_func:
@@ -165,7 +166,6 @@ def reloader_main(main_func, *args, **kwargs):
     :return:
     """
 
-    watch_self = kwargs.pop("watch_self", False)
 
     # If it is, start watcher thread and then run the main_func in the parent process as thread 0
     if os.environ.get(SENTINEL_NAME) == "true":
@@ -185,7 +185,7 @@ def reloader_main(main_func, *args, **kwargs):
             pass
 
 
-def reloader(main_func, *args, **kwargs):
+def reloader(main_func, *args, watch_self=False, **kwargs):
     """
         To avoid fucking with twisted as much as possible, the watcher logic is shunted into
         a thread while the main (twisted) reactor runs in the main thread.
@@ -201,7 +201,7 @@ def reloader(main_func, *args, **kwargs):
     if kwargs is None:
         kwargs = {}
 
-    reloader_main(main_func, *args, **kwargs)
+    reloader_main(main_func, *args, watch_self=watch_self, **kwargs)
 
 
 """
