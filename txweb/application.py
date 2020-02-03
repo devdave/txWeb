@@ -154,14 +154,16 @@ class ApplicationErrorHandlingMixin(object):
 
         if reason.type in self.error_handlers:
             handler = self.error_handlers[reason.type]
-
         elif isinstance(reason.value, HTTPCode) and reason.value.code in self.error_handlers:
             handler = self.error_handlers[reason.value.code]
         else:
             handler = default_handler
 
         if handler(request, reason) is False:
-            default_handler(request, reason)
+            if handler == default_handler:
+                raise RuntimeError(f"Default error handler {handler} returned False but it should return True")
+            else:
+                default_handler(request, reason)
 
         request.ensureFinished()
 
