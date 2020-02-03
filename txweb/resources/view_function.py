@@ -29,14 +29,16 @@ class ViewFunctionResource(resource.Resource):
 
         request_view_kwargs = getattr(request, "route_args", {})
 
+        func_name = getattr(self.func, "__qualname__", getattr(self.func, "__name__", repr(self.func)))
+
         if self.prefilter:
-            self.prefilter(request)
+            self.prefilter(request, func_name)
 
         func = self.func
         result_body = func(request, **request_view_kwargs)
 
         if self.postfilter:
-            result_body = self.postfilter(request, result_body)
+            result_body = self.postfilter(request, func_name, result_body)
 
         return sanitize_render_output(result_body)
 
