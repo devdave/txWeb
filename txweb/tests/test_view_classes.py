@@ -3,6 +3,7 @@ from unittest.mock import sentinel
 
 from txweb.application import Application
 from txweb.lib.view_class_assembler import view_assembler, expose
+from .helper import RequestRetval
 
 
 def test_correctly_adds_classes_to_routing_map():
@@ -21,7 +22,7 @@ def test_correctly_adds_classes_to_routing_map():
 
 
 
-def test_provides_pre_filter_support(dummy_request):
+def test_provides_pre_filter_support(dummy_request:RequestRetval):
     """
 
     :return:
@@ -51,7 +52,7 @@ def test_provides_pre_filter_support(dummy_request):
 
         assert "Prefilter called" in str(excinfo.value)
 
-def test_provides_post_filter_support(dummy_request):
+def test_provides_post_filter_support(dummy_request:RequestRetval):
     """
 
     :return:
@@ -82,7 +83,7 @@ def test_provides_post_filter_support(dummy_request):
 
 
 
-def test_universal_url_arguments(dummy_request):
+def test_universal_url_arguments(dummy_request:RequestRetval):
 
     app = Application(__name__)
 
@@ -100,7 +101,7 @@ def test_universal_url_arguments(dummy_request):
 
     assert actual.endswith(b"READ:345")
 
-def test_stacked_adds(dummy_request):
+def test_stacked_adds(dummy_request:RequestRetval):
 
     app = Application(__name__)
 
