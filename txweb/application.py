@@ -23,7 +23,7 @@ from twisted.python.compat import intToBytes
 log.debug(f"Loaded reactor: {reactor!r}")
 
 from .resources import RoutingResource, SimpleFile, Directory
-from .lib import StrRequest, expose_method
+from .lib import StrRequest, expose_method, set_prefilter, set_postfilter
 from .web_views import WebSite
 from .http_codes import HTTPCode
 from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
@@ -64,6 +64,7 @@ class ApplicationRoutingHelperMixin(object):
     def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
         return self.router.add(route_str, **kwargs)
 
+
     def add_resource(self, route_str:str, resource, **kwargs):
         return self.router.add(route_str, **kwargs)(resource)
 
@@ -93,6 +94,12 @@ class ApplicationRoutingHelperMixin(object):
     def expose(self, route_str, **kwargs):
         # TODO make route_str optional somehow
         return expose_method(route_str, **kwargs)
+
+    def set_prefilter(self, func):
+        return set_prefilter(func)
+
+    def set_postfilter(self, func):
+        return set_postfilter(func)
 
 
 class ApplicationErrorHandlingMixin(object):
