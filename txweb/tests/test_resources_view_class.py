@@ -9,7 +9,6 @@ def test_basic():
     sentinel_string = "foo_boo_1234"
 
     class StubView():
-        pass
 
         def render_POST(self, request):
             return sentinel_string
