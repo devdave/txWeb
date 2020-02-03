@@ -90,12 +90,6 @@ class DefaultHandler(BaseHandler):
             request.setResponseCode(500, b"Internal server error")
             log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
 
-        if self.enable_debug is True and request.method.lower() != b"head":
-            # TODO return error resource
-            pass
-        else:
-            pass
-
         request.ensureFinished()
         return True
 
