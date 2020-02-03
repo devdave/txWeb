@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import sentinel
 
 from txweb.application import Application
-from txweb.lib.view_class_assembler import view_assembler, expose
+from txweb.lib.view_class_assembler import view_assembler, expose, set_prefilter, set_postfilter
+
 from .helper import RequestRetval
 
 
@@ -33,10 +34,11 @@ def test_provides_pre_filter_support(dummy_request:RequestRetval):
     class PreFoo(object):
 
         @expose("/branch")
-        def do_branch(self):
+        def do_branch(self, request):
             raise ValueError("Prefilter not called")
 
-        def _prefilter(self, request):
+        @set_prefilter
+        def _prefilter(self, request, method_name):
             raise RuntimeError("Prefilter called")
 
     pre_thing = view_assembler("/foo", PreFoo, {})
@@ -66,7 +68,8 @@ def test_provides_post_filter_support(dummy_request:RequestRetval):
         def do_branch(self, request):
             return "do_branch's output"
 
-        def _postfilter(self, request, original_body):
+        @set_postfilter
+        def _postfilter(self, request, request_method, original_body):
             assert original_body == "do_branch's output"
             return "post filter replaced output"
 
@@ -120,3 +123,87 @@ def test_stacked_adds(dummy_request:RequestRetval):
     assert actual.strip().endswith(b"A,B,C")
 
 
+def test_find_pre_and_post_filters():
+
+    app = Application(__name__)
+
+    class Test(object):
+
+        @app.set_prefilter
+        def blank_prefilter(self, request, method_name):
+            return None
+
+        @app.set_postfilter
+        def blank_postfilter(self, request, method_name, response):
+            return response
+
+    from txweb.lib.view_class_assembler import find_member, POSTFILTER_ID, PREFILTER_ID
+
+    test = Test()
+
+    assert hasattr(test.blank_postfilter, POSTFILTER_ID) is True
+    assert hasattr(test.blank_prefilter, PREFILTER_ID) is True
+
+    actual = find_member(test, POSTFILTER_ID)
+    assert actual == test.blank_postfilter
+
+    actual = find_member(test, PREFILTER_ID)
+    assert actual == test.blank_prefilter
+
+    bad = find_member(test, "NOT A REAL THING")
+    assert bad is False
+
+
+
+
+def test_setting_prefilter(dummy_request:RequestRetval):
+
+    from unittest.mock import sentinel
+
+    app = Application(__name__)
+
+    class WasCalled(Exception):
+        pass
+
+
+    class TestPrefilter(object):
+
+        @app.expose("/foo")
+        def stub(self, request):
+            return ""
+
+        @app.set_prefilter
+        def my_prefilter(self, request, method_name):
+            raise WasCalled()
+
+    decorated = view_assembler("/test", TestPrefilter, {})
+    resource_name, resource = next(iter(decorated.endpoints.items()))
+    with pytest.raises(WasCalled):
+        result = resource.render(dummy_request.request)
+
+
+
+def test_setting_postfilter(dummy_request:RequestRetval):
+
+    from unittest.mock import sentinel
+
+    app = Application(__name__)
+
+    class WasCalled(Exception):
+        pass
+
+
+    class TestPostfilter(object):
+
+        @app.expose("/foo")
+        def stub(self, request):
+            return ""
+
+        @app.set_postfilter
+        def my_postfilter(self, request, method_name, response):
+            raise WasCalled()
+
+    decorated = view_assembler("/test", TestPostfilter, {})
+    resource_name, resource = next(iter(decorated.endpoints.items()))
+    with pytest.raises(WasCalled):
+        result = resource.render(dummy_request.request)
