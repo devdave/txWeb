@@ -93,7 +93,7 @@ class StrRequest(Request):
         self.setHeader("Content-Length", content_length)
         self.write(response_body)
         if code is not None:
-            self.setResponseCode(code, message=messsage)
+            self.setResponseCode(code, message=message)
 
         self.ensureFinished()
 
