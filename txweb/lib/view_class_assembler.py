@@ -19,6 +19,8 @@
             return compat.IntToBytes(self.count)
 
 """
+import typing as T
+
 from ..resources import ViewFunctionResource, ViewClassResource
 from txweb.http_codes import UnrenderableException
 from txweb.util.basic import get_thing_name
@@ -35,6 +37,8 @@ import inspect
 EXPOSED_STR = "__exposed__"
 EXPOSED_RULE = "__sub_rule__"
 
+PREFILTER_ID = "__PREFILTER_ID__"
+POSTFILTER_ID = "__POSTFILTER_ID__"
 
 def has_exposed(obj):
     return any([
@@ -78,6 +82,14 @@ def expose(route, **route_kwargs):
         return func
 
     return processor
+
+def set_prefilter(func):
+    setattr(func, PREFILTER_ID, True)
+    return func
+
+def set_postfilter(func):
+    setattr(func, POSTFILTER_ID, True)
+    return func
 
 
 ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
