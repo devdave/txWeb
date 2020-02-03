@@ -70,7 +70,8 @@ class DefaultHandler(BaseHandler):
             if issubclass(reason.type, http_codes.HTTP3xx):
                 exc = reason.value
                 request.redirect(exc.redirect, exc.code)
-                request.writeTotal(html.REDIRECT_BODY.format(url=exc.redirect))
+                response = html.REDIRECT_BODY.format(url=exc.redirect)
+                request.writeTotal(response, code=exc.code, message=exc.message)
             else:
                 exc = reason.value  # type: HTTPCode
                 request.setResponseCode(exc.code, exc.message)
