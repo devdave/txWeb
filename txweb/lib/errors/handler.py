@@ -63,9 +63,17 @@ class DefaultHandler(BaseHandler):
 
         # Check if this is a HTTPCode error
         if request.startedWriting not in [0, False]:
-            # We are done, the HTTP stream to client is already tainted
-            pass
-        if isinstance(http_codes.HTTPCode, reason.type) or issubclass(reason.type, http_codes.HTTPCode):
+            # There is nothing we can do, the out going stream is already tainted
+            try:
+                request.write("!!!Internal Server Error!!!")
+            except:
+                log.exception("Failed writing error message to an active stream")
+            finally:
+                request.ensureFinished()
+
+            return True
+
+        elif isinstance(http_codes.HTTPCode, reason.type) or issubclass(reason.type, http_codes.HTTPCode):
 
             if issubclass(reason.type, http_codes.HTTP3xx):
                 exc = reason.value
