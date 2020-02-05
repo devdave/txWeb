@@ -98,7 +98,7 @@ class WebSite(_RoutingSiteConnectors, object):
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
         self._lastError = reason
-        log.debug(f"Handling exception: {reason!r}")
+        log.error(f"Handling exception: {reason!r}")
 
         try:
             self._errorHandler(request, reason)
