@@ -29,6 +29,10 @@ class HTTP3xx(HTTPCode):
         self.redirect = redirect
         super().__init__(code, message=message)
 
+class HTTP301(HTTP3xx):
+    def __init__(self, redirect):
+        super().__init__(301, redirect, "Moved Permanently")
+
 class HTTP302(HTTP3xx):
     def __init__(self, redirect):
         super().__init__(302, redirect, "FOUND")
@@ -37,13 +41,42 @@ class HTTP303(HTTP3xx):
     def __init__(self, redirect):
         super(HTTP303, self).__init__(303, redirect, message="See Other")
 
+class HTTP304(HTTP3xx):
+    def __init__(self, redirect):
+        super().__init__(304, redirect, "Not Modified")
+
+class HTTP307(HTTP3xx):
+    def __init__(self, redirect):
+        super().__init__(307, redirect, "Temporary Redirect")
+
+class HTTP308(HTTP3xx):
+    def __init__(self, redirect):
+        super().__init__(308, redirect, "Permanent Redirect")
+
 
 class HTTP4xx(HTTPCode):
     pass
 
+class HTTP400(HTTP4xx):
+    def __init__(self):
+        super().__init__(400, "Bad Request")
+
+class HTTP401(HTTP4xx):
+    def __init__(self):
+        super().__init__(401, "Unauthorized")
+
+class HTTP403(HTTP4xx):
+    def __init__(self):
+        super().__init__(403, "Forbidden")
+
 class HTTP404(HTTP4xx):
     def __init__(self, exc=None):
         super().__init__(404, "Resource not found", exc=exc)
+
+class HTTP410(HTTP4xx):
+    def __init__(self):
+        super().__init__(410, "Gone")
+
 
 class HTTP405(HTTP4xx):
     def __init__(self, exc=None):
