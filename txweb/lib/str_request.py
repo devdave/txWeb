@@ -105,7 +105,11 @@ class StrRequest(Request):
         """
             Utility to take a dictionary and convert it to a JSON string
         """
-        return self.write(json.dumps(data))
+        payload = json.dumps(data)
+        content_length = intToBytes(len(payload))
+        self.setHeader("Content-Type", "application/json")
+        self.setHeader("Content-Length", content_length)
+        return self.write(payload)
 
     def setHeader(self, name:T.Union[str, bytes], value:T.Union[str, bytes]):
         """
