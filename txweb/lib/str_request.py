@@ -277,11 +277,9 @@ class StrRequest(Request):
     @property
     def json(self):
         if self.getHeader("Content-Type") not in ["application/json", "text/json"]:
-            raise RuntimeError(
-                "Request content-type is not JSON content type "
-                f"{self.getHeader('Content-Type')!r}")
-
-        return json.loads(self.content.read())
+            return json.loads(self.content.read())
+        else:
+            return None
 
     def redirect(self, url, code = FOUND):
         """
