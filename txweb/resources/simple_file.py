@@ -71,6 +71,12 @@ class SimpleFile(File):
             return ""
 
 
+
+        if self.type == "text/html":
+            request.setHeader("content-type", f"{self.type}; charset=utf-8")
+        else:
+            request.setHeader("content-type", self.type)
+
         if request.setLastModified(self.getModificationTime()) is http.CACHED:
             # TODO research
             return b""
