@@ -162,6 +162,7 @@ class RoutingResource(resource.Resource):
 
     def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
+        endpoint = endpoint or get_thing_name(thing)
 
         new_rule = wz_routing.Rule(route_str, endpoint=endpoint, **route_kwargs)
         self._endpoints[endpoint] = thing
