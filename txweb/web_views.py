@@ -1,4 +1,15 @@
 from __future__ import annotations
+
+#stdlib
+from logging import getLogger
+import pathlib
+import copy
+
+#Third party
+############
+# TODO remove this as a hardwired requirement?
+import jinja2
+
 # txweb imports
 import txweb
 from txweb import resources as txw_resources
@@ -8,18 +19,13 @@ from txweb.resources import RoutingResource
 from txweb import http_codes as HTTP_Errors
 
 
-#Third party
-############
-import jinja2
+
 
 # twisted imports
 from twisted.python import failure
 from twisted.web import server
 
-#stdlib
-from logging import getLogger
-import pathlib
-import copy
+
 
 
 log = getLogger(__name__)
