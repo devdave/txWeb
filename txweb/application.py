@@ -66,7 +66,8 @@ class ApplicationRoutingHelperMixin(object):
 
 
     def add_resource(self, route_str:str, resource, **kwargs):
-        return self.router.add(route_str, **kwargs)(resource)
+        return self.router._add_resource(route_str, thing=resource, route_kwargs=kwargs )
+
 
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> SimpleFile:
         """
@@ -77,7 +78,9 @@ class ApplicationRoutingHelperMixin(object):
         :param default_type: What content type should a file be served as
         :return: twisted.web.static.File
         """
-        file_resource = SimpleFile(filePath, defaultType=defaultType)
+        from twisted.web.static import File as StaticFile
+
+        file_resource = StaticFile(filePath) #SimpleFile(filePath, defaultType=defaultType)
         return self.router.add(route_str)(file_resource)
 
     def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path]) -> Directory:
