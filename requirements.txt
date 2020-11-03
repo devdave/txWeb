@@ -5,6 +5,7 @@ constantly==15.1.0
 decorator==4.1.2
 hyperlink==17.3.1
 incremental==17.5.0
+Jinja2==2.11.2
 MarkupSafe==1.0
 pipdeptree==0.10.1
 py==1.4.34
