@@ -66,16 +66,13 @@ class StrRequest(Request):
             retval = Request.getCookie(self, byte_name)
             return retval.decode("utf-8")
 
-
     def add_before_render(self, func):
         self._call_before_render = func
         return func
 
-
     def add_after_render(self, func):
         self._call_after_render = func
         return func
-
 
     def write(self, data:T.Union[bytes, str]):
 
@@ -108,9 +105,6 @@ class StrRequest(Request):
         self.write(response_body)
         self.ensureFinished()
 
-
-
-
     def writeJSON(self, data:T.Dict):
         """
             Utility to take a dictionary and convert it to a JSON string
@@ -137,8 +131,8 @@ class StrRequest(Request):
 
         return Request.setHeader(self, name, value)
 
-    def setResponseCode(self, code:int=500, message:T.Optional[T.Union[str,bytes]]=b"Failure processing request"):
-        if message and not isinstance(message,bytes):
+    def setResponseCode(self, code:int=500, message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
+        if message and not isinstance(message, bytes):
             message = message.encode("utf-8")
 
         return Request.setResponseCode(self, code, message)
