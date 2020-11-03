@@ -74,7 +74,7 @@ class StrRequest(Request):
         self._call_after_render = func
         return func
 
-    def write(self, data:T.Union[bytes, str]):
+    def write(self, data: T.Union[bytes, str]):
 
         if isinstance(data, str):
             data = data.encode("utf-8")
@@ -86,8 +86,8 @@ class StrRequest(Request):
 
         return Request.write(self, data)
 
-    def writeTotal(self, response_body:T.Union[bytes, str], code:T.Union[int, str, bytes] = None,
-                   message:T.Union[bytes, str]=None) -> T.NoReturn:
+    def writeTotal(self, response_body: T.Union[bytes, str], code: T.Union[int, str, bytes] = None,
+                   message:T.Union[bytes, str] = None) -> T.NoReturn:
         """
         
         :param response_body: Content intended for after headers 
@@ -131,7 +131,7 @@ class StrRequest(Request):
 
         return Request.setHeader(self, name, value)
 
-    def setResponseCode(self, code:int=500, message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
+    def setResponseCode(self, code: int = 500, message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
         if message and not isinstance(message, bytes):
             message = message.encode("utf-8")
 
@@ -210,7 +210,7 @@ class StrRequest(Request):
             if self._call_after_render is not None:
                 self._call_after_render(self, body)
         except:
-            #log.exception(f"While processing {self.method!r} {self.uri}")
+            # log.exception(f"While processing {self.method!r} {self.uri}")
             raise
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
