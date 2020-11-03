@@ -2,8 +2,7 @@ import typing as T
 
 from werkzeug.routing import BaseConverter
 
-
-class DirectoryPath(BaseConverter):
+class DirectoryPath(BaseConverter): # pragma: no cover
     """
         Rule("/whatever/<directory:foo>") is a black hole rule in that
         whatever starts with /whatever will end up being caught by this rule.
