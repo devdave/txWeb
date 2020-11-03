@@ -224,7 +224,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
         self._router = RoutingResource()
         self._site = WebSite(self._router, request_factory=Application.request_factory_partial(self, request_factory))
         self._router.site = self._site
-        self._reactor = twisted_reactor or None  # type: PosixReactorBase
+        self._reactor = twisted_reactor or reactor  # type: PosixReactorBase
 
         self.name = namespace
         self._listening_port = None
@@ -288,6 +288,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
     @reactor.setter
     def reactor(self, reactor: PosixReactorBase):
         self._reactor = reactor
+
+
 
     def listenTCP(self, port:int, interface:str= "127.0.0.1") -> Port:
         """
