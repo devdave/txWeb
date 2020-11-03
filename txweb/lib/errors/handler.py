@@ -4,17 +4,14 @@ from pathlib import Path
 import linecache
 from dataclasses import dataclass
 
-
 from twisted.python.failure import Failure
 from twisted.python.compat import intToBytes
-from twisted.python.failure import Failure
 
 from txweb.log import getLogger
 from ... import http_codes
 from . import html
 from ..str_request import StrRequest
 from txweb.lib.str_request import StrRequest
-
 
 
 @dataclass
@@ -24,48 +21,54 @@ class FormattedFrame(object):
     line_no: int
     line: bytes
 
+
 class StackFrame(T.NamedTuple):
-    funcName:str
-    fileName:str
-    lineNumber:int
-    localsItems:T.Dict[str,T.Any]
-    globalsItems:T.Dict[str, T.Any]
+    funcName: str
+    fileName: str
+    lineNumber: int
+    localsItems: T.Dict[str, T.Any]
+    globalsItems: T.Dict[str, T.Any]
 
 
 log = getLogger(__name__)
+
 
 class BaseHandler(object):
 
     def __init__(self, application):
         self.application = application
 
-    def __call__(self, request: StrRequest, reason:Failure) -> None:
+    def __call__(self, request: StrRequest, reason: Failure) -> None:
+        # noinspection PyBroadException
         try:
             self.process(request, reason)
-        except:
+        except Exception:
             log.exception("PANIC - There was an exception in the error handler.")
             request.ensureFinished()
 
-    def process(self, request: StrRequest, reason:Failure) -> None:
+    def process(self, request: StrRequest, reason: Failure) -> None:
         raise NotImplementedError("Attempting to use Base error handler")
 
+
+# noinspection PyMissingConstructor
 class DefaultHandler(BaseHandler):
     """
         Goal:  Delegate various errors to templates to make
             a visual error system easier to view.
     """
 
-    def __init__(self, enable_debug = False):
+    def __init__(self, enable_debug=False):
+
         self.enable_debug = enable_debug
 
-    def process(self, request: StrRequest, reason:Failure) -> None:
+    def process(self, request: StrRequest, reason: Failure) -> bool:
 
-        # Check if this is a HTTPCode error
         if request.startedWriting not in [0, False]:
             # There is nothing we can do, the out going stream is already tainted
+            # noinspection PyBroadException
             try:
                 request.write("!!!Internal Server Error!!!")
-            except:
+            except Exception:
                 log.exception("Failed writing error message to an active stream")
             finally:
                 request.ensureFinished()
@@ -114,14 +117,14 @@ class DebugHandler(BaseHandler):
         * txweb beyond the first or second frame.
 
     """
-    def process(self, request: StrRequest, reason:Failure) -> None:
+    def process(self, request: StrRequest, reason: Failure) -> None:
         error_items = []
-        for formated_frame in self.format_stack(reason.frames):
-            error_items.append(html.ERROR_ITEM.format(**formated_frame))
+        for formatted_frame in self.format_stack(reason.frames):
+            error_items.append(html.ERROR_ITEM.format(**formatted_frame))
 
         error_list = html.ERROR_LIST.format(error_items="\n".join(error_items))
 
-        content = html.ERROR_CONTENT.format(digest=repr(reason.value),error_list=error_list)
+        content = html.ERROR_CONTENT.format(digest=repr(reason.value), error_list=error_list)
         body = html.ERROR_BODY.format(content=content)
 
         if issubclass(reason.type, HTTPCode):
@@ -142,4 +145,3 @@ class DebugHandler(BaseHandler):
             )
 
         linecache.clearcache()
-
