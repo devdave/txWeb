@@ -56,6 +56,16 @@ class StrRequest(Request):
         self._call_before_render = None
         self._call_after_render = None
 
+    def getCookie(self, cookie_name:T.Union[str, bytes]):
+        expectBytes = isinstance(cookie_name, bytes)
+
+        if expectBytes:
+            return Request.getCookie(self, cookie_name)
+        else:
+            byte_name = cookie_name.encode("ascii")
+            retval = Request.getCookie(self, byte_name)
+            return retval.decode("utf-8")
+
 
     def add_before_render(self, func):
         self._call_before_render = func
