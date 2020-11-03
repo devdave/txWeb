@@ -113,3 +113,5 @@ def test_correctly_processes_redirects(dummy_request:RequestRetval):
     dummy_request.request.requestReceived(b"GET", b"/", b"HTTP/1.1")
     response = dummy_request.read()
     assert dummy_request.response_contains(b"302 FOUND")
+    assert dummy_request.response_contains(b"Location: /foo")
+    assert dummy_request.response_contains(b"<title>Redirecting to /foo</title>")
