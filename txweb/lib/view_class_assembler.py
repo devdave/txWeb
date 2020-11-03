@@ -20,19 +20,15 @@
 
 """
 import typing as T
-
-from ..resources import ViewFunctionResource, ViewClassResource
-from txweb.http_codes import UnrenderableException
-from txweb.util.basic import get_thing_name
-
 from collections import namedtuple
 import inspect
 
 from werkzeug.routing import Rule, Submount
 
+from ..resources import ViewFunctionResource, ViewClassResource
+from txweb.http_codes import UnrenderableException
+from txweb.util.basic import get_thing_name
 
-
-import inspect
 
 EXPOSED_STR = "__exposed__"
 EXPOSED_RULE = "__sub_rule__"

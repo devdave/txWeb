@@ -13,6 +13,11 @@
     and into the twisted library.   Unfortunately this is a doozy of a sub-project as its not just Request but also
     headers logic.
 """
+import cgi
+import json
+from urllib.parse import parse_qs
+import typing as T
+
 from twisted.python import reflect
 from twisted.web.error import UnsupportedMethod
 from twisted.web.server import Request, NOT_DONE_YET, supportedMethods
@@ -26,11 +31,6 @@ from twisted.python.compat import _PY3, _PY37PLUS, nativeString, escape, intToBy
 
 from werkzeug.formparser import FormDataParser
 from werkzeug.datastructures import MultiDict
-
-import cgi
-import json
-from urllib.parse import parse_qs
-import typing as T
 
 from ..log import getLogger
 from ..http_codes import HTTP500
