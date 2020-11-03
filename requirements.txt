@@ -15,7 +15,7 @@ pytest==3.2.3
 pytest-cov==2.5.1
 pyzmq==17.1.2
 six==1.11.0
-Twisted==19.10.0
+Twisted==20.3.0
 txZMQ==0.8.0
 Werkzeug==0.16.0
 zope.interface==4.4.3
