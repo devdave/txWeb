@@ -89,6 +89,7 @@ class DefaultHandler(BaseHandler):
         else:
             request.setResponseCode(500, b"Internal server error")
             log.debug(f"Non-HTTPCode error was caught: {reason.type} - {reason.value}")
+            reason.raiseException()
 
         request.ensureFinished()
         return True
