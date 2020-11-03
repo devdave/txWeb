@@ -1,14 +1,13 @@
-from txweb.lib.str_request import StrRequest
+import errno
+from pathlib import Path
+import typing as T
 
 from twisted.web.static import File, getTypeAndEncoding
 from twisted.web.server import NOT_DONE_YET
 from twisted.web import http
-
 from twisted.python import log
 
-import errno
-from pathlib import Path
-import typing as T
+from txweb.lib.str_request import StrRequest
 
 
 class SimpleFile(File):
