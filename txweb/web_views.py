@@ -31,7 +31,7 @@ from twisted.web import server
 log = getLogger(__name__)
 
 import typing as T
-if T.TYPE_CHECKING:
+if T.TYPE_CHECKING: # pragma: no cover
     # No executable intended for type hints only
     import pathlib
 
