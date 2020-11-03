@@ -37,13 +37,13 @@ from ..http_codes import HTTP500
 
 log = getLogger(__name__)
 
-if T.TYPE_CHECKING: # pragma: no cover
+if T.TYPE_CHECKING:  # pragma: no cover
     from werkzeug import FileStorage
 
 
 class StrRequest(Request):
 
-    NOT_DONE_YET: T.Union[int, bool]  = NOT_DONE_YET
+    NOT_DONE_YET: T.Union[int, bool] = NOT_DONE_YET
 
     def __init__(self, *args, **kwargs):
 
@@ -56,10 +56,10 @@ class StrRequest(Request):
         self._call_before_render = None
         self._call_after_render = None
 
-    def getCookie(self, cookie_name:T.Union[str, bytes]):
-        expectBytes = isinstance(cookie_name, bytes)
+    def getCookie(self, cookie_name: T.Union[str, bytes]):
+        expect_bytes = isinstance(cookie_name, bytes)
 
-        if expectBytes:
+        if expect_bytes:
             return Request.getCookie(self, cookie_name)
         else:
             byte_name = cookie_name.encode("ascii")
@@ -191,13 +191,13 @@ class StrRequest(Request):
                 key = key.decode("utf-8") if isinstance(key, bytes) else key
                 for val in values:
                     val = val.decode("utf-8") if isinstance(val, bytes) else val
-                    yield (key, val,)
+                    yield key, val,
 
         self.args = MultiDict(list(query_iter(query_args)))
 
         self.process()
 
-    def render(self, resrc):
+    def render(self, resrc: resource.Resource) -> None:
         """
         Ask a resource to render itself.
 
@@ -257,10 +257,8 @@ class StrRequest(Request):
         """
         options = {}
 
-
         if isinstance(content_type, bytes):
             content_type = content_type.decode("utf-8")  # type: str
-
 
         if ";" in content_type:
             """
@@ -276,7 +274,7 @@ class StrRequest(Request):
 
         content_length = int(content_length)
 
-        self.content.seek(0,0)
+        self.content.seek(0, 0)
         parser = FormDataParser()
         _, self.form, self.files = parser.parse(self.content, content_type, content_length, options=options)
         self.content.seek(0, 0)
@@ -291,7 +289,7 @@ class StrRequest(Request):
         else:
             return None
 
-    def redirect(self, url:T.Union[str, bytes], code = FOUND):
+    def redirect(self, url: T.Union[str, bytes], code=FOUND):
         """
         Utility function that does a redirect.
 
@@ -301,6 +299,7 @@ class StrRequest(Request):
         The request should have C{finish()} called after this.
 
         @param url: I{Location} header value.
+        @param code: {int} http response code to use
         @type url: L{bytes} or L{str}
         """
         self.setResponseCode(code)
