@@ -22,7 +22,11 @@ TxWeb is an overlay above the twisted.web module/package along with providing a 
 
 ```python
 
+from twisted.internet import reactor
+
 from txweb import Application
+
+
 
 app = Application(__name__)
 
@@ -45,7 +49,8 @@ def handle_form(request):
     input1 = request.form.get("input1")
     return ""
 
- 
+app.listenTCP(8080)
+reactor.run() 
 
 
     
