@@ -281,7 +281,7 @@ class StrRequest(Request):
         else:
             return None
 
-    def redirect(self, url, code = FOUND):
+    def redirect(self, url:T.Union[str, bytes], code = FOUND):
         """
         Utility function that does a redirect.
 
