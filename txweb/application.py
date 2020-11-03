@@ -20,6 +20,7 @@ import sys
 from twisted.internet.tcp import Port
 from twisted.internet import reactor # type: PosixReactorBase
 from twisted.python.compat import intToBytes
+from twisted.web.static import File
 log.debug(f"Loaded reactor: {reactor!r}")
 
 from .resources import RoutingResource, SimpleFile, Directory
@@ -60,6 +61,9 @@ class ApplicationRoutingHelperMixin(object):
         :return:
         """
         return self.router.add(route_str, **kwargs)
+
+    # mimic flask's API
+    route = add
 
     def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
         return self.router.add(route_str, **kwargs)
