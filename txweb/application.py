@@ -83,16 +83,28 @@ class ApplicationRoutingHelperMixin(object):
         file_resource = StaticFile(filePath) #SimpleFile(filePath, defaultType=defaultType)
         return self.router.add(route_str)(file_resource)
 
-    def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path]) -> Directory:
+    def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> Directory:
 
         if route_str.endswith("/") is False:
             route_str += "/"
 
-        directory_resource = Directory(dirPath)
+        directory_resource = Directory(dirPath, recurse)
 
         self.router.add_directory(route_str, directory_resource)
 
         return directory_resource
+
+    def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> File:
+
+        if route_str.endswith("/") is False:
+            route_str += "/"
+
+        directory_resource = File(dirPath)
+
+        self.router.add_directory(route_str, directory_resource)
+
+        return directory_resource
+
 
     def expose(self, route_str, **kwargs):
         # TODO make route_str optional somehow
