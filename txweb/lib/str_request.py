@@ -191,6 +191,15 @@ class StrRequest(Request):
 
         self.process()
 
+
+    @property
+    def methodIsPost(self):
+        return self.method == b"POST"
+
+    @property
+    def methodIsGet(self):
+        return self.method == b"GET"
+
     def render(self, resrc: resource.Resource) -> None:
         """
         Ask a resource to render itself.
