@@ -64,7 +64,10 @@ class StrRequest(Request):
         else:
             byte_name = cookie_name.encode("ascii")
             retval = Request.getCookie(self, byte_name)
-            return retval.decode("utf-8")
+            if retval is not None:
+                return retval.decode("utf-8")
+            else:
+                return None
 
     def add_before_render(self, func):
         self._call_before_render = func
