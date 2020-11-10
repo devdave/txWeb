@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 #stdlib
-from logging import getLogger
 import pathlib
 import copy
 
@@ -10,6 +9,7 @@ import copy
 # TODO remove this as a hardwired requirement?
 import jinja2
 
+
 # txweb imports
 import txweb
 from txweb import resources as txw_resources
@@ -17,6 +17,7 @@ from txweb.lib.str_request import StrRequest
 from txweb.lib import view_class_assembler as vca
 from txweb.resources import RoutingResource
 from txweb import http_codes as HTTP_Errors
+from txweb.log import getLogger
 
 
 
@@ -88,6 +89,7 @@ class WebSite(_RoutingSiteConnectors, object):
         Purpose: provide a hook for error handling and maybe a global template system
 
     """
+    my_log = getLogger()
     _errorHandler: ErrorHandler
 
     def __init__(self, routing_resource=None, request_factory=StrRequest, siteErrorHandler=None):
@@ -104,13 +106,13 @@ class WebSite(_RoutingSiteConnectors, object):
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
         self._lastError = reason
-        log.error(f"Handling exception: {reason!r}")
+        # self.my_log.error("Handling exception: {reason!r}", reason=reason)
 
         try:
             self._errorHandler(request, reason)
         except Exception as exc:
             #Dear god wtf went wrong?
-            log.error(f"Exception occurred while handling {reason!r}")
+            self.my_log.error(f"Exception occurred while handling {reason!r}")
             raise
 
     def addErrorHandler(self, func: ErrorHandler):
