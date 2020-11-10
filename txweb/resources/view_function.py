@@ -7,7 +7,7 @@ import typing as T
 
 
 PrefilterFunc = T.NewType("PrefilterFunc", T.Callable[["StrRequest"], None])
-PostFilterFunc = T.NewType("PostFilterFunc", T.Callable[["StrRequest", T.Union[str, bytes]], T.Union[str,bytes]])
+PostFilterFunc = T.NewType("PostFilterFunc", T.Callable[["StrRequest", T.Union[str, bytes]], T.Union[str, bytes]])
 
 
 class ViewFunctionResource(resource.Resource):
@@ -15,11 +15,12 @@ class ViewFunctionResource(resource.Resource):
     isLeaf: T.ClassVar[T.Union[bool, int]] = True
 
     # noinspection PyMissingConstructor
-    def __init__(self, func: T.Callable, prefilter:T.Union[PrefilterFunc, None]=None, postfilter:T.Union[PostFilterFunc, None]=None):
+    def __init__(self, func: T.Callable,
+                 prefilter: T.Union[PrefilterFunc, None] = None,
+                 postfilter: T.Union[PostFilterFunc, None] = None):
         self.func = func
         self.prefilter = prefilter
         self.postfilter = postfilter
-
 
     @classmethod
     def Wrap(cls, func):
@@ -44,4 +45,3 @@ class ViewFunctionResource(resource.Resource):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} at {id(self)!r} func={self.func!r}/>"
-
