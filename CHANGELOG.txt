@@ -1,10 +1,14 @@
-2020
+2020-11
     TxWeb (Texas web) is coming along.   There are a few outstanding issues:
     Fix error handling
     Fix static directory serving
+        New direction is to overload tx.web.static.Directory to provide two features: no recursion flag and also a no directory lister option.
     Cleanup code more
     Documentation
     More unit tests
+
+2020-11
+    Autobahn integration is working well in auto_texas side project.
 
 2019-11-16
     There are still a lot of features to add (eg. File directory support) but I am happy with the refactor
