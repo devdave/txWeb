@@ -43,7 +43,7 @@ class BaseHandler(object):
         try:
             self.process(request, reason)
         except Exception:
-            log.exception("PANIC - There was an exception in the error handler.")
+            log.error("PANIC - There was an exception in the error handler.")
             request.ensureFinished()
 
     def process(self, request: StrRequest, reason: Failure) -> None:
@@ -69,7 +69,7 @@ class DefaultHandler(BaseHandler):
             try:
                 request.write("!!!Internal Server Error!!!")
             except Exception:
-                log.exception("Failed writing error message to an active stream")
+                log.error("Failed writing error message to an active stream")
             finally:
                 request.ensureFinished()
 

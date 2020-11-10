@@ -326,14 +326,14 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
             try:
                 func(request)
             except Exception:
-                log.exception(f"Before render failed {func}")
+                log.error(f"Before render failed {func}")
 
     def _call_after_render(self, request: StrRequest, body:T.Union[bytes,str,int]):
         for func in self._after_render_handlers:
             try:
                 func(request)
             except Exception:
-                log.exception(f"After render failed {func}")
+                log.error(f"After render failed {func}")
 
 
 
