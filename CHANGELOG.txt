@@ -1,3 +1,10 @@
+2020
+    TxWeb (Texas web) is coming along.   There are a few outstanding issues:
+    Fix error handling
+    Fix static directory serving
+    Cleanup code more
+    Documentation
+    More unit tests
 
 2019-11-16
     There are still a lot of features to add (eg. File directory support) but I am happy with the refactor
