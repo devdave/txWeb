@@ -6,7 +6,9 @@ from twisted.web import resource
 import typing as T
 
 
+# Prefilter takes StrRequest as first argument and second argument is the actual wrapped view function
 PrefilterFunc = T.NewType("PrefilterFunc", T.Callable[["StrRequest"], None])
+# Postfilter takes StrRequest, wrapped view func, and the output of the view func
 PostFilterFunc = T.NewType("PostFilterFunc", T.Callable[["StrRequest", T.Union[str, bytes]], T.Union[str, bytes]])
 
 
