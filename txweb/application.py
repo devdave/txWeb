@@ -11,15 +11,17 @@
 """
 from __future__ import annotations
 
+# Stdlib
 from pathlib import Path
 import typing as T
 import sys
-
+# 3rd party
 from twisted.internet.tcp import Port
-from twisted.internet import reactor # type: PosixReactorBase
+from twisted.internet.posixbase import PosixReactorBase
+from twisted.internet import reactor  # type: PosixReactorBase
 from twisted.python.compat import intToBytes
 from twisted.web.static import File
-log.debug(f"Loaded reactor: {reactor!r}")
+from twisted.python import failure
 
 # Application
 from .log import getLogger
@@ -29,8 +31,6 @@ from .web_views import WebSite
 from .http_codes import HTTPCode
 from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
 
-from twisted.python import failure
-from twisted.internet.posixbase import PosixReactorBase
 
 log = getLogger(__name__)
 
