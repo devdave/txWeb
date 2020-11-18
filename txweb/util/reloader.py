@@ -78,7 +78,7 @@ _watch_list = {}
 _win = (sys.platform == "win32")
 
 
-def build_list(root_dir, watch_self=False):
+def build_list(root_dir, watch_self=False, ignore_prefix=None):
     """
         Walk from root_dir down, collecting all files that end with ^*.py$ to watch
 
@@ -95,15 +95,19 @@ def build_list(root_dir, watch_self=False):
     if watch_self is True:
         import txweb
         print("RELOADER: Watching self")
-        build_list(pathlib.Path(txweb.__file__).parent.absolute())
+        build_list(pathlib.Path(txweb.__file__).parent.absolute(), ignore_prefix=ignore_prefix)
 
+    is_list = lambda obj: obj is not None and isinstance(obj, list)
 
     for pathobj in root_dir.iterdir():
         if pathobj.is_dir():
-            build_list(pathobj, watch_self=False)
+            build_list(pathobj, watch_self=False, ignore_prefix=ignore_prefix)
         elif pathobj.name.endswith(".py") and not (pathobj.name.endswith(".pyc") or pathobj.name.endswith(".pyo")):
             stat = pathobj.stat()
-            _watch_list[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+            if is_list(ignore_prefix) and any([pathobj.name.startswith(prefix) for prefix in ignore_prefix]) is False:
+                _watch_list[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+            else:
+                log.debug("Ignoring", pathobj.name)
         else:
             pass
 
@@ -130,10 +134,10 @@ def file_changed():
     return change_detected
 
 
-def watch_thread(os_exit=SENTINEL_OS_EXIT, watch_self=False):
+def watch_thread(os_exit=SENTINEL_OS_EXIT, watch_self=False, ignore_prefix=None):
     exit_func = os._exit if os_exit is True else sys.exit
 
-    build_list(pathlib.Path(os.getcwd()), watch_self=watch_self)
+    build_list(pathlib.Path(os.getcwd()), watch_self=watch_self, ignore_prefix=ignore_prefix)
 
     while True:
         if file_changed():
@@ -157,7 +161,7 @@ def run_reloader():
             return exit_code
 
 
-def reloader_main(main_func, *args, watch_self=False, **kwargs):
+def reloader_main(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
     """
 
     :param main_func:
@@ -170,7 +174,7 @@ def reloader_main(main_func, *args, watch_self=False, **kwargs):
     # If it is, start watcher thread and then run the main_func in the parent process as thread 0
     if os.environ.get(SENTINEL_NAME) == "true":
 
-        thread.start_new_thread(watch_thread, (), {"os_exit": SENTINEL_OS_EXIT, "watch_self": watch_self})
+        thread.start_new_thread(watch_thread, (), {"os_exit": SENTINEL_OS_EXIT, "watch_self": watch_self, "ignore_prefix": ignore_prefix})
         try:
             main_func(*args, **kwargs)
         except KeyboardInterrupt:
@@ -185,9 +189,9 @@ def reloader_main(main_func, *args, watch_self=False, **kwargs):
             pass
 
 
-def reloader(main_func, *args, watch_self=False, **kwargs):
+def reloader(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
     """
-        To avoid fucking with twisted as much as possible, the watcher logic is shunted into
+        To avoid messing with twisted as much as possible, the watcher logic is shunted into
         a thread while the main (twisted) reactor runs in the main thread.
 
     :param main_func: The function to run in the main/primary thread
@@ -201,7 +205,7 @@ def reloader(main_func, *args, watch_self=False, **kwargs):
     if kwargs is None:
         kwargs = {}
 
-    reloader_main(main_func, *args, watch_self=watch_self, **kwargs)
+    reloader_main(main_func, *args, watch_self=watch_self, ignore_prefix=ignore_prefix, **kwargs)
 
 
 """
