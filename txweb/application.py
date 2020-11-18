@@ -10,8 +10,6 @@
 
 """
 from __future__ import annotations
-from .log import getLogger
-log = getLogger(__name__)
 
 from pathlib import Path
 import typing as T
@@ -23,6 +21,8 @@ from twisted.python.compat import intToBytes
 from twisted.web.static import File
 log.debug(f"Loaded reactor: {reactor!r}")
 
+# Application
+from .log import getLogger
 from .resources import RoutingResource, SimpleFile, Directory
 from .lib import StrRequest, expose_method, set_prefilter, set_postfilter
 from .web_views import WebSite
@@ -32,6 +32,7 @@ from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
 from twisted.python import failure
 from twisted.internet.posixbase import PosixReactorBase
 
+log = getLogger(__name__)
 
 if T.TYPE_CHECKING:
 
