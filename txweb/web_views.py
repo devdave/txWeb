@@ -96,7 +96,8 @@ class WebSite(_RoutingSiteConnectors, object):
         routing_resource = routing_resource or RoutingResource()
         request_factory = request_factory or StrRequest
 
-        super(WebSite, self).__init__(routing_resource, requestFactory=request_factory)
+        _RoutingSiteConnectors.__init__(self, routing_resource, requestFactory=request_factory)
+
         self._errorHandler = siteErrorHandler or WebSite.defaultSiteErrorHandler
         self._lastError = None
 
