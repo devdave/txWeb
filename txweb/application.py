@@ -289,10 +289,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
         return self._reactor
 
     @reactor.setter
-    def reactor(self, reactor: PosixReactorBase):
-        self._reactor = reactor
-
-
+    def reactor(self, active_reactor: PosixReactorBase):
+        self._reactor = active_reactor
 
     def listenTCP(self, port:int, interface:str= "127.0.0.1") -> Port:
         """
