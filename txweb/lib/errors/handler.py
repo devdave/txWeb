@@ -42,9 +42,10 @@ class BaseHandler(object):
         # noinspection PyBroadException
         try:
             self.process(request, reason)
-        except Exception:
+        except Exception as exc:
             log.error("PANIC - There was an exception in the error handler.")
             request.ensureFinished()
+            raise exc
 
     def process(self, request: StrRequest, reason: Failure) -> None:
         raise NotImplementedError("Attempting to use Base error handler")
