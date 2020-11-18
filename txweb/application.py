@@ -36,7 +36,6 @@ log = getLogger(__name__)
 
 if T.TYPE_CHECKING:
 
-
     ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
     ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
 
@@ -84,8 +83,8 @@ class ApplicationRoutingHelperMixin(object):
         :return: twisted.web.static.File
         """
         from twisted.web.static import File as StaticFile
-
-        file_resource = StaticFile(filePath) #SimpleFile(filePath, defaultType=defaultType)
+        assert Path(filePath).exists()
+        file_resource = StaticFile(filePath)
         return self.router.add(route_str)(file_resource)
 
     def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> Directory:
@@ -173,7 +172,6 @@ class ApplicationErrorHandlingMixin(object):
             raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {handler}")
 
         self.error_handlers[error_type] = handler
-
 
     def processingFailed(self, request:StrRequest, reason: failure.Failure):
 
