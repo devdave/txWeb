@@ -146,7 +146,6 @@ class WebSite(_RoutingSiteConnectors, object):
             message = "Processing aborted"
             buffer = template.render(code=code, message=message, traceback=traceback)
             reason.printDetailedTraceback()
-            # reason.raiseException()
 
         request.setHeader(b'content-type', b"text/html")
         request.setHeader(b'content-length', str(len(buffer)).encode("utf-8"))
