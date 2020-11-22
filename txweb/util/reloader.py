@@ -94,7 +94,7 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
 
     if watch_self is True:
         import txweb
-        print("RELOADER: Watching self")
+        log.info("RELOADER: Watching self")
         build_list(pathlib.Path(txweb.__file__).parent.absolute(), ignore_prefix=ignore_prefix)
 
     is_list = lambda obj: obj is not None and isinstance(obj, list)
@@ -107,7 +107,8 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
             if is_list(ignore_prefix) and any([pathobj.name.startswith(prefix) for prefix in ignore_prefix]) is False:
                 _watch_list[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
             else:
-                log.debug("Ignoring", pathobj.name)
+                # print("Ignoring", pathobj.name)
+                pass
         else:
             pass
 
@@ -128,7 +129,7 @@ def file_changed():
             change_detected = True
 
         if change_detected:
-            log.debug(f"RELOADING - {pathobj} changed")
+            print(f"RELOADING - {pathobj} changed")
             break
 
     return change_detected
