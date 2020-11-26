@@ -1,3 +1,4 @@
+import pytest
 
 from txweb import Application
 from txweb.lib.errors.handler import DebugHandler
@@ -22,9 +23,10 @@ def test_handler_catches_error(dummy_request:RequestRetval):
 
     @app.add("/foo")
     def handle_foo(request):
-        raise Exception()
+        raise RuntimeError()
 
-    dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
+    with pytest.raises(RuntimeError):
+        dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
 
     dummy_request.request.transport.written.seek(0,0)
     content = dummy_request.request.transport.written.read()
@@ -42,7 +44,8 @@ def test_handler_catches_resources_that_return_none(dummy_request:RequestRetval)
     def handle_foo(request):
         pass
 
-    dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
+    with pytest.raises(RuntimeError):
+        dummy_request.request.requestReceived(b"GET", b"/foo", b"HTTP/1.1")
 
     dummy_request.request.transport.written.seek(0, 0)
     content = dummy_request.request.transport.written.read()

@@ -48,8 +48,9 @@ def test_see_what_happens_with_bad_resources(dummy_request:RequestRetval, caplog
     def handle_foo(request):
         raise RuntimeError("Where is this caught?")
 
-    with caplog.at_level(logging.DEBUG):
-        dummy_request.request.requestReceived(B"GET", b"/foo", b"HTTTP/1.1")
+    with pytest.raises(RuntimeError):
+        with caplog.at_level(logging.DEBUG):
+            dummy_request.request.requestReceived(B"GET", b"/foo", b"HTTTP/1.1")
 
     assert dummy_request.request.code == 500
     assert dummy_request.read().startswith(b"HTTTP/1.1 500 Internal server error")
