@@ -30,11 +30,13 @@ try:
     import autobahn
 except ImportError:
     AUTOBAHN_MISSING = True
+    print("Unable to support websockets:  `pip install autobahn` to enable")
 else:
     AUTOBAHN_MISSING = False
     from .lib.at_wsprotocol import AtWSProtocol
     from .lib.message_handler import MessageHandler
     from .lib.routed_factory import RoutedWSFactory
+    from autobahn.twisted.resource import WebSocketResource
 
 # Application
 from .log import getLogger
@@ -76,7 +78,7 @@ class ApplicationWebsocketMixin(object):
         if AUTOBAHN_MISSING is True:
             raise EnvironmentError("Unable to provide websocket support without autobahn installed/present")
 
-        self.ws_factory = RoutedWSFactory(url, self.ws_endpoints)
+        self.ws_factory = RoutedWSFactory(url, self.ws_endpoints, application=self)
         self.ws_resource = WebSocketResource(self.ws_factory)
         self.add_resource(route, self.ws_resource)
 
@@ -116,23 +118,23 @@ class ApplicationWebsocketMixin(object):
         arg_keys = {}
         for param_name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
-                if param.name in ["connection", "message"]:
-                    raise TypeError(f"Cannot use assign_args when using keyword arguments `connection` or `message`: {param.name}")
+                if param.name in ["message"]:
+                    raise TypeError(f"Cannot use assign_args when using keyword argument `message`: {param.name}")
                 arg_keys[param_name] = param.default
 
-        if "connection" not in params or "message" not in params:
-            raise TypeError("ws_expose convention expects (self, connection, message, **kwargs)")
+        if "message" not in params:
+            raise TypeError("ws_expose convention expects (self, message, **kwargs)")
 
 
         @functools.wraps(func)
-        def argument_decorator(parent, connection, message):
+        def argument_decorator(parent, message):
             kwargs = {}
 
 
             for arg_name, arg_default in arg_keys.items():
                 kwargs[arg_name] = message.get(arg_name, arg_default)
 
-            return func(parent, connection, message, **kwargs)
+            return func(parent, message, **kwargs)
 
         return argument_decorator
 
@@ -142,22 +144,22 @@ class ApplicationWebsocketMixin(object):
         arg_keys = {}
         for name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
-                if param.name in ["connection", "message"]:
+                if param.name in ["message"]:
                     raise TypeError(
-                        f"Cannot use assign_args when using keyword arguments `connection` or `message`: {param.name}")
+                        f"Cannot use assign_args when using keyword arguments `message`: {param.name}")
                 arg_keys[name] = param.default
 
-        if "connection" not in params or "message" not in params:
-            raise TypeError("ws_add convention expects (connection, message)")
+        if "message" not in params:
+            raise TypeError("ws_add convention expects endpoint(message)")
 
         @functools.wraps(func)
-        def argument_decorator(connection, message: MessageHandler):
+        def argument_decorator(message: MessageHandler):
             kwargs = {}
 
             for name, default in arg_keys.items():
                 kwargs[name] = message.args(name, default=default) #TODO also use annotation for type-casting
 
-            return func(connection, message, **kwargs)
+            return func(message, **kwargs)
 
         return argument_decorator
 

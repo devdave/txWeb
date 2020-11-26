@@ -71,24 +71,38 @@ class ResilientSocket {
         this._sendRaw(JSON.stringify(msg));
     }
 
+    async sendResponse(caller_id, result){
+        let msg = {type:"response", caller_id:caller_id, result:result}
+        this._sendRaw(JSON.stringify(msg));
+    }
+
     async receiveMsg(msg) {
         if(this.debug) {
             console.debug(msg);
         }
 
         let data = JSON.parse(msg.data);
-        if (data['type'] == "ask") {
+        if (data['type'] == "response") {
             let d = this.pending[data['caller_id']];
             d.fire(data.result);
             delete this.pending[data['caller_id']];
         }
-        else if(data['type'] == "call" || data['type'] == "tell") {
-            if(this.endpoints[data['endpoint']] != undefined){
-                let endpoint = this.endpoints[data['endpoint']];
-                let response = await endpoint(data['arguments'], data);
+        else if(data['type'] == "tell") {
+            if (this.endpoints[data['endpoint']] != undefined) {
+                const endpoint = this.endpoints[data['endpoint']];
+                await endpoint(data.args);
             } else {
-                console.error(`Tell the user that ${data['endpoint']} doesn't exist`);
+                console.error(`Tell the user that ${data['endpoint']} doesn't exist`, data);
             }
+        } else if(data['type'] == "ask") {
+            if(this.endpoints[data['endpoint']] != undefined) {
+                const endpoint = this.endpoints[data['endpoint']];
+                let result = await endpoint(data.args);
+                await this.sendResponse(data['caller_id'], result);
+            } else{
+                console.error(`User asked for ${data['endpoint']} that doesn't exist`, data);
+            }
+
         } else {
             console.error("unhandled message", data);
         }
