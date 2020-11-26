@@ -15,13 +15,26 @@ from __future__ import annotations
 from pathlib import Path
 import typing as T
 import sys
+import inspect
+import functools
 # 3rd party
 from twisted.internet.tcp import Port
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet import reactor  # type: PosixReactorBase
 from twisted.python.compat import intToBytes
+from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import File
 from twisted.python import failure
+
+try:
+    import autobahn
+except ImportError:
+    AUTOBAHN_MISSING = True
+else:
+    AUTOBAHN_MISSING = False
+    from .lib.at_wsprotocol import AtWSProtocol
+    from .lib.message_handler import MessageHandler
+    from .lib.routed_factory import RoutedWSFactory
 
 # Application
 from .log import getLogger
@@ -31,6 +44,9 @@ from .web_views import WebSite
 from .http_codes import HTTPCode
 from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
 
+
+HERE = Path(__file__).parent
+WS_STATIC_LIB = HERE / "websocket_static_libraries"
 
 log = getLogger(__name__)
 
@@ -44,6 +60,120 @@ if T.TYPE_CHECKING:
 
     ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], T.Union[bool, None]])
 
+
+class ApplicationWebsocketMixin(object):
+
+    WS_EXPOSED_FUNC = "WS_EXPOSED_FUNC"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ws_endpoints = {}
+        self.ws_factory = None
+        self.ws_resource = None
+        self.ws_instances = {}
+
+    def enable_websockets(self, url, route):
+        if AUTOBAHN_MISSING is True:
+            raise EnvironmentError("Unable to provide websocket support without autobahn installed/present")
+
+        self.ws_factory = RoutedWSFactory(url, self.ws_endpoints)
+        self.ws_resource = WebSocketResource(self.ws_factory)
+        self.add_resource(route, self.ws_resource)
+
+    def ws_add(self, name, assign_args=False) -> T.Callable[[WSEndpoint], WSEndpoint]:
+
+        def processor(func: WSEndpoint) -> WSEndpoint:
+            self.ws_endpoints[name] = func
+            if assign_args is True:
+                func = self.websocket_function_arguments_decorator(func)
+            return func
+
+        return processor
+
+    # noinspection SpellCheckingInspection
+    def ws_sharelib(self, route_str="/lib"):
+        self.add_staticdir2(route_str, WS_STATIC_LIB)
+
+    def ws_class(self, kls):
+        kls_name = kls.__name__.lower()
+        if kls_name in self.ws_instances:
+            raise ValueError(f"Websocket name: {kls_name} class is already registered!")
+
+        self.ws_instances[kls_name] = kls(self)
+
+        methods = [member
+                   for member in inspect.getmembers(self.ws_instances[kls_name])
+                   if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
+
+        for name, method in methods:
+            self.ws_endpoints[f"{kls_name}.{name.lower()}"] = method
+
+        return kls
+
+    @staticmethod
+    def websocket_class_arguments_decorator(func):
+        params = inspect.signature(func).parameters
+        arg_keys = {}
+        for param_name, param in params.items():  # type: inspect.Parameter
+            if param.default is not inspect.Parameter.empty:
+                if param.name in ["connection", "message"]:
+                    raise TypeError(f"Cannot use assign_args when using keyword arguments `connection` or `message`: {param.name}")
+                arg_keys[param_name] = param.default
+
+        if "connection" not in params or "message" not in params:
+            raise TypeError("ws_expose convention expects (self, connection, message, **kwargs)")
+
+
+        @functools.wraps(func)
+        def argument_decorator(parent, connection, message):
+            kwargs = {}
+
+
+            for arg_name, arg_default in arg_keys.items():
+                kwargs[arg_name] = message.get(arg_name, arg_default)
+
+            return func(parent, connection, message, **kwargs)
+
+        return argument_decorator
+
+    @staticmethod
+    def websocket_function_arguments_decorator(func):
+        params = inspect.signature(func).parameters
+        arg_keys = {}
+        for name, param in params.items():  # type: inspect.Parameter
+            if param.default is not inspect.Parameter.empty:
+                if param.name in ["connection", "message"]:
+                    raise TypeError(
+                        f"Cannot use assign_args when using keyword arguments `connection` or `message`: {param.name}")
+                arg_keys[name] = param.default
+
+        if "connection" not in params or "message" not in params:
+            raise TypeError("ws_add convention expects (connection, message)")
+
+        @functools.wraps(func)
+        def argument_decorator(connection, message: MessageHandler):
+            kwargs = {}
+
+            for name, default in arg_keys.items():
+                kwargs[name] = message.args(name, default=default) #TODO also use annotation for type-casting
+
+            return func(connection, message, **kwargs)
+
+        return argument_decorator
+
+
+    def ws_expose(self, func: callable = None, assign_args=False):
+
+        if func is None and assign_args is True:
+            def processor(real_func):
+                setattr(real_func, self.WS_EXPOSED_FUNC, True)
+                magic_func = self.websocket_class_arguments_decorator(real_func)
+                return magic_func
+            return processor
+
+        else:
+            setattr(func, self.WS_EXPOSED_FUNC, True)
+            return func
 
 
 class ApplicationRoutingHelperMixin(object):
@@ -199,31 +329,32 @@ class ApplicationErrorHandlingMixin(object):
 
 
 
-class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
-    """
-        Similar to Klein and its influence Flask, the goal is to consolidate
-        technical debt into one God module antipattern class.
+class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, ApplicationWebsocketMixin):
 
-        Purposes:
-            Provides a public API to Site, HTTPErrors, RoutingResource, and additional helpers.
 
-        Arguments:
-            namespace: the base module/package name of the application, currently intended to assist logging and debugging
-            twisted_reactor: currently unused
-            request_factory: currently unused
-            enable_debug: Not implemented yet, switches on extra debugging tools
-    """
+    NOT_DONE_YET = NOT_DONE_YET
 
     def __init__(self,
                  namespace: str = None,
                  twisted_reactor: T.Optional[PosixReactorBase] = None,
                  request_factory:StrRequest=StrRequest,
-                 enable_debug:bool=False,
-                 base_dir = None
+                 enable_debug:bool=False
                  ):
         """
+            Similar to Klein and its influence Flask, the goal is to consolidate
+            technical debt into one God module antipattern class.
 
+            Purposes:
+                Provides a public API to Site, HTTPErrors, RoutingResource, and additional helpers.
+
+            Arguments:
+                namespace: the base module/package name of the application, currently intended to assist logging and debugging
+                twisted_reactor: currently unused
+                request_factory: currently unused
+                enable_debug: Not implemented yet, switches on extra debugging tools
         """
+
+
         self._router = RoutingResource()
         self._site = WebSite(self._router, request_factory=Application.request_factory_partial(self, request_factory))
         self._router.site = self._site
@@ -239,7 +370,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin):
             self.__owner_module = None
 
 
-
+        ApplicationWebsocketMixin.__init__(self)
         ApplicationRoutingHelperMixin.__init__(self)
         # _ApplicationTemplateSupportMixin.__init__(self)
         ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
