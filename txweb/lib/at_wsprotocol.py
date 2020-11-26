@@ -72,7 +72,7 @@ class AtWSProtocol(WebSocketServerProtocol):
         :param values:
         :return:
         """
-        self.sendDict(endpoint=endpoint, type="tell", arguments=values)
+        self.sendDict(endpoint=endpoint, type="tell", args=values)
 
     callDict = tell
 
@@ -85,7 +85,7 @@ class AtWSProtocol(WebSocketServerProtocol):
         :return:
         """
         requestToken = uuid4().hex
-        self.sendDict(endpoint=endpoint, type="ask", token=requestToken, arguments=values)
+        self.sendDict(endpoint=endpoint, type="ask", token=requestToken, args=values)
 
     call = ask
 
