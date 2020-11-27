@@ -29,7 +29,8 @@ class AtWSProtocol(WebSocketServerProtocol):
         self.identity = None
         self.on_disconnect = Deferred()
 
-        self._raw_message = {}
+
+        # self._raw_message = {}
 
     # @property
     # def application(self):
