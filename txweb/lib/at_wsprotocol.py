@@ -120,8 +120,6 @@ class AtWSProtocol(WebSocketServerProtocol):
                 result = endpoint_func(message)
         else:
             self.my_log.error("Got message without an endpoint: {raw!r}", raw=message.raw_message)
-            raise Exception("Got message without a endpoint")
-
             # raise Exception("Got message without a endpoint")
 
         if result in [NOT_DONE_YET, None]:
