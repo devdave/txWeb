@@ -86,6 +86,7 @@ def test_onMessage():
     import json
 
     mock_func = MagicMock()
+    mock_func.return_value = None
     protocol, factory = mock_protocol(dict(endpoint1=mock_func))
 
     payload = dict(endpoint="endpoint1", type="tell")
