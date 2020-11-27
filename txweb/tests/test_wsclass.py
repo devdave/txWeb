@@ -60,10 +60,11 @@ def test_magic_arguments():
             self.app = app
 
         @app.ws_expose(assign_args=True)
-        def test_function(self, connection, message, foo=False, bar=None):
+        def test_function(self, message, foo=False, bar=None):
             return foo, bar
 
         with pytest.raises(TypeError, match="^ws_expose convention expects.*"):
+
             @app.ws_expose(assign_args=True)
             def test_bad_convention(self, protocol, incoming):
                 pass
@@ -74,7 +75,7 @@ def test_magic_arguments():
 
     message = MessageHandler({"args":dict(foo=True, bar="Hello World!")}, None)
 
-    foo, bar = instance.test_function(None, message)
+    foo, bar = instance.test_function(message)
 
     assert foo == True
     assert bar == "Hello World!"
