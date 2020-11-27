@@ -97,4 +97,4 @@ def test_name_override():
         def method1(self, message):
             pass
 
-    assert "bar.method1" in app.ws_endpoints
+    assert "Bar.method1" in app.ws_endpoints
