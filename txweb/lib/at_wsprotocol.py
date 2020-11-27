@@ -49,17 +49,11 @@ class AtWSProtocol(WebSocketServerProtocol):
         self.identity = uuid4().hex
         self.my_log.debug("Client connecting: {request.peer}", request=request)
 
-    def onOpen(self):
-        self.my_log.debug("WebSocket connection open.")
-
     def onClose(self, wasClean, code, reason):
         self.on_disconnect.addErrback(self.my_log.error)
         self.on_disconnect.callback(self.identity)
         del self.on_disconnect
         self.my_log.debug("WebSocket connection closed: {reason!r}", reason=reason)
-
-    def onClosed(self, *args, **kwargs):
-        self.my_log.debug(*args, **kwargs)
 
     def sendDict(self, **values):
         response = json.dumps(values)
