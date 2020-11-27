@@ -91,12 +91,13 @@ class AtWSProtocol(WebSocketServerProtocol):
 
     call = ask
 
-    def sendTell(self, data, result):
-        self.sendDict(caller_id=data['caller_id'], type="tell", result=result)
 
 
-    def sendTellAsDict(self, data, **result):
-        self.sendTell(data, result)
+    # def sendTell(self, data, result):
+    #     self.sendDict(caller_id=data['caller_id'], type="tell", result=result)
+    #
+    # def sendTellAsDict(self, data, **result):
+    #     self.sendTell(data, result)
 
     def respondAsDict(self, data, **result):
         self.sendDict(caller_id=data["caller_id"], end_point=data["endpoint"], type="response", result=result)
