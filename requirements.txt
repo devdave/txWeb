@@ -19,3 +19,4 @@ setuptools~=40.4.3
 txweb~=0.11.2019
 pytest~=3.2.3
 recommonmark~=0.6.0
+autobahn~=20.7.1
