@@ -111,7 +111,17 @@ class AtWSProtocol(WebSocketServerProtocol):
         message = MessageHandler(json.loads(payload), self)
         result = None
 
-        if "endpoint" in message:
+        if message.get("type") == "response":
+            caller_id = message.get("caller_id", None)
+
+            if caller_id is not None and caller_id in self.deferred_asks:
+                d = self.deferred_asks[caller_id] # type: Deferred
+                d.callback(message.get("result"))
+                del self.deferred_asks[caller_id]
+            else:
+                warnings.warn(f"Response to ask {caller_id} arrived but wasn't found in deferred_asks")
+
+        elif "endpoint" in message:
             endpoint_func = self.factory.get_endpoint(message['endpoint'])
             self.my_log.debug("Processing {endpoint_func!r}", endpoint_func=endpoint_func)
 
@@ -121,7 +131,7 @@ class AtWSProtocol(WebSocketServerProtocol):
             else:
                 result = endpoint_func(message)
         else:
-            self.my_log.error("Got message without an endpoint: {raw!r}", raw=message.raw_message)
+            self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
             # raise Exception("Got message without a endpoint")
 
         if result in [NOT_DONE_YET, None]:
