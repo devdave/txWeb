@@ -17,7 +17,7 @@ class ViewClassResource(resource.Resource):
     # noinspection PyMissingConstructor
     def __init__(self, kls_view, instance=None):
         self.kls_view = kls_view
-        self.instance = instance  # TODO is this needed?
+        self.instance = instance
 
     def render(self, request:StrRequest) -> T.Union[bytes, NotDoneYet]:
         """
