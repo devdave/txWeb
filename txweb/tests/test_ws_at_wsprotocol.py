@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 from dataclasses import dataclass
 
+from twisted.internet.defer import inlineCallbacks
+
 from txweb.lib.at_wsprotocol import AtWSProtocol
 
 @dataclass(frozen=True)
@@ -39,6 +41,11 @@ def mock_protocol(endpoints):
     protocol = TrackingProtocol()
     protocol.factory = factory
     return protocol, factory
+
+def mock_message(**kwargs):
+    from json import dumps
+    raw = dumps(kwargs)
+    return raw.encode("utf-8")
 
 
 
@@ -95,4 +102,36 @@ def test_onMessage():
     protocol.onMessage(dumped, False)
 
     mock_func.assert_called_once()
+
+
+def test_deferred_ask():
+
+    import json
+
+    @inlineCallbacks
+    def asking_func(message):
+
+        result = yield message.ask("remote.add", first=1, second=2)
+        message.tell("result_was", logic=result)
+        assert result == 4
+
+    protocol, factory = mock_protocol({"test_endpoint": asking_func})
+    protocol.onMessage(mock_message(type="call", endpoint="test_endpoint"), False)
+    captured = protocol.messages[0] # type: CapturedMessage
+    ask_msg = json.loads(captured.payload)
+
+    assert ask_msg['type'] == "ask"
+    assert len(protocol.deferred_asks) == 1
+
+    caller_id = ask_msg['caller_id']
+
+    protocol.onMessage(mock_message(type="response", caller_id=caller_id, result=4), False)
+
+    assert len(protocol.messages) == 2
+
+    latest = protocol.messages[-1] # type: CapturedMessage
+    tell_msg = json.loads(latest.payload)
+
+    assert tell_msg['type'] == "tell"
+    assert tell_msg['args']['logic'] == 4
 
