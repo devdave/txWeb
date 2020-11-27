@@ -22,7 +22,8 @@ class AtWSProtocol(WebSocketServerProtocol):
     def __init__(self, *args, **kwargs):
         self.pending_responses = {}
 
-        WebSocketServerProtocol.__init__(self, *args, **kwargs)
+        super(AtWSProtocol, self).__init__(*args, **kwargs)
+        # WebSocketServerProtocol.__init__(self, *args, **kwargs)
 
         self.identity = None
         self.on_disconnect = Deferred()
