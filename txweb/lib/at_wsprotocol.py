@@ -68,6 +68,9 @@ class AtWSProtocol(WebSocketServerProtocol):
         # Always send synchronously for now
         self.sendMessage(response.encode("utf-8"), isBinary=False, sync=True)
 
+    def respond(self, original_message, result):
+        self.sendDict(caller_id=original_message['caller_id'], result=result)
+
     def tell(self, endpoint, **values):
         """
             Tell the client to do something and don't expect a response
@@ -77,8 +80,6 @@ class AtWSProtocol(WebSocketServerProtocol):
         :return:
         """
         self.sendDict(endpoint=endpoint, type="tell", args=values)
-
-    callDict = tell
 
     def ask(self, endpoint, **values):
         """
@@ -96,17 +97,6 @@ class AtWSProtocol(WebSocketServerProtocol):
             return d
         else:
             raise EnvironmentError("Maximum # of pending asks reached")
-
-
-
-    # def sendTell(self, data, result):
-    #     self.sendDict(caller_id=data['caller_id'], type="tell", result=result)
-    #
-    # def sendTellAsDict(self, data, **result):
-    #     self.sendTell(data, result)
-
-    def respondAsDict(self, data, **result):
-        self.sendDict(caller_id=data["caller_id"], end_point=data["endpoint"], type="response", result=result)
 
     def onMessage(self, payload, isBinary):
         if isBinary:
