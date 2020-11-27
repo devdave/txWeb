@@ -96,21 +96,46 @@ class ApplicationWebsocketMixin(object):
     def ws_sharelib(self, route_str="/lib"):
         self.add_staticdir2(route_str, WS_STATIC_LIB)
 
-    def ws_class(self, kls):
-        kls_name = kls.__name__.lower()
-        if kls_name in self.ws_instances:
-            raise ValueError(f"Websocket name: {kls_name} class is already registered!")
+    def ws_class(self, kls=None, name: str = None):
 
-        self.ws_instances[kls_name] = kls(self)
+        if name is None:
+            kls_name = kls.__name__.lower()
+            if kls_name in self.ws_instances:
+                raise ValueError(f"Websocket name: {kls_name} class is already registered!")
 
-        methods = [member
-                   for member in inspect.getmembers(self.ws_instances[kls_name])
-                   if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
+            if kls_name in self.ws_instances:
+                raise ValueError(f"ws_class already has {kls_name}")
 
-        for name, method in methods:
-            self.ws_endpoints[f"{kls_name}.{name.lower()}"] = method
+            self.ws_instances[kls_name] = kls(self)
 
-        return kls
+            methods = [member
+                       for member in inspect.getmembers(self.ws_instances[kls_name])
+                       if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
+
+            for name, method in methods:
+                self.ws_endpoints[f"{kls_name}.{name.lower()}"] = method
+
+            return kls
+
+        else:
+
+            def processor(kls):
+
+                kls_name = name
+
+                self.ws_instances[kls_name] = kls(self)
+
+                methods = [member
+                           for member in inspect.getmembers(self.ws_instances[kls_name])
+                           if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
+
+                for method_name, method in methods:
+                    self.ws_endpoints[f"{kls_name}.{method_name.lower()}"] = method
+
+                return kls
+
+            return processor
+
 
     @staticmethod
     def websocket_class_arguments_decorator(func):

@@ -82,3 +82,19 @@ def test_magic_arguments():
 
     assert hasattr(instance.test_function, app.WS_EXPOSED_FUNC) is True
 
+
+def test_name_override():
+
+    app = WSApp(__name__)
+
+    @app.ws_class(name="Bar")
+    class Foo:
+
+        def __init__(self, app):
+            self.app = app
+
+        @app.ws_expose
+        def method1(self, message):
+            pass
+
+    assert "bar.method1" in app.ws_endpoints
