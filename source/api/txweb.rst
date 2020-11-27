@@ -5,6 +5,7 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    txweb.lib
    txweb.resources
@@ -21,10 +22,10 @@ txweb.application module
    :undoc-members:
    :show-inheritance:
 
-txweb.errors module
--------------------
+txweb.http\_codes module
+------------------------
 
-.. automodule:: txweb.errors
+.. automodule:: txweb.http_codes
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +45,6 @@ txweb.web\_views module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

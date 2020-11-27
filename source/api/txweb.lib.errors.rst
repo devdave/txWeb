@@ -20,7 +20,6 @@ txweb.lib.errors.html module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

@@ -52,7 +52,6 @@ txweb.resources.view\_function module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

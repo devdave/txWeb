@@ -5,11 +5,36 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    txweb.lib.errors
 
 Submodules
 ----------
+
+txweb.lib.at\_wsprotocol module
+-------------------------------
+
+.. automodule:: txweb.lib.at_wsprotocol
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+txweb.lib.message\_handler module
+---------------------------------
+
+.. automodule:: txweb.lib.message_handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+txweb.lib.routed\_factory module
+--------------------------------
+
+.. automodule:: txweb.lib.routed_factory
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 txweb.lib.str\_request module
 -----------------------------
@@ -26,7 +51,6 @@ txweb.lib.view\_class\_assembler module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

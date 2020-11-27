@@ -1,11 +1,12 @@
 """
     Application is a common interface to Texas's various components
 
-    The Application object logic has been broken apart into two mixin like classes and the main Application class.
+    The Application object logic has been broken apart into mixin like classes and combined into Application class.
 
     1. Routing logic (adding new routes/resources to the URL router) `ApplicationRoutingHelperMixin`
     2. Error handling `ApplicationErrorHandlingMixin`
-    3. General utilities and resources ( website, router, reactor, etc) `Application`
+    3. Websocket support
+    4. General utilities and resources ( website, router, reactor, etc) `Application`
 
 
 """
@@ -52,15 +53,14 @@ WS_STATIC_LIB = HERE / "websocket_static_libraries"
 
 log = getLogger(__name__)
 
-if T.TYPE_CHECKING:
 
-    ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
-    ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
+ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
+ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
 
-    WebCallable = T.NewType("WebCallable", T.Callable[[StrRequest, ArbitraryListArg], T.Union[str, bytes]])
-    CallableToResourceDecorator = T.NewType("CallableToResourceDecorator", T.Callable[[WebCallable], WebCallable])
-
-    ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], T.Union[bool, None]])
+WebCallable = T.NewType("WebCallable", T.Callable[[StrRequest, ArbitraryListArg], T.Union[str, bytes]])
+CallableToResourceDecorator = T.NewType("CallableToResourceDecorator", T.Callable[[WebCallable], WebCallable])
+WSEndpoint = T.Callable[[MessageHandler], T.Any]
+ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], T.Union[bool, None]])
 
 
 class ApplicationWebsocketMixin(object):
@@ -256,6 +256,7 @@ class ApplicationRoutingHelperMixin(object):
 class ApplicationErrorHandlingMixin(object):
     """
     The Error processing and handling aspect of Application
+
     """
 
 

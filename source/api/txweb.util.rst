@@ -20,6 +20,14 @@ txweb.util.reloader module
    :undoc-members:
    :show-inheritance:
 
+txweb.util.templating module
+----------------------------
+
+.. automodule:: txweb.util.templating
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 txweb.util.url\_converter module
 --------------------------------
 
@@ -27,7 +35,6 @@ txweb.util.url\_converter module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

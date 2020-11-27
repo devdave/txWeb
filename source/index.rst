@@ -10,9 +10,11 @@ Welcome to Texas web's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   api/txweb
-   manual/error_handling
    manual/quick_start
+   manual/error_handling
+   api/txweb
+
+
 
 
 
@@ -23,3 +25,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
