@@ -112,8 +112,19 @@ class AtWSProtocol(WebSocketServerProtocol):
         if isBinary:
             return None # I don't know how to deal with binary
 
-        payload = payload.decode("utf-8")
-        message = MessageHandler(json.loads(payload), self)
+        try:
+            payload = payload.decode("utf-8")
+        except UnicodeDecodeError:
+            warnings.warn(f"Failed to decode {payload}")
+            return
+
+        try:
+            raw_message = json.loads(payload)
+        except json.JSONDecodeError:
+            warnings.warn(f"Corrupt/bad payload: {payload}")
+            return
+
+        message = MessageHandler(raw_message, self)
         result = None
 
         if message.get("type") == "response":
@@ -124,7 +135,7 @@ class AtWSProtocol(WebSocketServerProtocol):
                 d.callback(message.get("result"))
                 del self.deferred_asks[caller_id]
             else:
-                warnings.warn(f"Response to ask {caller_id} arrived but wasn't found in deferred_asks")
+                warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
 
         elif "endpoint" in message:
             endpoint_func = self.factory.get_endpoint(message['endpoint'])
