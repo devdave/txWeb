@@ -122,19 +122,16 @@ class AtWSProtocol(WebSocketServerProtocol):
             self.my_log.error("Got message without an endpoint: {raw!r}", raw=message.raw_message)
             raise Exception("Got message without a endpoint")
 
-        # if result == NOT_DONE_YET:
-        #     return
-        #
-        # elif result is None:
-        #     return
-        #
-        # elif isinstance(result, Deferred):
-        #     return result
-        #
-        # elif "type" in message and message['type'] == "ask":
-        #     self.respondAsDict(message, result=result)
-        # else:
-        #     response = json.dumps(result)
-        #     ## echo back message verbatim
-        #     self.sendMessage(response.encode("utf-8"), isBinary)
+            # raise Exception("Got message without a endpoint")
+
+        if result in [NOT_DONE_YET, None]:
+            return
+        elif isinstance(result, Deferred):
+            return
+        elif "type" in message and message['type'] == "ask":
+            self.respondAsDict(message, result=result)
+        else:
+            warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
+            pass
+
 
