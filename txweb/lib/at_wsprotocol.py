@@ -19,6 +19,11 @@ from txweb.log import getLogger
 class AtWSProtocol(WebSocketServerProtocol):
 
     my_log = getLogger()
+    """
+        To prevent an OOM/out of memory event, limit the number of 
+        pending asks to 100
+    """
+    MAX_ASKS = 100  # Need to make this tunable
 
     def __init__(self, *args, **kwargs):
         self.pending_responses = {}
@@ -28,6 +33,8 @@ class AtWSProtocol(WebSocketServerProtocol):
 
         self.identity = None
         self.on_disconnect = Deferred()
+        # for tracking deferred `ask` calls
+        self.deferred_asks = {}
 
 
         # self._raw_message = {}
@@ -81,10 +88,14 @@ class AtWSProtocol(WebSocketServerProtocol):
         :param values:
         :return:
         """
-        requestToken = uuid4().hex
-        self.sendDict(endpoint=endpoint, type="ask", token=requestToken, args=values)
-
-    call = ask
+        if len(self.deferred_asks) < self.MAX_ASKS:
+            requestToken = uuid4().hex
+            d = Deferred()
+            self.deferred_asks[requestToken] = d
+            self.sendDict(endpoint=endpoint, type="ask", caller_id=requestToken, args=values)
+            return d
+        else:
+            raise EnvironmentError("Maximum # of pending asks reached")
 
 
 
@@ -96,7 +107,6 @@ class AtWSProtocol(WebSocketServerProtocol):
 
     def respondAsDict(self, data, **result):
         self.sendDict(caller_id=data["caller_id"], end_point=data["endpoint"], type="response", result=result)
-
 
     def onMessage(self, payload, isBinary):
         if isBinary:
