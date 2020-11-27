@@ -4,6 +4,7 @@ except ImportError:
     import json
 
 from uuid import uuid4
+import warnings
 
 
 from twisted.web.server import NOT_DONE_YET
