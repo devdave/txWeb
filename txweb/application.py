@@ -157,7 +157,7 @@ class ApplicationWebsocketMixin(object):
 
 
             for arg_name, arg_default in arg_keys.items():
-                kwargs[arg_name] = message.get(arg_name, arg_default)
+                kwargs[arg_name] = message.args(arg_name, arg_default)
 
             return func(parent, message, **kwargs)
 
