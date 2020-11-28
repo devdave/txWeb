@@ -124,6 +124,16 @@ class ResilientSocket {
         return d;
     }
 
+    async a_ask(endpoint, args) {
+        const d = this.ask(endpoint, args);
+
+        return new Promise(function(resolve){
+            d.then(result => {
+                resolve(result);
+            } )
+        });
+    }
+
     call(endpoint, args) {
         /**
          * Tell the server something has happened but don't expect a direct response.
