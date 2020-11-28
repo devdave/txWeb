@@ -9,6 +9,7 @@ class RoutedWSFactory(WebSocketServerFactory):  #pragma: no cover
         self.protocol = protocol_cls
 
         self.routes = routes
+        self._application = application
 
     def get_endpoint(self, name):
         return self.routes.get(name, None)
