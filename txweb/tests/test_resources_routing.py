@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from twisted.web.resource import NoResource
 
 from txweb.resources import RoutingResource
@@ -15,7 +17,7 @@ import pytest
 
 def test_instantiates_without_error():
 
-    class FakeSite():
+    class FakeSite:
         pass
 
     fake_site = FakeSite()
@@ -33,7 +35,10 @@ def test_how_head_requests_are_handled(dummy_request:RequestRetval):
 
     dummy_request.request.site = app.site
     dummy_request.channel.site = app.site
-    dummy_request.request.requestReceived(b"HEAD", b"/foo", b"HTTP1/1")
+    dummy_request.request.requestReceived(b"HEAD", b"/foo", b"HTTP/1.1")
+    assert dummy_request.request.code == 405
+    assert dummy_request.request.code_message == b"Method not allowed"
+
 
 
 def test_ensure_blows_up_with_a_bad_add():
@@ -54,7 +59,7 @@ def test_ensure_blowsup_with_a_class_that_has_no_way_to_render():
 
     with pytest.raises(UnrenderableException):
         @app.add("/trash")
-        class BasClass(object):
+        class BaseClass(object):
             pass
 
 def test_ensure_a_classic_like_class_is_routed():
@@ -84,5 +89,25 @@ def test_ensure_resource_is_added():
     endpoint = app.router._endpoints[first_key.endpoint]
     assert isinstance(endpoint, NoResource)
     debug = 1
+
+
+def test_handle_add_slashes(dummy_request:RequestRetval):
+
+    app = App(__name__)
+
+    mock = MagicMock()
+
+    app.route("/js/")(mock)
+
+    dummy_request.request.site = app.site
+    dummy_request.channel.site = app.site
+    dummy_request.request.requestReceived(b"GET", b"/js", b"HTTP/1.1")
+
+    assert dummy_request.request.code == 308
+    assert dummy_request.request.code_message == b"Permanent Redirect"
+    assert dummy_request.request.responseHeaders.getRawHeaders(b"location") == [b"http://10.0.0.1/js/"]
+    assert mock.call_count == 0
+
+
 
 
