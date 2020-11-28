@@ -11,6 +11,8 @@ Major issues
 ============
 Error handling needs to be drastically improved/refactored
 
+TODO - support for SCRIPT_NAME so the app could theoretically run in a sub directory of a
+another application.
 
 Purpose & History
 ======
