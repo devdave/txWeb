@@ -39,9 +39,9 @@ class AtWSProtocol(WebSocketServerProtocol):
 
         # self._raw_message = {}
 
-    # @property
-    # def application(self):
-    #     return self.factory.get_application()
+    @property
+    def application(self):
+        return self.factory.get_application()
 
     def getCookie(self, cookie_name, default=None):
         raw_cookies = self.http_headers.get('cookie', "")
