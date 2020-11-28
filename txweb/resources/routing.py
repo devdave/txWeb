@@ -191,7 +191,7 @@ class RoutingResource(resource.Resource):
         else:
             map_bind_kwargs["server_name"] = request.getRequestHostname()
 
-        map_bind_kwargs["script_name"] = b"/".join(request.prepath) if request.prepath else b"/"
+        map_bind_kwargs["script_name"] = b"/"  # b"/".join(request.prepath) if request.prepath else b"/"
 
         #TODO add strict slash check flag to here or to website.add
         if map_bind_kwargs["script_name"].startswith(b"/") is False:
@@ -219,6 +219,9 @@ class RoutingResource(resource.Resource):
             # TODO refactor to handle HEAD requests when the only valid match support GET
             # - one bad idea is to hack on werkzeug to append the URI matching rule to MethodNotAllowed
             (rule, kwargs) = map.match(return_rule=True)
+        except wz_routing.RequestRedirect as redirect:
+            log.debug(f"Werkzeug threw a redirect")
+            raise HTTP_Errors.HTTP3xx(redirect.code, redirect.new_url, redirect.name)
         except wz_routing.NotFound as exc:
             # TODO remove print
             log.debug(f"Failed to find match for: {request.path!r}")
