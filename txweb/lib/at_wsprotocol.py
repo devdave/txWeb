@@ -69,7 +69,7 @@ class AtWSProtocol(WebSocketServerProtocol):
         self.sendMessage(response.encode("utf-8"), isBinary=False, sync=True)
 
     def respond(self, original_message, result):
-        self.sendDict(caller_id=original_message['caller_id'], result=result)
+        self.sendDict(caller_id=original_message['caller_id'], type="response", result=result)
 
     def tell(self, endpoint, **values):
         """
