@@ -45,14 +45,9 @@ class MessageHandler(Mapping): #pragma: no cover
     def get(self, key, default=None, type=None):
 
         try:
-            args = self['args']
-            value = args[key]
-
+            value = self[key]
         except KeyError:
-            try:
-                value = self[key]
-            except KeyError:
-                return default
+            return default
 
         if type:
             try:
@@ -69,7 +64,6 @@ class MessageHandler(Mapping): #pragma: no cover
             args = self['args']
         except KeyError:
             return default
-
 
         try:
             value = args[key]
