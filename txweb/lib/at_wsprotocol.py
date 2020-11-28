@@ -129,7 +129,7 @@ class AtWSProtocol(WebSocketServerProtocol):
 
         elif "endpoint" in message:
             endpoint_func = self.factory.get_endpoint(message['endpoint'])
-            self.my_log.debug("Processing {endpoint_func!r}", endpoint_func=endpoint_func)
+            # self.my_log.debug("Processing {endpoint_func!r}", endpoint_func=endpoint_func)
 
             if endpoint_func is None:
                 self.my_log.error("Bad endpoint {endpoint}", endpoint=call_data['endpoint'])
