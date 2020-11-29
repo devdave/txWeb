@@ -144,6 +144,8 @@ def test_assign_args_ignores_missing_args():
 
 def test_isolate_bug_with_name_argument():
 
+    import inspect
+
     app = WSApp(__name__)
 
     @app.ws_class(name="ec")
@@ -158,6 +160,9 @@ def test_isolate_bug_with_name_argument():
 
 
     start_endpoint = app.ws_endpoints['ec.start']
+    endpoint_sig = inspect.signature(start_endpoint)
+
+
     message = MessageHandler({}, None)
 
     start_endpoint(message)

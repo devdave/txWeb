@@ -115,7 +115,7 @@ class ApplicationWebsocketMixin(object):
 
             for method_name, method in methods:
                 # Always use assign_args with ws_class's
-                self.ws_endpoints[f"{kls_name}.{method_name.lower()}"] = self.websocket_class_arguments_decorator(method)
+                self.ws_endpoints[f"{kls_name}.{method_name.lower()}"] = method
 
             return kls
 
@@ -152,7 +152,7 @@ class ApplicationWebsocketMixin(object):
 
 
         @functools.wraps(func)
-        def argument_decorator(parent, message):
+        def method_argument_decorator(parent, message):
             kwargs = {}
 
             for arg_name, arg_default in arg_keys.items():
@@ -168,7 +168,7 @@ class ApplicationWebsocketMixin(object):
 
             return func(parent, message, **kwargs)
 
-        return argument_decorator
+        return method_argument_decorator
 
     @staticmethod
     def websocket_function_arguments_decorator(func):
