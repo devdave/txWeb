@@ -103,10 +103,8 @@ class ApplicationWebsocketMixin(object):
         if name is None:
             kls_name = kls.__name__.lower()
             if kls_name in self.ws_instances:
-                raise ValueError(f"Websocket name: {kls_name} class is already registered!")
+                raise ValueError(f"Websocket ws_class: a class with {kls_name} is already registered!  Use ws_class(name=NewName) to override.")
 
-            if kls_name in self.ws_instances:
-                raise ValueError(f"ws_class already has {kls_name}")
 
             self.ws_instances[kls_name] = kls(self)
 
