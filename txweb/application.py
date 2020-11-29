@@ -169,12 +169,19 @@ class ApplicationWebsocketMixin(object):
     def websocket_function_arguments_decorator(func):
         params = inspect.signature(func).parameters
         arg_keys = {}
+        positional_count = 0
         for name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
                     raise TypeError(
                         f"Cannot use assign_args when using keyword arguments `message`: {param.name}")
                 arg_keys[name] = param.default
+
+            else:
+                positional_count += 1
+
+        if positional_count != 1:
+            raise ValueError("ws_add(... asign_args=True) - arguments need to be keyword arguments and not positional.")
 
         if "message" not in params:
             raise TypeError("ws_add convention expects endpoint(message)")
