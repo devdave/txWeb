@@ -132,7 +132,7 @@ class AtWSProtocol(WebSocketServerProtocol):
             # self.my_log.debug("Processing {endpoint_func!r}", endpoint_func=endpoint_func)
 
             if endpoint_func is None:
-                self.my_log.error("Bad endpoint {endpoint}", endpoint=call_data['endpoint'])
+                self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
                 return
             else:
                 result = endpoint_func(message)
@@ -144,8 +144,8 @@ class AtWSProtocol(WebSocketServerProtocol):
             return
         elif isinstance(result, Deferred):
             return
-        elif "type" in message and message['type'] == "ask":
-            self.respondAsDict(message, result=result)
+        elif message.get("type", default=None) == "ask":
+            self.respond(message, result=result)
         else:
             warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
             pass
