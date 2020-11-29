@@ -140,3 +140,24 @@ def test_assign_args_ignores_missing_args():
     method1 = app.ws_instances['foo'].method1
     assert "foo.method1" in app.ws_endpoints
     assert method1(message) is None
+
+
+def test_isolate_bug_with_name_argument():
+
+    app = WSApp(__name__)
+
+    @app.ws_class(name="ec")
+    class EntityControl:
+
+        def __init__(self, app):
+            self.app = app
+
+        @app.ws_expose
+        def start(self, message):
+            pass
+
+
+    start_endpoint = app.ws_endpoints['ec.start']
+    message = MessageHandler({}, None)
+
+    start_endpoint(message)
