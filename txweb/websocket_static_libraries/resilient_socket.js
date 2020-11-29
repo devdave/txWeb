@@ -124,13 +124,11 @@ class ResilientSocket {
         return d;
     }
 
-    async a_ask(endpoint, args) {
+    async a_ask(endpoint, args, timeout) {
         const d = this.ask(endpoint, args);
 
         return new Promise(function(resolve){
-            d.then(result => {
-                resolve(result);
-            } )
+            d.then(resolve);
         });
     }
 
