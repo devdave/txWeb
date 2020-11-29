@@ -144,7 +144,7 @@ class ApplicationWebsocketMixin(object):
         for param_name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
-                    raise TypeError(f"Cannot use assign_args when using keyword argument `message`: {param.name}")
+                    raise TypeError(f"assign_args error: argument `message` cannot be a keyword argument: {param.name}")
                 arg_keys[param_name] = param.default
 
         if "message" not in params:
@@ -167,13 +167,21 @@ class ApplicationWebsocketMixin(object):
     def websocket_function_arguments_decorator(func):
         params = inspect.signature(func).parameters
         arg_keys = {}
+        converter_keys= {}
         positional_count = 0
+
+        def eval_type(st):
+            return st if not isinstance(st, str) else eval(st, vars(sys.modules[func.__module__]))
+
         for name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
                     raise TypeError(
                         f"Cannot use assign_args when using keyword arguments `message`: {param.name}")
                 arg_keys[name] = param.default
+
+                if param.annotation is not inspect.Parameter.empty:
+                    converter_keys[name] = eval_type(param.annotation)
 
             else:
                 positional_count += 1
@@ -182,7 +190,7 @@ class ApplicationWebsocketMixin(object):
             raise ValueError("ws_add(... asign_args=True) - arguments need to be keyword arguments and not positional.")
 
         if "message" not in params:
-            raise TypeError("ws_add convention expects endpoint(message)")
+            raise TypeError("ws_add convention expects first positional argument be called message.")
 
         @functools.wraps(func)
         def argument_decorator(message: MessageHandler):
@@ -190,6 +198,16 @@ class ApplicationWebsocketMixin(object):
 
             for name, default in arg_keys.items():
                 kwargs[name] = message.args(name, default=default) #TODO also use annotation for type-casting
+                if name in converter_keys:
+                    try:
+                        kwargs[name] = converter_keys[name](kwargs[name])
+                    except (TypeError, ValueError,):
+                        log.error(
+                            "assign_args failed to use {converter!r} on {value!r}",
+                            converter=converter_keys[name],
+                            value=kwargs[name])
+
+                        kwargs[name] = default
 
             return func(message, **kwargs)
 
