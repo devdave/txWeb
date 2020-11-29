@@ -85,9 +85,11 @@ class ApplicationWebsocketMixin(object):
     def ws_add(self, name, assign_args=False) -> T.Callable[[WSEndpoint], WSEndpoint]:
 
         def processor(func: WSEndpoint) -> WSEndpoint:
-            self.ws_endpoints[name] = func
+
             if assign_args is True:
                 func = self.websocket_function_arguments_decorator(func)
+
+            self.ws_endpoints[name] = func
             return func
 
         return processor
