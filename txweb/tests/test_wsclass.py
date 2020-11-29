@@ -3,6 +3,10 @@ import pytest
 from txweb import Application as WSApp
 from txweb.lib.message_handler import MessageHandler
 
+
+def quick_message_mock(**args):
+    return MessageHandler(dict(args=args), None)
+
 def test_concept():
 
     app = WSApp(__name__)
@@ -98,3 +102,41 @@ def test_name_override():
             pass
 
     assert "Bar.method1" in app.ws_endpoints
+
+
+def test_assign_args():
+
+    app = WSApp(__name__)
+
+    @app.ws_class()
+    class Foo:
+
+        def __init__(self, app):
+            self.app = app
+
+        @app.ws_expose(assign_args=True)
+        def method1(self, message, numbah: int = None):
+            return numbah
+
+    message = quick_message_mock(numbah = "123")
+    method1 = app.ws_instances['foo'].method1
+    assert "foo.method1" in app.ws_endpoints
+    assert method1(message) == 123
+
+def test_assign_args_ignores_missing_args():
+    app = WSApp(__name__)
+
+    @app.ws_class()
+    class Foo:
+
+        def __init__(self, app):
+            self.app = app
+
+        @app.ws_expose(assign_args=True)
+        def method1(self, message, bar: int = None):
+            return bar
+
+    message = quick_message_mock(numbah="123")
+    method1 = app.ws_instances['foo'].method1
+    assert "foo.method1" in app.ws_endpoints
+    assert method1(message) is None

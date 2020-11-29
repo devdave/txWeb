@@ -100,11 +100,12 @@ class ApplicationWebsocketMixin(object):
 
     def ws_class(self, kls=None, name: str = None):
 
-        if name is None:
-            kls_name = kls.__name__.lower()
-            if kls_name in self.ws_instances:
-                raise ValueError(f"Websocket ws_class: a class with {kls_name} is already registered!  Use ws_class(name=NewName) to override.")
 
+        def processor(kls, name = None):
+            kls_name = name if name is not None else kls.__name__.lower()
+            if kls_name in self.ws_instances:
+                raise ValueError(
+                    f"Websocket ws_class: a class with {kls_name} is already registered!  Use ws_class(name=NewName) to override.")
 
             self.ws_instances[kls_name] = kls(self)
 
@@ -112,40 +113,39 @@ class ApplicationWebsocketMixin(object):
                        for member in inspect.getmembers(self.ws_instances[kls_name])
                        if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
 
-            for name, method in methods:
-                self.ws_endpoints[f"{kls_name}.{name.lower()}"] = method
+            for method_name, method in methods:
+                # Always use assign_args with ws_class's
+                self.ws_endpoints[f"{kls_name}.{method_name.lower()}"] = self.websocket_class_arguments_decorator(method)
 
             return kls
 
+
+        if kls is None:
+            return functools.partial(processor, name=name)
         else:
+            return processor(kls, name)
 
-            def processor(kls):
 
-                kls_name = name
-
-                self.ws_instances[kls_name] = kls(self)
-
-                methods = [member
-                           for member in inspect.getmembers(self.ws_instances[kls_name])
-                           if inspect.ismethod(member[1]) and hasattr(member[1], self.WS_EXPOSED_FUNC)]
-
-                for method_name, method in methods:
-                    self.ws_endpoints[f"{kls_name}.{method_name.lower()}"] = method
-
-                return kls
-
-            return processor
 
 
     @staticmethod
     def websocket_class_arguments_decorator(func):
         params = inspect.signature(func).parameters
         arg_keys = {}
+        converter_keys = {}
+        positional_count = 0
+
+        def eval_type(st):
+            return st if not isinstance(st, str) else eval(st, vars(sys.modules[func.__module__]))
+
         for param_name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
                     raise TypeError(f"assign_args error: argument `message` cannot be a keyword argument: {param.name}")
-                arg_keys[param_name] = param.default
+                arg_keys[param.name] = param.default
+
+                if param.annotation is not inspect.Parameter.empty:
+                    converter_keys[param.name] = eval_type(param.annotation)
 
         if "message" not in params:
             raise TypeError("ws_expose convention expects (self, message, **kwargs)")
@@ -155,9 +155,16 @@ class ApplicationWebsocketMixin(object):
         def argument_decorator(parent, message):
             kwargs = {}
 
-
             for arg_name, arg_default in arg_keys.items():
-                kwargs[arg_name] = message.args(arg_name, arg_default)
+                raw_argument = message.args(arg_name, arg_default)
+                converter = converter_keys.get(arg_name, None)
+                if converter:
+                    try:
+                        kwargs[arg_name] = converter(raw_argument)
+                    except (TypeError, ValueError,):
+                        kwargs[arg_name] = arg_default
+                else:
+                    kwargs[arg_name] = raw_argument
 
             return func(parent, message, **kwargs)
 
@@ -168,7 +175,6 @@ class ApplicationWebsocketMixin(object):
         params = inspect.signature(func).parameters
         arg_keys = {}
         converter_keys= {}
-        positional_count = 0
 
         def eval_type(st):
             return st if not isinstance(st, str) else eval(st, vars(sys.modules[func.__module__]))
@@ -183,14 +189,6 @@ class ApplicationWebsocketMixin(object):
                 if param.annotation is not inspect.Parameter.empty:
                     converter_keys[name] = eval_type(param.annotation)
 
-            else:
-                positional_count += 1
-
-        if positional_count != 1:
-            raise ValueError("ws_add(... asign_args=True) - arguments need to be keyword arguments and not positional.")
-
-        if "message" not in params:
-            raise TypeError("ws_add convention expects first positional argument be called message.")
 
         @functools.wraps(func)
         def argument_decorator(message: MessageHandler):

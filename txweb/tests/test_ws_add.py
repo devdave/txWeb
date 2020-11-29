@@ -33,23 +33,23 @@ def test_ws_assign_args_flag_works():
     assert result == "Steve!!!"
 
 
-def test_ws_enforces_naming_conventions():
+# def test_ws_enforces_naming_conventions():
+#
+#     app = WSApp(__name__)
+#
+#     with pytest.raises(TypeError):
+#         @app.ws_add("bob", assign_args=True)
+#         def bad_endpoint(steve):
+#             pass
 
-    app = WSApp(__name__)
-
-    with pytest.raises(TypeError):
-        @app.ws_add("bob", assign_args=True)
-        def bad_endpoint(steve):
-            pass
-
-def test_ws_enforces_assign_args_is_kosher():
-
-    app = WSApp(__name__)
-
-    with pytest.raises(ValueError):
-        @app.ws_add("steve", assign_args=True)
-        def missing_kwargs(message, alice, bob):
-            pass
+# def test_ws_enforces_assign_args_is_kosher():
+#
+#     app = WSApp(__name__)
+#
+#     with pytest.raises(ValueError):
+#         @app.ws_add("steve", assign_args=True)
+#         def missing_kwargs(message, alice, bob):
+#             pass
 
 def ToyConverter(arg):
     return int(arg)
