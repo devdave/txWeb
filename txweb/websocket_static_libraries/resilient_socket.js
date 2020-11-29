@@ -108,7 +108,7 @@ class ResilientSocket {
         }
     }
 
-    ask(endpoint, args) {
+    async ask(endpoint, args) {
         /**
          * Expects a response using Deferred for callbacks
          */
@@ -121,15 +121,13 @@ class ResilientSocket {
         let msg = {type:"ask", endpoint:endpoint, args: args, caller_id: this.callerID};
         this._sendRaw(JSON.stringify(msg));
 
-        return d;
-    }
-
-    async a_ask(endpoint, args, timeout) {
-        const d = this.ask(endpoint, args);
-
         return new Promise(function(resolve){
             d.then(resolve);
         });
+    }
+
+    async a_ask(endpoint, args, timeout) {
+        return this.ask(endpoint, args);
     }
 
     call(endpoint, args) {
