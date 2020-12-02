@@ -2,6 +2,14 @@
 export {ResilientSocket};
 import {Deferred} from "./deferred.js";
 
+
+async function sleep(time) {
+    return new Promise(resolve => {
+        window.setTimeout(resolve, time);
+    })
+}
+
+
 class ResilientSocket {
     constructor(conString, {debug=false} = {}) {
         this.conString = conString;
@@ -18,9 +26,11 @@ class ResilientSocket {
 
 
         this.endpoints = {};
+
+        this.connect();
     }
 
-    connect() {
+    async connect() {
 
         if(this.retries > this.retryLimit) {
             console.error("Number of connect retries reached limit!");
@@ -28,15 +38,50 @@ class ResilientSocket {
             // connection retries failing.
         }
 
-        console.debug("connecting resilient");
+        if(this.debug){
+            console.debug("connecting resilient");
+        }
+
         this.socket = new WebSocket(this.conString);
         this.socket.addEventListener("message", this.receiveMsg.bind(this));
         this.socket.addEventListener("close", this.onclose.bind(this));
         this.socket.addEventListener("open", this.onopen.bind(this));
         this.socket.addEventListener("error", this.onerror.bind(this));
+
+        return new Promise((resolve, reject)=>{
+            const self = this;
+            async function on_open(evt){
+                if(self.debug){
+                    console.debug("Connection opened!", self.socket.readyState);
+                }
+
+                if(self.socket.readyState != self.socket.OPEN) {
+                    await sleep(1000);
+                }
+                self.retries = 0;
+                self.closed = false;
+                self.socket.removeEventListener("open", this);
+                self.socket.removeEventListener("error", on_error);
+                resolve(evt);
+            }
+
+            function on_error(evt) {
+                self.closed = true;
+                self.socket.removeEventListener("error", this);
+                reject(evt);
+            }
+
+            this.socket.addEventListener("open", on_open, {once: true});
+            this.socket.addEventListener("error", on_error, {once: true});
+
+
+
+        });
+
     }
 
     onopen() {
+        console.log("rs.onopen called");
         this.closed = false;
         this.retries = 0;
     }
@@ -55,14 +100,22 @@ class ResilientSocket {
         this.socket.addEventListener("open", handler, {once:true});
     }
 
-    _sendRaw(msg) {
+    async _sendRaw(msg) {
         //Check if disconnected
-        if(this.closed == true) {
-            this.connect();
-            this.first_open( x=>this.socket.send(msg));
+
+        if(this.socket.readyState != this.socket.OPEN) {
+            const result = await this.connect();
+            console.log("this.connect", result, this.socket.readyState);
+            this.socket.send(msg);
         } else {
             this.socket.send(msg);
         }
+
+        if(this.debug){
+            console.debug("Sent", msg);
+        }
+
+
 
     }
 
@@ -78,14 +131,15 @@ class ResilientSocket {
 
     async receiveMsg(msg) {
         if(this.debug) {
-            console.debug(msg);
+            console.debug("received", msg);
         }
 
         let data = JSON.parse(msg.data);
         if (data['type'] == "response") {
             let d = this.pending[data['caller_id']];
-            d.fire(data.result);
             delete this.pending[data['caller_id']];
+            d.fire(data.result);
+
         }
         else if(data['type'] == "tell") {
             if (this.endpoints[data['endpoint']] != undefined) {
