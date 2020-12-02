@@ -128,8 +128,9 @@ class AtWSProtocol(WebSocketServerProtocol):
                 warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
 
         elif "endpoint" in message:
+
             endpoint_func = self.factory.get_endpoint(message['endpoint'])
-            # self.my_log.debug("Processing {endpoint_func!r}", endpoint_func=endpoint_func)
+            self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
 
             if endpoint_func is None:
                 self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
