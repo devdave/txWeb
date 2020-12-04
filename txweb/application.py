@@ -65,7 +65,7 @@ WSEndpoint = T.Callable[[MessageHandler], T.Any]
 ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure], T.Union[bool, None]])
 
 
-class ApplicationWebsocketMixin(object):
+class ApplicationWebsocketMixin:
 
     WS_EXPOSED_FUNC = "WS_EXPOSED_FUNC"
 
@@ -77,6 +77,13 @@ class ApplicationWebsocketMixin(object):
         self.ws_instances = {}
 
     def enable_websockets(self, url, route):
+        """
+            Setup websocket support for txweb
+
+        :param url:
+        :param route:
+        :return:
+        """
         if AUTOBAHN_MISSING is True:
             raise EnvironmentError("Unable to provide websocket support without autobahn installed/present")
 
@@ -85,6 +92,19 @@ class ApplicationWebsocketMixin(object):
         self.add_resource(route, self.ws_resource)
 
     def ws_add(self, name, assign_args=False) -> T.Callable[[WSEndpoint], WSEndpoint]:
+        """
+        Add a new endpoint for use with the connected websocket.
+
+        Example usage
+        ```
+            @ws_add
+            def my_websocket_endpoint(message):
+                ...
+        ```
+        :param name:
+        :param assign_args:
+        :return:
+        """
 
         def processor(func: WSEndpoint) -> WSEndpoint:
 
@@ -98,10 +118,31 @@ class ApplicationWebsocketMixin(object):
 
     # noinspection SpellCheckingInspection
     def ws_sharelib(self, route_str="/lib"):
+        """
+            Adds utility libraries to the provided route str for use by client facing html javascript.
+        :param route_str:
+        :return:
+        """
         self.add_staticdir2(route_str, WS_STATIC_LIB)
 
     def ws_class(self, kls=None, name: str = None):
+        """
+        Add an entire class of @ws_expose'd class methods as endpoints for the websocket.
 
+        Example
+        ```
+            @app.ws_class
+            class Foo:
+                @app.expose
+                def bar(message):
+                    ...
+        ```
+            That will create a "foo.bar" endpoint
+
+        :param kls:
+        :param name: Override the default behavior of using the class.__name__ property for the base endpoint.
+        :return:
+        """
 
         def processor(kls, name = None):
             kls_name = name if name is not None else kls.__name__.lower()
@@ -132,6 +173,11 @@ class ApplicationWebsocketMixin(object):
 
     @staticmethod
     def websocket_class_arguments_decorator(func):
+        """
+            Internal method not intended for users
+        :param func:
+        :return:
+        """
         params = inspect.signature(func).parameters
         arg_keys = {}
         converter_keys = {}
@@ -174,6 +220,11 @@ class ApplicationWebsocketMixin(object):
 
     @staticmethod
     def websocket_function_arguments_decorator(func):
+        """
+            Internal method not intended for users
+        :param func:
+        :return:
+        """
         params = inspect.signature(func).parameters
         arg_keys = {}
         converter_keys= {}
@@ -215,6 +266,12 @@ class ApplicationWebsocketMixin(object):
 
 
     def ws_expose(self, func: callable = None, assign_args=False):
+        """
+        See ws_class for use
+        :param func:
+        :param assign_args:
+        :return:
+        """
 
         if func is None and assign_args is True:
             def processor(real_func):
@@ -228,7 +285,7 @@ class ApplicationWebsocketMixin(object):
             return func
 
 
-class ApplicationRoutingHelperMixin(object):
+class ApplicationRoutingHelperMixin:
     """
         Provides a wrapping interface around :ref: `RoutingResource`
 
@@ -248,10 +305,63 @@ class ApplicationRoutingHelperMixin(object):
     route = add
 
     def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
+        """
+
+        example usage
+        ```
+        @app.add_class("/my_foo")
+        class Foo:
+            @app.expose("/bar")
+            def some_endpoint(self, request):
+                ...
+
+        ```
+        would connect an instance of Foo and it's method `some_endpoint` to the url `/my_foo/bar`
+
+
+        :param route_str:
+        :param kwargs:
+        :return:
+        """
         return self.router.add(route_str, **kwargs)
 
 
+    def expose(self, route_str, **kwargs):
+        """
+            Refer to add_class for usage
+        :param route_str:
+        :param kwargs:
+        :return:
+        """
+
+        return expose_method(route_str, **kwargs)
+
+    def set_view_prefilter(self, func):
+        """
+            Experimental, sets a view class method to be called before any `expose`'d method.
+        :param func:
+        :return:
+        """
+        return set_prefilter(func)
+
+    def set_view_postfilter(self, func):
+        """
+            Experimental, sets a view class method to be called after any `expose`'d method.
+        :param func:
+        :return:
+        """
+        return set_postfilter(func)
+
+
     def add_resource(self, route_str:str, resource, **kwargs):
+        """
+        Add's a native/vanilla twisted.web.Resource object to the provided route_str
+
+        :param route_str:
+        :param resource:
+        :param kwargs:
+        :return:
+        """
         return self.router._add_resource(route_str, thing=resource, route_kwargs=kwargs )
 
 
@@ -271,6 +381,13 @@ class ApplicationRoutingHelperMixin(object):
 
 
     def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> File:
+        """
+        TODO - remove calls to `add_staticdir2` and just use `add_staticdir`
+        :param route_str:
+        :param dirPath:
+        :param recurse:
+        :return:
+        """
 
         if route_str.endswith("/") is False:
             route_str += "/"
@@ -284,18 +401,10 @@ class ApplicationRoutingHelperMixin(object):
     add_staticdir = add_staticdir2
 
 
-    def expose(self, route_str, **kwargs):
-        # TODO make route_str optional somehow
-        return expose_method(route_str, **kwargs)
-
-    def set_view_prefilter(self, func):
-        return set_prefilter(func)
-
-    def set_view_postfilter(self, func):
-        return set_postfilter(func)
 
 
-class ApplicationErrorHandlingMixin(object):
+
+class ApplicationErrorHandlingMixin:
     """
     The Error processing and handling aspect of Application
 
@@ -341,6 +450,15 @@ class ApplicationErrorHandlingMixin(object):
         return processor
 
     def add_error_handler(self, handler:T.Callable, error_type: T.Union[HTTPCode, int, Exception, str], override=False):
+        """
+        TODO cull this out or justify it's existence.
+
+        Used similar to @handle_error but instead the first argument is a callable/reference to a function.
+        :param handler:
+        :param error_type:
+        :param override:
+        :return:
+        """
 
         if error_type in self.error_handlers and override is False:
             old_func = self.error_handlers[error_type]
@@ -349,6 +467,17 @@ class ApplicationErrorHandlingMixin(object):
         self.error_handlers[error_type] = handler
 
     def processingFailed(self, request:StrRequest, reason: failure.Failure):
+        """
+        Internal method
+
+        Called as part of the pipeline started when an exception occurs at Request.render and bubbles its
+        way up to this part.
+
+
+        :param request:
+        :param reason:
+        :return:
+        """
 
         default_handler = self.error_handlers['default']
 
@@ -375,7 +504,11 @@ class ApplicationErrorHandlingMixin(object):
 
 
 class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, ApplicationWebsocketMixin):
+    """
+        Grand unified god module of txweb.
 
+        TODO rename to TXWeb versus application to avoid confusion.
+    """
 
     NOT_DONE_YET = NOT_DONE_YET
 
@@ -444,14 +577,26 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
     @property
     def router(self) -> RoutingResource:
+        """
+        Provide access to the routing resource object.
+        :return:
+        """
         return self._router
 
     @property
     def site(self) -> WebSite:
+        """
+        Provides access to the server.Site instance
+        :return:
+        """
         return self._site
 
     @property
     def reactor(self) -> PosixReactorBase:
+        """
+        Provides access to the currently used reactor, used specifically to make testing easier.
+        :return:
+        """
         return self._reactor
 
     @reactor.setter
@@ -485,6 +630,14 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         return func
 
     def _call_before_render(self, request: StrRequest):
+        """
+        Internal method that iterates over all appended pre filter functions
+
+        TODO - add logic to abort the loop if a post filter returns anything besides None
+
+        :param request:
+        :return:
+        """
         for func in self._before_render_handlers:
             try:
                 func(request)
@@ -492,12 +645,20 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
                 log.error(f"Before render failed {func}")
 
     def _call_after_render(self, request: StrRequest, body:T.Union[bytes,str,int]):
+        """
+            Internal method that iterates over all post filters.
+
+        :param request:
+        :param body:
+        :return:
+        """
         for func in self._after_render_handlers:
             try:
-                func(request)
+                body = func(request, body)
             except Exception:
                 log.error(f"After render failed {func}")
 
+        return body
 
 
 
