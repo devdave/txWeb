@@ -16,6 +16,7 @@ from .message_handler import MessageHandler
 
 from txweb.log import getLogger
 
+
 class WSProtocol(WebSocketServerProtocol):
 
     my_log = getLogger()
@@ -28,7 +29,7 @@ class WSProtocol(WebSocketServerProtocol):
     def __init__(self, *args, **kwargs):
         self.pending_responses = {}
 
-        super(WSProtocol, self).__init__(*args, **kwargs)
+        super(WSProtocol, self).__init__()
         # WebSocketServerProtocol.__init__(self, *args, **kwargs)
 
         self.identity = None
@@ -42,7 +43,6 @@ class WSProtocol(WebSocketServerProtocol):
 
     def getCookie(self, cookie_name, default=None):
         raw_cookies = self.http_headers.get('cookie', "")
-        cookies = {}
         for params in raw_cookies.split(";"):
             str_name, value = params.split("=")
             if str_name.strip() == cookie_name:
@@ -114,6 +114,7 @@ class WSProtocol(WebSocketServerProtocol):
 
         message = MessageHandler(raw_message, self)
         result = None
+        endpoint_func = None
 
         if message.get("type") == "response":
             caller_id = message.get("caller_id", None)
