@@ -57,13 +57,13 @@ class BaseHandler(object):
         """
         # noinspection PyBroadException
         try:
-            self.process(request, error)
+            return self.process(request, error)
         except Exception as exc:
             log.error("PANIC - There was an exception in the error handler.")
             request.ensureFinished()
             raise exc
 
-    def process(self, request: StrRequest, error: Failure) -> None:  # pragma: no cover
+    def process(self, request: StrRequest, error: Failure) -> T.Union[None, bool]:  # pragma: no cover
         raise NotImplementedError("Attempting to use Base error handler")
 
 
@@ -126,7 +126,7 @@ class DefaultHandler(BaseHandler):
         return True
 
 
-class DebugHandler(BaseHandler):  #  pragma: no cover
+class DebugHandler(BaseHandler):  # pragma: no cover
     """
         TODO - To finish
 
@@ -166,7 +166,8 @@ class DebugHandler(BaseHandler):  #  pragma: no cover
         request.write(body)
         request.ensureFinished()
 
-    def format_stack(self, frames:T.List[StackFrame]) -> T.Generator[T.Dict[str, T.Any]]:
+    @staticmethod
+    def format_stack(frames: T.List[StackFrame]) -> T.Generator[T.Dict[str, T.Any]]:
         for frame in frames:
             yield FormattedFrame(
                 name=frame[0].encode("UTF-8"),
