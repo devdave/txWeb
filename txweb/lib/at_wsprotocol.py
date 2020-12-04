@@ -99,18 +99,19 @@ class AtWSProtocol(WebSocketServerProtocol):
             raise EnvironmentError("Maximum # of pending asks reached")
 
     def onMessage(self, payload, isBinary):
-        if isBinary:
+        if isBinary:  # pragma: no cover
+            warnings.warn("Received binary payload, don't know how to deal with this.")
             return None # I don't know how to deal with binary
 
-        try:
+        try:  # pragma: no cover
             payload = payload.decode("utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError:  # pragma: no cover
             warnings.warn(f"Failed to decode {payload}")
             return
 
-        try:
+        try:  # pragma: no cover
             raw_message = json.loads(payload)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError:  # pragma: no cover
             warnings.warn(f"Corrupt/bad payload: {payload}")
             return
 
@@ -126,6 +127,7 @@ class AtWSProtocol(WebSocketServerProtocol):
                 del self.deferred_asks[caller_id]
             else:
                 warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
+                return
 
         elif "endpoint" in message:
 

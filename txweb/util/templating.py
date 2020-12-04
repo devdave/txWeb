@@ -1,3 +1,4 @@
+
 import json
 import typing as T
 from pathlib import Path
@@ -16,6 +17,7 @@ from jinja2.bccache import Bucket
     TODO: look into jinja2 returning bytes by default to cut down on post-processing
 """
 
+# pragma: no cover
 JINJA2_ENV = None  # type: Environment
 
 
