@@ -55,8 +55,8 @@ def test_hybrid_leaf_and_branch(static_dir):
 
 def test_full_suite_with_routed_site_to_added_directory(static_dir):
 
-    test_app = Application()
-    test_app(__name__)
+    test_app = Application(__name__)
+
 
 
     test_app.add_staticdir("/some/convoluted_path", static_dir)
