@@ -1,4 +1,16 @@
+from collections import OrderedDict
+import typing as T
+import inspect
+import warnings
+
 from twisted.web.static import File
+
+from twisted.web import resource
+from twisted.python import compat
+
+# Werkzeug routing import
+from werkzeug import routing as wz_routing
+
 
 from txweb.http_codes import UnrenderableException
 from txweb.util.url_converter import DirectoryPath
@@ -12,18 +24,10 @@ from .view_class import ViewClassResource
 from ..lib import view_class_assembler as vca
 from txweb import http_codes as HTTP_Errors
 
-from twisted.web import resource
-from twisted.python import compat
-
-# Werkzeug routing import
-from werkzeug import routing as wz_routing
 
 from ..log import getLogger
 
-from collections import OrderedDict
-import typing as T
-import inspect
-import warnings
+
 
 log = getLogger(__name__)
 
@@ -36,8 +40,17 @@ EndpointCallable = T.NewType("InstanceCallable",
 
 
 class RoutingResource(resource.Resource):
+    """
+        The bridge between twisted's object graph routing system and werkzeug's url pattern
+        recognition routing system.
+    """
 
     def __init__(self, script_name: bytes = None):
+        """
+
+        :param script_name: Optional ability to add a prefix to all routed URL's in case this application
+            is nested inside another web app.   See CGI's SCRIPT_NAME variable.
+        """
 
         resource.Resource.__init__(self)
 
@@ -50,16 +63,36 @@ class RoutingResource(resource.Resource):
 
     @property
     def site(self):   # pragma: no cover
+        """
+            Return a reference to the parent site of this resource
+        :return:
+        """
         return self._site
 
     @site.setter
     def site(self, site):  # pragma: no cover
+        """
+        TODO - Verify this is still being used.
+        :param site:
+        :return:
+        """
         self._site = site
 
     def iter_rules(self) -> T.Generator:
+        """
+        Debug method for iterating over all of the currently set URL Rule's for the werkzeug routing map.
+        :return:
+        """
         return self._route_map.iter_rules()
 
     def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]):
+        """
+            Possibly super overloaded
+
+        :param route_str:
+        :param kwargs:
+        :return:
+        """
 
         assert "endpoint" not in kwargs, \
             "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
@@ -72,11 +105,15 @@ class RoutingResource(resource.Resource):
 
             common_kwargs = {"endpoint": endpoint_name, "thing": original_thing, "route_kwargs": kwargs}
 
+            """
+                Is the thing to be added to the router a twisted Resource class?
+            """
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
 
                 self._add_resource_cls(route_str, **common_kwargs)
 
             elif isinstance(original_thing, resource.Resource):
+
                 self._add_resource(route_str, **common_kwargs)
 
             elif inspect.isclass(original_thing):
@@ -122,6 +159,9 @@ class RoutingResource(resource.Resource):
                    endpoint: T.AnyStr = None,
                    thing: T.Union[object, T.Callable] = None,
                    route_kwargs: T.Dict[str, T.Any] = None):
+        """
+            A view class has been provided, decorate and process it into the router.
+        """
 
         if vca.is_renderable(thing) is False:
             raise UnrenderableException(f"{thing.__name__!r} is missing exposed methods or a render method")
@@ -137,12 +177,32 @@ class RoutingResource(resource.Resource):
             self._endpoints[endpoint] = ViewClassResource(thing, instance)
 
     def _add_resource_cls(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+        """
+            Give the class definition of a resource, instantiate it, add it to the instances list, and then
+            add the instance to the routing map.
+
+        :param self:
+        :param route_str:
+        :param endpoint:
+        :param thing:
+        :param route_kwargs:
+        :return:
+        """
         route_kwargs = route_kwargs if route_kwargs is not None else {}
         if endpoint not in self._instances:
             self._instances[endpoint] = thing()
         self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_kwargs=route_kwargs)
 
     def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+        """
+
+        :param self:
+        :param route_str:
+        :param endpoint:
+        :param thing:
+        :param route_kwargs:
+        :return:
+        """
         route_kwargs = route_kwargs if route_kwargs is not None else {}
         endpoint = endpoint or get_thing_name(thing)
 
@@ -152,6 +212,13 @@ class RoutingResource(resource.Resource):
         self._route_map.add(new_rule)
 
     def add_directory(self, route_str: str, directory_resource: File) -> File:
+        """
+            TODO refactor.   Since I've dropped my own custom file and directory resources
+             this method isn't as relevant.
+        :param route_str:
+        :param directory_resource:
+        :return:
+        """
 
         endpoint = repr(directory_resource)
         if endpoint not in self._endpoints:
@@ -172,6 +239,16 @@ class RoutingResource(resource.Resource):
         return directory_resource
 
     def _build_map(self, path_element, request):
+        """
+            Takes all of the information provided by the request object and adapts them to match the wsgi environment
+            dictionary so that werkzeug can provide a routing map.
+
+            It feels unfortunate/excessive that I have to build this map on each request instead of just reporting
+            the changes in URL.
+        :param path_element:
+        :param request:
+        :return:
+        """
 
         map_bind_kwargs = {}
 
@@ -187,7 +264,6 @@ class RoutingResource(resource.Resource):
         else:
             map_bind_kwargs["script_name"] = self._script_name
 
-        # TODO add strict slash check flag to here or to website.add
         if map_bind_kwargs["script_name"].startswith(b"/") is False:
             map_bind_kwargs["script_name"] = b"/" + map_bind_kwargs["script_name"]
 
