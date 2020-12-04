@@ -25,6 +25,7 @@ from twisted.internet import reactor  # type: PosixReactorBase
 from twisted.python.compat import intToBytes
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import File
+from twisted.web.static import File as StaticFile
 from twisted.python import failure
 
 try:
@@ -41,7 +42,8 @@ else:
 
 # Application
 from .log import getLogger
-from .resources import RoutingResource, SimpleFile, Directory
+from .resources import RoutingResource
+# from .resources import SimpleFile, Directory
 from .lib import StrRequest, expose_method, set_prefilter, set_postfilter
 from .web_views import WebSite
 from .http_codes import HTTPCode
@@ -262,21 +264,11 @@ class ApplicationRoutingHelperMixin(object):
         :param default_type: What content type should a file be served as
         :return: twisted.web.static.File
         """
-        from twisted.web.static import File as StaticFile
+
         assert Path(filePath).exists()
         file_resource = StaticFile(filePath)
         return self.router.add(route_str)(file_resource)
 
-    def add_staticdir(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> Directory:
-
-        if route_str.endswith("/") is False:
-            route_str += "/"
-
-        directory_resource = Directory(dirPath, recurse)
-
-        self.router.add_directory(route_str, directory_resource)
-
-        return directory_resource
 
     def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> File:
 
@@ -288,6 +280,8 @@ class ApplicationRoutingHelperMixin(object):
         self.router.add_directory(route_str, directory_resource)
 
         return directory_resource
+
+    add_staticdir = add_staticdir2
 
 
     def expose(self, route_str, **kwargs):

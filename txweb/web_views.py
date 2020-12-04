@@ -56,20 +56,20 @@ class _RoutingSiteConnectors(server.Site):
         """
         return self.resource.add(route_str, **kwargs)
 
-    def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> txw_resources.SimpleFile:
-        """
-        Just a simple helper for a common task of serving individual files
-
-        :param route_str: A valid URI route string
-        :param filepath: An absolute or relative path to a file to be served over HTTP
-        :param default_type: What content type should a file be served as
-        :return: twisted.web.static.File
-        """
-        return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
-
-    def add_directory(self, route_str: str, dirPath: T.Union[str, pathlib.Path]) -> txw_resources.Directory:
-        # TODO pull add_directory OUT of RoutingResource
-        return self.resource.add_directory(route_str, dirPath)
+    # def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> txw_resources.SimpleFile:
+    #     """
+    #     Just a simple helper for a common task of serving individual files
+    #
+    #     :param route_str: A valid URI route string
+    #     :param filepath: An absolute or relative path to a file to be served over HTTP
+    #     :param default_type: What content type should a file be served as
+    #     :return: twisted.web.static.File
+    #     """
+    #     return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
+    #
+    # def add_directory(self, route_str: str, dirPath: T.Union[str, pathlib.Path]) -> txw_resources.Directory:
+    #     # TODO pull add_directory OUT of RoutingResource
+    #     return self.resource.add_directory(route_str, dirPath)
 
 
 

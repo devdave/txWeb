@@ -1,3 +1,5 @@
+from twisted.web.static import File
+
 from txweb.http_codes import UnrenderableException
 from txweb.util.url_converter import DirectoryPath
 from txweb.util.basic import get_thing_name
@@ -5,7 +7,7 @@ from txweb.lib.str_request import StrRequest
 
 from .view_function import ViewFunctionResource
 from .view_class import ViewClassResource
-from .directory import Directory
+# from .directory import Directory
 
 from ..lib import view_class_assembler as vca
 from txweb import http_codes as HTTP_Errors
@@ -157,7 +159,7 @@ class RoutingResource(resource.Resource):
 
         self._route_map.add(new_rule)
 
-    def add_directory(self, route_str: str, directory_resource: Directory) -> Directory:
+    def add_directory(self, route_str: str, directory_resource: File) -> File:
 
         endpoint = repr(directory_resource)
         if endpoint not in self._endpoints:
