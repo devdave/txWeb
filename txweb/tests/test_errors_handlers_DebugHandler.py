@@ -89,10 +89,6 @@ def test_error_custom_errorhandler_prevents_duplicates(dummy_request: RequestRet
     class TestError(Exception):
         pass
 
-    @app.add("/throws")
-    def throws_error(request):
-        raise TestError()
-
     app.handle_error(TestError)(fake_handler)
     with pytest.raises(ValueError):
         app.handle_error(TestError)(fake_handler)
