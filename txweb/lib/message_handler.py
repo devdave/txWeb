@@ -5,20 +5,18 @@ from twisted.web.server import NOT_DONE_YET
 
 from collections.abc import Mapping
 
-if T.TYPE_CHECKING or False: # pragma: no cover
+if T.TYPE_CHECKING or False:  # pragma: no cover
     # recursion import
     from .wsprotocol import WSProtocol
 
 
-
-
-class MessageHandler(Mapping): #pragma: no cover
+class MessageHandler(Mapping):  # pragma: no cover
 
     raw_message: T.Dict[T.str, T.Any]
     connection: WSProtocol
 
-    def __init__(self, raw_message:dict, connection:WSProtocol):
-        self.raw_message = raw_message # type: dict
+    def __init__(self, raw_message: dict, connection: WSProtocol):
+        self.raw_message = raw_message  # type: dict
         self.connection = connection
 
     def __getitem__(self, item):  # pragma: no cover
@@ -30,7 +28,7 @@ class MessageHandler(Mapping): #pragma: no cover
     def __len__(self):  # pragma: no cover
         return len(self.raw_message)
 
-    def __contains__(self, item): # pragma: no cover
+    def __contains__(self, item):  # pragma: no cover
         return item in self.raw_message
 
     def keys(self):  # pragma: no cover
@@ -58,8 +56,7 @@ class MessageHandler(Mapping): #pragma: no cover
         return value
 
     def args(self, key, default=None, type=None):
-        args = None
-        value = default
+
         try:
             args = self['args']
         except KeyError:
