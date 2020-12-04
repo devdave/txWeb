@@ -35,7 +35,7 @@ except ImportError:
     print("Unable to support websockets:  `pip install autobahn` to enable")
 else:
     AUTOBAHN_MISSING = False
-    from .lib.at_wsprotocol import AtWSProtocol
+    from .lib.wsprotocol import WSProtocol
     from .lib.message_handler import MessageHandler
     from .lib.routed_factory import RoutedWSFactory
     from autobahn.twisted.resource import WebSocketResource

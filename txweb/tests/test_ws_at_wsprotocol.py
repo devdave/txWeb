@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from twisted.internet.defer import inlineCallbacks
 
-from txweb.lib.at_wsprotocol import AtWSProtocol
+from txweb.lib.wsprotocol import WSProtocol
 
 @dataclass(frozen=True)
 class CapturedMessage:
@@ -20,7 +20,7 @@ class MockFactory:
     def get_endpoint(self, endpoint):
         return self.endpoints[endpoint]
 
-class TrackingProtocol(AtWSProtocol):
+class TrackingProtocol(WSProtocol):
 
         def __init__(self, *args, **kwargs):
             super(TrackingProtocol, self).__init__(*args, **kwargs)

@@ -7,7 +7,7 @@ from collections.abc import Mapping
 
 if T.TYPE_CHECKING or False: # pragma: no cover
     # recursion import
-    from .at_wsprotocol import AtWSProtocol
+    from .wsprotocol import WSProtocol
 
 
 
@@ -15,9 +15,9 @@ if T.TYPE_CHECKING or False: # pragma: no cover
 class MessageHandler(Mapping): #pragma: no cover
 
     raw_message: T.Dict[T.str, T.Any]
-    connection: AtWSProtocol
+    connection: WSProtocol
 
-    def __init__(self, raw_message:dict, connection:AtWSProtocol):
+    def __init__(self, raw_message:dict, connection:WSProtocol):
         self.raw_message = raw_message # type: dict
         self.connection = connection
 

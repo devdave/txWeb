@@ -16,7 +16,7 @@ from .message_handler import MessageHandler
 
 from txweb.log import getLogger
 
-class AtWSProtocol(WebSocketServerProtocol):
+class WSProtocol(WebSocketServerProtocol):
 
     my_log = getLogger()
     """
@@ -28,7 +28,7 @@ class AtWSProtocol(WebSocketServerProtocol):
     def __init__(self, *args, **kwargs):
         self.pending_responses = {}
 
-        super(AtWSProtocol, self).__init__(*args, **kwargs)
+        super(WSProtocol, self).__init__(*args, **kwargs)
         # WebSocketServerProtocol.__init__(self, *args, **kwargs)
 
         self.identity = None

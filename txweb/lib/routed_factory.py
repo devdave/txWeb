@@ -1,10 +1,10 @@
 from autobahn.twisted.websocket import WebSocketServerFactory
-from .at_wsprotocol import AtWSProtocol
+from .wsprotocol import WSProtocol
 
 
 class RoutedWSFactory(WebSocketServerFactory):  #pragma: no cover
 
-    def __init__(self, url, routes, protocol_cls=AtWSProtocol, application=None):
+    def __init__(self, url, routes, protocol_cls=WSProtocol, application=None):
         WebSocketServerFactory.__init__(self, url)
         self.protocol = protocol_cls
 
