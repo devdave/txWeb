@@ -36,6 +36,7 @@ EXPOSED_RULE = "__sub_rule__"
 PREFILTER_ID = "__PREFILTER_ID__"
 POSTFILTER_ID = "__POSTFILTER_ID__"
 
+
 def has_exposed(obj):
     return any([
         True
@@ -43,10 +44,10 @@ def has_exposed(obj):
         if inspect.isfunction(m) and hasattr(m, EXPOSED_STR)
     ])
 
+
 def is_exposed(attribute):
-
-
     return has_exposed(attribute, EXPOSED_STR) and is_valid_callable
+
 
 def is_viewable(attribute):
     is_valid_callable = inspect.ismethod(attribute) \
@@ -79,9 +80,11 @@ def expose(route, **route_kwargs):
 
     return processor
 
+
 def set_prefilter(func):
     setattr(func, PREFILTER_ID, True)
     return func
+
 
 def set_postfilter(func):
     setattr(func, POSTFILTER_ID, True)
@@ -89,6 +92,7 @@ def set_postfilter(func):
 
 
 ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
+
 
 def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
 
