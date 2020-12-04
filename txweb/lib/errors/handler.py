@@ -20,14 +20,14 @@ from txweb.lib.str_request import StrRequest
 
 
 @dataclass
-class FormattedFrame(object):
+class FormattedFrame:
     name: bytes
     file: Path
     line_no: int
     line: bytes
 
-
-class StackFrame(T.NamedTuple):
+@dataclass(frozen=True, unsafe_hash=True)
+class StackFrame:
     funcName: str
     fileName: str
     lineNumber: int
@@ -38,7 +38,7 @@ class StackFrame(T.NamedTuple):
 log = getLogger(__name__)
 
 
-class BaseHandler(object):
+class BaseHandler:
     """
         TODO - Look into using twisted/zope's interface system
 
