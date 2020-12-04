@@ -36,48 +36,32 @@ ErrorHandler = T.NewType("ErrorHandler", T.Callable[['Website', StrRequest, fail
 
 LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
 
-class _RoutingSiteConnectors(server.Site):
-    """
-        Purpose: provide hooks to the RoutingResource assigned to self.resource
-    """
-    resource: RoutingResource
-
-    def add(self, route_str: str, **kwargs: T.Optional[T.Dict[str, T.Any]]) -> ResourceView:
-        """
-
-        :param route_str: A valid werkzeug routing url
-        :param kwargs: optional keyword arguments for werkzeug routing
-        :return:
-        """
-        return self.resource.add(route_str, **kwargs)
-
-    # def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> txw_resources.SimpleFile:
+# class _RoutingSiteConnectors(server.Site):
+#     """
+#         Purpose: provide hooks to the RoutingResource assigned to self.resource
+#     """
+#     resource: RoutingResource
+#
+    # def add(self, route_str: str, **kwargs: T.Optional[T.Dict[str, T.Any]]) -> ResourceView:
     #     """
-    #     Just a simple helper for a common task of serving individual files
-    #
-    #     :param route_str: A valid URI route string
-    #     :param filepath: An absolute or relative path to a file to be served over HTTP
-    #     :param default_type: What content type should a file be served as
-    #     :return: twisted.web.static.File
+    #         :param route_str: A valid werkzeug routing url
+    #         :param kwargs: optional keyword arguments for werkzeug routing
+    #         :return:
     #     """
-    #     return self.add_resource(route_str, txw_resources.SimpleFile(filePath, defaultType=defaultType))
-    #
-    # def add_directory(self, route_str: str, dirPath: T.Union[str, pathlib.Path]) -> txw_resources.Directory:
-    #     # TODO pull add_directory OUT of RoutingResource
-    #     return self.resource.add_directory(route_str, dirPath)
+    #     return self.resource.add(route_str, **kwargs)
+#
+#
+#
+#     def add_resource(self, route_str: str,
+#                      rsrc: resource.Resource,
+#                      **kwargs: T.Dict[str, T.Any]) -> ResourceView:
+#         return self.resource.add(route_str, **kwargs)(rsrc)
+#
+#     def expose(self, route_str, **route_kwargs) -> T.Callable:
+#         return vca.expose(route_str, **route_kwargs)
 
 
-
-    def add_resource(self, route_str: str,
-                     rsrc: resource.Resource,
-                     **kwargs: T.Dict[str, T.Any]) -> ResourceView:
-        return self.resource.add(route_str, **kwargs)(rsrc)
-
-    def expose(self, route_str, **route_kwargs) -> T.Callable:
-        return vca.expose(route_str, **route_kwargs)
-
-
-class WebSite(_RoutingSiteConnectors):
+class WebSite(server.Site):
     """
         Public side of the web_views class collection.
 
@@ -91,13 +75,15 @@ class WebSite(_RoutingSiteConnectors):
         routing_resource = routing_resource or RoutingResource()
         request_factory = request_factory or StrRequest
 
-        _RoutingSiteConnectors.__init__(self, routing_resource, requestFactory=request_factory)
+        # _RoutingSiteConnectors.__init__(self, routing_resource, requestFactory=request_factory)
+        super().__init__(routing_resource, requestFactory=request_factory)
 
         self._errorHandler = siteErrorHandler
         self._lastError = None
 
         # self._before_request_render = None
         # self._after_request_render = None
+
 
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
@@ -114,48 +100,4 @@ class WebSite(_RoutingSiteConnectors):
     def setErrorHandler(self, func: ErrorHandler):
         self._errorHandler = func
         return func
-
-
-    # def call_before_request_render(self, func):
-    #     self._before_request_render = func
-    #     return func
-    #
-    # def after_resource_fetch(self, func):
-    #     self._after_request_render = func
-    #     return func
-    #
-    # def getResourceFor(self, request: StrRequest):
-    #     """
-    #     This is probably the least convoluted way to manipulate the
-    #     current http request.
-    #     """
-    #
-    #     if self._before_request_render is not None:
-    #         request.add_before_render(self._before_request_render)
-    #
-    #     if self._after_request_render is not None:
-    #         request.add_after_render(self._after_request_render)
-    #
-    #     return server.Site.getResourceFor(self, request)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
