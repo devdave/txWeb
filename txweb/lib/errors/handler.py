@@ -67,14 +67,9 @@ class DefaultHandler(BaseHandler):
         if request.startedWriting not in [0, False]:
             # There is nothing we can do, the out going stream is already tainted
             # noinspection PyBroadException
-            try:
-                request.write("!!!Internal Server Error!!!")
-            except Exception:
-                log.error("Failed writing error message to an active stream")
-            finally:
-                request.ensureFinished()
-
-            return True
+            log.error("Failed writing error message to an active stream")
+            request.ensureFinished()
+            reason.raiseException()
 
         elif isinstance(http_codes.HTTPCode, reason.type) or issubclass(reason.type, http_codes.HTTPCode):
 
