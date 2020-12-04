@@ -93,7 +93,7 @@ class RoutingResource(resource.Resource):
                     f"Received {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 
             # return whatever was decorated unchanged
-            # the Resource.getChildForRequest is completely shortcircuited so
+            # the Resource.getChildForRequest is completely short circuited so
             # that a viewable class could be inherited in userland
             return original_thing
 
@@ -171,7 +171,7 @@ class RoutingResource(resource.Resource):
 
         return directory_resource
 
-    def _build_map(self, pathEl, request):
+    def _build_map(self, path_element, request):
 
         map_bind_kwargs = {}
 
@@ -183,7 +183,7 @@ class RoutingResource(resource.Resource):
             map_bind_kwargs["server_name"] = request.getRequestHostname()
 
         if self._script_name is None:
-            map_bind_kwargs["script_name"] = b"/"  # b"/".join(request.prepath) if request.prepath else b"/"
+            map_bind_kwargs["script_name"] = b"/"
         else:
             map_bind_kwargs["script_name"] = self._script_name
 
@@ -199,18 +199,18 @@ class RoutingResource(resource.Resource):
 
         return self._route_map.bind(**map_bind_kwargs)
 
-    def getChildWithDefault(self, pathEl: T.Union[bytes, str], request: StrRequest):
+    def getChildWithDefault(self, path_element: T.Union[bytes, str], request: StrRequest):
         """
             Routing resource is mostly ignorant of the larger ecosystem so it either
             returns a resource OR it throws up an errors.HTTPCode
         """
 
-        map = self._build_map(pathEl, request)
+        routing = self._build_map(path_element, request)
 
         try:
             # TODO refactor to handle HEAD requests when the only valid match support GET
             # - one bad idea is to hack on werkzeug to append the URI matching rule to MethodNotAllowed
-            (rule, kwargs) = map.match(return_rule=True)
+            (rule, kwargs) = routing.match(return_rule=True)
         except wz_routing.RequestRedirect as redirect:
             log.debug(f"Werkzeug threw a redirect")
             raise HTTP_Errors.HTTP3xx(redirect.code, redirect.new_url, redirect.name)
@@ -230,4 +230,3 @@ class RoutingResource(resource.Resource):
             # Intended to help with nested Directory resources
             request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
         return self._endpoints[rule.endpoint]
-

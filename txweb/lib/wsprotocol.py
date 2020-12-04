@@ -1,3 +1,4 @@
+from __future__ import annotations
 try:
     import ujson as json
 except ImportError:
@@ -25,6 +26,7 @@ class WSProtocol(WebSocketServerProtocol):
         pending asks to 100
     """
     MAX_ASKS = 100  # Need to make this tunable
+    factory: RoutedFactory
 
     def __init__(self, *args, **kwargs):
         self.pending_responses = {}
@@ -54,7 +56,7 @@ class WSProtocol(WebSocketServerProtocol):
         self.identity = uuid4().hex
         self.my_log.debug("Client connecting: {request.peer}", request=request)
 
-    def onClose(self, wasClean, code, reason):
+    def onClose(self, was_clean, code, reason):
         self.on_disconnect.addErrback(self.my_log.error)
         self.on_disconnect.callback(self.identity)
         del self.on_disconnect
@@ -87,18 +89,18 @@ class WSProtocol(WebSocketServerProtocol):
         :return:
         """
         if len(self.deferred_asks) < self.MAX_ASKS:
-            requestToken = uuid4().hex
+            request_token = uuid4().hex
             d = Deferred()
-            self.deferred_asks[requestToken] = d
-            self.sendDict(endpoint=endpoint, type="ask", caller_id=requestToken, args=values)
+            self.deferred_asks[request_token] = d
+            self.sendDict(endpoint=endpoint, type="ask", caller_id=request_token, args=values)
             return d
         else:
             raise EnvironmentError("Maximum # of pending asks reached")
 
-    def onMessage(self, payload, isBinary):
-        if isBinary:  # pragma: no cover
+    def onMessage(self, payload, is_binary):
+        if is_binary:  # pragma: no cover
             warnings.warn("Received binary payload, don't know how to deal with this.")
-            return None # I don't know how to deal with binary
+            return None  # I don't know how to deal with binary
 
         try:  # pragma: no cover
             payload = payload.decode("utf-8")
@@ -120,7 +122,7 @@ class WSProtocol(WebSocketServerProtocol):
             caller_id = message.get("caller_id", None)
 
             if caller_id is not None and caller_id in self.deferred_asks:
-                d = self.deferred_asks[caller_id] # type: Deferred
+                d = self.deferred_asks[caller_id]  # type: Deferred
                 d.callback(message.get("result"))
                 del self.deferred_asks[caller_id]
             else:
@@ -150,5 +152,3 @@ class WSProtocol(WebSocketServerProtocol):
         else:
             warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
             pass
-
-
