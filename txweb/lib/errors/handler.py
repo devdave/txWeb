@@ -47,7 +47,7 @@ class BaseHandler(object):
             request.ensureFinished()
             raise exc
 
-    def process(self, request: StrRequest, reason: Failure) -> None:
+    def process(self, request: StrRequest, reason: Failure) -> None:  # pragma: no cover
         raise NotImplementedError("Attempting to use Base error handler")
 
 
