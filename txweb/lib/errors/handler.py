@@ -1,3 +1,8 @@
+"""
+    Base, Default, and generic Debug error handlers for txweb.
+
+
+"""
 from __future__ import annotations
 import typing as T
 from pathlib import Path
@@ -34,28 +39,39 @@ log = getLogger(__name__)
 
 
 class BaseHandler(object):
+    """
+        TODO - Look into using twisted/zope's interface system
+
+        Base/example class of an error handler.
+    """
 
     def __init__(self, application):
         self.application = application
 
-    def __call__(self, request: StrRequest, reason: Failure) -> None:
+    def __call__(self, request: StrRequest, error: Failure) -> T.Union[None, bool]:
+        """
+
+        :param request:  Provided to allow managing the connection (writing, http code, etc).
+        :param reason:
+        :return: Return False if the handler was unable to handle the error
+        """
         # noinspection PyBroadException
         try:
-            self.process(request, reason)
+            self.process(request, error)
         except Exception as exc:
             log.error("PANIC - There was an exception in the error handler.")
             request.ensureFinished()
             raise exc
 
-    def process(self, request: StrRequest, reason: Failure) -> None:  # pragma: no cover
+    def process(self, request: StrRequest, error: Failure) -> None:  # pragma: no cover
         raise NotImplementedError("Attempting to use Base error handler")
 
 
 # noinspection PyMissingConstructor
 class DefaultHandler(BaseHandler):
     """
-        Goal:  Delegate various errors to templates to make
-            a visual error system easier to view.
+        Primarily focused with handling 3xx HTTP exception/codes thrown by the application.
+
     """
 
     def __init__(self, enable_debug=False):
@@ -63,6 +79,22 @@ class DefaultHandler(BaseHandler):
         self.enable_debug = enable_debug
 
     def process(self, request: StrRequest, reason: Failure) -> bool:
+        """
+            As mentioned in class docblock, primary focus is handling HTTPCode exceptions thrown by the application.
+
+            If the request/response factory has already started writing to the client, this halts all error processing
+             and throws the exception.
+
+            else if a HTTPCode exception/error it redirects for 3xx codes
+            OR it writes the code and message to the client
+            (Eg HTTPCode500 with Internal error would throw 500 "Internal server error")
+
+            else it sends a 500 HTTP response and then raises the exception back into the user application.
+
+        :param request:
+        :param reason:
+        :return:
+        """
 
         if request.startedWriting not in [0, False]:
             # There is nothing we can do, the out going stream is already tainted
