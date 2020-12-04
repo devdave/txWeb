@@ -32,27 +32,21 @@ log = getLogger(__name__)
 #    view_function(request, foo, bar)
 # EndPointCallable should match `view_function`
 EndpointCallable = T.NewType("InstanceCallable",
-                                  T.Callable[
-                                      [StrRequest,
-                                       T.Optional[T.Iterable],
-                                       T.Optional[T.Dict],
-                                       ], T.Union[str, int]])
-
+                             T.Callable[[StrRequest, T.Optional[T.Iterable], T.Optional[T.Dict], ], T.Union[str, int]])
 
 
 class RoutingResource(resource.Resource):
 
-
-    def __init__(self, on_error: T.Optional[resource.Resource] = None):
-
+    def __init__(self, script_name: bytes = None):
 
         resource.Resource.__init__(self)
 
         self._site = None
-        self._endpoints = OrderedDict() # type: typing.Dict[str, resource.Resource]
-        self._instances = OrderedDict() # type: typing.Dict[str, object]
-        self._route_map = wz_routing.Map() # type: wz_routing.Map
+        self._endpoints = OrderedDict()  # type: typing.Dict[str, resource.Resource]
+        self._instances = OrderedDict()  # type: typing.Dict[str, object]
+        self._route_map = wz_routing.Map()  # type: wz_routing.Map
         self._route_map.converters['directory'] = DirectoryPath
+        self._script_name = script_name
 
     @property
     def site(self):   # pragma: no cover
@@ -61,13 +55,11 @@ class RoutingResource(resource.Resource):
     @site.setter
     def site(self, site):  # pragma: no cover
         self._site = site
-        return self._site
-
 
     def iter_rules(self) -> T.Generator:
         return self._route_map.iter_rules()
 
-    def add(self, route_str:str, **kwargs:T.Dict[str, T.Any]):
+    def add(self, route_str: str, **kwargs: T.Dict[str, T.Any]):
 
         assert "endpoint" not in kwargs, \
             "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
@@ -78,7 +70,7 @@ class RoutingResource(resource.Resource):
 
             endpoint_name = get_thing_name(original_thing)
 
-            common_kwargs = {"endpoint":endpoint_name, "thing":original_thing, "route_kwargs":kwargs}
+            common_kwargs = {"endpoint": endpoint_name, "thing": original_thing, "route_kwargs": kwargs}
 
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
 
@@ -97,7 +89,8 @@ class RoutingResource(resource.Resource):
                 self._add_callable(route_str, **common_kwargs)
 
             else:
-                raise ValueError(f"Received {original_thing} but expected callable|Object|twisted.web.resource.Resource")
+                raise ValueError(
+                    f"Received {original_thing} but expected callable|Object|twisted.web.resource.Resource")
 
             # return whatever was decorated unchanged
             # the Resource.getChildForRequest is completely shortcircuited so
@@ -106,10 +99,10 @@ class RoutingResource(resource.Resource):
 
         return processor
 
-    def _add_callable(self, route_str:str,
-                      endpoint:str=None,
-                      thing:T.Union[EndpointCallable, object]=None,
-                      route_kwargs:T.Dict[str,T.Any]=None):
+    def _add_callable(self, route_str: str,
+                      endpoint: str = None,
+                      thing: T.Union[EndpointCallable, object] = None,
+                      route_kwargs: T.Dict[str, T.Any] = None):
         """
 
         :param route_str: a valid path for werkzeug routing
@@ -127,7 +120,7 @@ class RoutingResource(resource.Resource):
 
     def _add_class(self, route_str: T.AnyStr,
                    endpoint: T.AnyStr = None,
-                   thing:T.Union[object,T.Callable] = None,
+                   thing: T.Union[object, T.Callable] = None,
                    route_kwargs: T.Dict[str, T.Any] = None):
 
         if vca.is_renderable(thing) is False:
@@ -139,7 +132,7 @@ class RoutingResource(resource.Resource):
             self._endpoints.update(result.endpoints)
             self._route_map.add(result.rule)
         else:
-            instance = self._instances[endpoint] = thing(**route_kwargs.get("inits_kwargs",{}))
+            instance = self._instances[endpoint] = thing(**route_kwargs.get("inits_kwargs", {}))
             self._route_map.add(wz_routing.Rule(route_str, endpoint=endpoint))
             self._endpoints[endpoint] = ViewClassResource(thing, instance)
 
@@ -148,7 +141,6 @@ class RoutingResource(resource.Resource):
         if endpoint not in self._instances:
             self._instances[endpoint] = thing()
         self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_kwargs=route_kwargs)
-
 
     def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
@@ -165,22 +157,19 @@ class RoutingResource(resource.Resource):
         if endpoint not in self._endpoints:
             self._endpoints[endpoint] = directory_resource
 
-
         fixed_rule = wz_routing.Rule(route_str,
                                      endpoint=endpoint,
                                      methods=["GET", "HEAD"],
-                                     defaults={"postpath":""})
+                                     defaults={"postpath": ""})
 
         instrumented_rule = wz_routing.Rule(route_str + "<directory:postpath>",
                                             endpoint=endpoint,
-                                            methods=["GET","HEAD"])
+                                            methods=["GET", "HEAD"])
 
         self._route_map.add(fixed_rule)
         self._route_map.add(instrumented_rule)
 
         return directory_resource
-
-
 
     def _build_map(self, pathEl, request):
 
@@ -193,9 +182,12 @@ class RoutingResource(resource.Resource):
         else:
             map_bind_kwargs["server_name"] = request.getRequestHostname()
 
-        map_bind_kwargs["script_name"] = b"/"  # b"/".join(request.prepath) if request.prepath else b"/"
+        if self._script_name is None:
+            map_bind_kwargs["script_name"] = b"/"  # b"/".join(request.prepath) if request.prepath else b"/"
+        else:
+            map_bind_kwargs["script_name"] = self._script_name
 
-        #TODO add strict slash check flag to here or to website.add
+        # TODO add strict slash check flag to here or to website.add
         if map_bind_kwargs["script_name"].startswith(b"/") is False:
             map_bind_kwargs["script_name"] = b"/" + map_bind_kwargs["script_name"]
 
@@ -207,9 +199,7 @@ class RoutingResource(resource.Resource):
 
         return self._route_map.bind(**map_bind_kwargs)
 
-
-
-    def getChildWithDefault(self, pathEl: T.Union[bytes,str], request: StrRequest):
+    def getChildWithDefault(self, pathEl: T.Union[bytes, str], request: StrRequest):
         """
             Routing resource is mostly ignorant of the larger ecosystem so it either
             returns a resource OR it throws up an errors.HTTPCode
@@ -241,7 +231,3 @@ class RoutingResource(resource.Resource):
             request.postpath = [el.encode("utf-8") for el in kwargs['postpath']]
         return self._endpoints[rule.endpoint]
 
-        # if rule:
-        #
-        # else:
-        #     raise HTTP_Errors.HTTP404()
