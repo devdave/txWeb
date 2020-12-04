@@ -1,14 +1,18 @@
+"""
+    Currently acts as a bridge for error handling.
+
+"""
+
 from __future__ import annotations
 
 #stdlib
+import typing as T
 import pathlib
 import copy
 
-#Third party
-############
-# TODO remove this as a hardwired requirement?
-import jinja2
-
+# twisted imports
+from twisted.python import failure
+from twisted.web import server
 
 # txweb imports
 import txweb
@@ -20,18 +24,9 @@ from txweb import http_codes as HTTP_Errors
 from txweb.log import getLogger
 
 
-
-
-# twisted imports
-from twisted.python import failure
-from twisted.web import server
-
-
-
-
 log = getLogger(__name__)
 
-import typing as T
+
 if T.TYPE_CHECKING: # pragma: no cover
     # No executable intended for type hints only
     import pathlib
