@@ -36,9 +36,6 @@ class WSProtocol(WebSocketServerProtocol):
         # for tracking deferred `ask` calls
         self.deferred_asks = {}
 
-
-        # self._raw_message = {}
-
     @property
     def application(self):
         return self.factory.get_application()
