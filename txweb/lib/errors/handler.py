@@ -94,8 +94,10 @@ class DefaultHandler(BaseHandler):
         return True
 
 
-class DebugHandler(BaseHandler):
+class DebugHandler(BaseHandler):  #  pragma: no cover
     """
+        TODO - To finish
+
         Mimic flask's exception rendering system with some minor caveats.
 
         Errors are held in resident/session memory if possible.
