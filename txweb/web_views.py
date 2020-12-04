@@ -86,6 +86,13 @@ class WebSite(server.Site):
 
 
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
+        """
+            The crucial bridge that connects a request.processingFailed exception chain upward
+                towards the Txweb application instance for errorhandling.
+        :param request:
+        :param reason:
+        :return:
+        """
 
         self._lastError = reason
         # self.my_log.error("Handling exception: {reason!r}", reason=reason)
@@ -98,6 +105,12 @@ class WebSite(server.Site):
             raise
 
     def setErrorHandler(self, func: ErrorHandler):
+        """
+            Kind of goofy, this should only be called by the Txweb application error handler so it can
+            snag the failure/exception that occurred in request.render
+        :param func:
+        :return:
+        """
         self._errorHandler = func
         return func
 

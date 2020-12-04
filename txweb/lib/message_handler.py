@@ -1,3 +1,10 @@
+"""
+    A wrapper around the message sent from the client
+
+    Breaks ideal style guides as it also wraps around the connection object to make
+    responding and interacting with the client easier.
+
+"""
 from __future__ import annotations
 import typing as T
 
@@ -56,6 +63,14 @@ class MessageHandler(Mapping):  # pragma: no cover
         return value
 
     def args(self, key, default=None, type=None):
+        """
+            A more explicit/direct getter that looks for an `args` dictionary in the client message and
+            if it exists, returns the requested key.
+        :param key:
+        :param default:
+        :param type:  What type to cast the arg value as.  (eg type=int would cast a str to int if possible)
+        :return:
+        """
 
         try:
             args = self['args']
@@ -78,13 +93,35 @@ class MessageHandler(Mapping):  # pragma: no cover
         return value
 
     def respond(self, result):
+        """
+            If the message was an request/ask for response, send back a result.
+        :param result:
+        :return:
+        """
         return self.connection.respond(self.raw_message, result=result)
 
     def tell(self, endpoint, **kwargs):
+        """
+        Tell the client to do something if it provides the requested end point.
+        :param endpoint:
+        :param kwargs:
+        :return:
+        """
         return self.connection.tell(endpoint, **kwargs)
 
     def ask(self, endpoint, **kwargs):
+        """
+            Ask the client for information or acknowledgement of success/failure for an action.
+        :param endpoint:
+        :param kwargs:
+        :return:
+        """
         return self.connection.ask(endpoint, type="ask", args=kwargs)
 
     def get_session(self, get_key=None):
+        """
+            see WSProtocol's get_session
+        :param get_key:
+        :return:
+        """
         return self.connection.application.get_session(self.connection, get_key=get_key)

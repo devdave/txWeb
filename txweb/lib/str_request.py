@@ -58,6 +58,13 @@ class StrRequest(Request):
         self._call_after_render = None
 
     def getCookie(self, cookie_name: T.Union[str, bytes]):
+        """
+        Wrapper around Request's getCookie to convert to and from byte strings
+        to unicode/str's
+
+        :param cookie_name:
+        :return:
+        """
         expect_bytes = isinstance(cookie_name, bytes)
 
         if expect_bytes:
@@ -71,15 +78,27 @@ class StrRequest(Request):
                 return None
 
     def add_before_render(self, func):
+        """
+        Utility intended solely to make testing easier
+        :param func:
+        :return:
+        """
         self._call_before_render = func
         return func
 
     def add_after_render(self, func):
+        """
+        Utility intended solely to make testing easier
+        :param func:
+        :return:
+        """
         self._call_after_render = func
         return func
 
     def write(self, data: T.Union[bytes, str]):
-
+        """
+            Wrapper to prevent unicode/str's from going to Request's write method
+        """
         if isinstance(data, str):
             data = data.encode("utf-8")
         elif isinstance(data, bytes) is False:
@@ -91,7 +110,10 @@ class StrRequest(Request):
     def writeTotal(self, response_body: T.Union[bytes, str], code: T.Union[int, str, bytes] = None,
                    message: T.Union[bytes, str] = None) -> T.NoReturn:
         """
-        
+            Utility to write and then close the connection in one go.
+            Especially useful for error handling events.
+
+
         :param response_body: Content intended for after headers 
         :param code: Optional HTTP Code to use
         :param message: Optional HTTP response message to use
@@ -136,12 +158,22 @@ class StrRequest(Request):
     def setResponseCode(self,
                         code: int = 500,
                         message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
+        """
+            Str wrapper
+        :param code:
+        :param message:
+        :return:
+        """
         if message and not isinstance(message, bytes):
             message = message.encode("utf-8")
 
         return Request.setResponseCode(self, code, message)
 
     def ensureFinished(self):
+        """
+            Ensure's the connection has been flushed and closed without throwing an error.
+        :return:
+        """
         if self.finished not in [1, True]:
             self.finish()
 
@@ -196,11 +228,19 @@ class StrRequest(Request):
         self.process()
 
     @property
-    def methodIsPost(self):
+    def methodIsPost(self) -> bool:
+        """
+            Utility method
+        :return:
+        """
         return self.method == b"POST"
 
     @property
-    def methodIsGet(self):
+    def methodIsGet(self) -> bool:
+        """
+            Utility method
+        :return:
+        """
         return self.method == b"GET"
 
     def render(self, resrc: resource.Resource) -> None:
@@ -217,7 +257,8 @@ class StrRequest(Request):
         """
         try:
             if self._call_before_render is not None:
-                self._call_before_render(self)
+                body = self._call_before_render(self)
+            # TODO halt rendering resource if call before render provides a response
             body = resrc.render(self)
             if self._call_after_render is not None:
                 self._call_after_render(self, body)
@@ -227,7 +268,7 @@ class StrRequest(Request):
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
 
-        if body is NOT_DONE_YET:  # TODO replace NOT_DONE_YET with a sentinel versus integer
+        if body is NOT_DONE_YET:
             return
 
         if not isinstance(body, bytes):
@@ -288,10 +329,19 @@ class StrRequest(Request):
         self.content.seek(0, 0)
 
     def processingFailed(self, reason):
+        """
+            Start of the error handling chain that leads from here all the way up to Application.processingFailed
+        :param reason:
+        :return:
+        """
         self.site.processingFailed(self, reason)
 
     @property
-    def json(self):
+    def json(self) -> bool:
+        """
+        Is this a JSON posted request?
+        :return:
+        """
         if self.getHeader("Content-Type") in ["application/json", "text/json"]:
             return json.loads(self.content.read())
         else:
