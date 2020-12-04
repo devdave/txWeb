@@ -36,6 +36,7 @@ import os
 import sys
 import time
 
+import txweb
 from logging import getLogger
 
 log = getLogger(__name__)
@@ -93,7 +94,6 @@ def build_list(
     global WATCH_LIST
 
     if watch_self is True:
-        import txweb
         log.info("RELOADER: Watching self")
         build_list(pathlib.Path(txweb.__file__).parent.absolute(), ignore_prefix=ignore_prefix)
 
