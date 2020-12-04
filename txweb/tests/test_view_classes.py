@@ -158,9 +158,10 @@ def test_find_pre_and_post_filters():
 
 def test_setting_prefilter(dummy_request:RequestRetval):
 
-    from unittest.mock import sentinel
+    from unittest.mock import sentinel, MagicMock
 
     app = Application(__name__)
+
 
     class WasCalled(Exception):
         pass
