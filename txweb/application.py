@@ -320,7 +320,7 @@ class ApplicationErrorHandlingMixin(object):
         self.error_handlers = dict(default=self.default_handler_cls(self))
         self.enable_debug = enable_debug
 
-        self.site.addErrorHandler(self.processingFailed)
+        self.site.setErrorHandler(self.processingFailed)
 
 
     def handle_error(self, error_type: T.Union[HTTPCode, int, Exception, str], write_over=False) -> T.Callable:
