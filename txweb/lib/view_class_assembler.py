@@ -140,4 +140,4 @@ def view_assembler(prefix, kls, route_args):
         return ViewAssemblerResult(instance, rule, endpoints)
 
     else:
-        raise UnrenderableException(f"{kls.__name__!r} is missing exposed method(s) or a render method")
+        raise Unrenderable(f"{kls.__name__!r} is missing exposed method(s) or a render method")

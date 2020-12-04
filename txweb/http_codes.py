@@ -91,6 +91,6 @@ class HTTP500(HTTP5xx):
         super().__init__(message)
 
 
-class UnrenderableException(HTTP5xx):
+class Unrenderable(HTTP5xx):
     def __init__(self, message):
         super().__init__(500, message)
