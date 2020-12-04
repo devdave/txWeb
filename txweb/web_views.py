@@ -98,7 +98,7 @@ class WebSite(_RoutingSiteConnectors, object):
 
         _RoutingSiteConnectors.__init__(self, routing_resource, requestFactory=request_factory)
 
-        self._errorHandler = siteErrorHandler or WebSite.defaultSiteErrorHandler
+        self._errorHandler = siteErrorHandler
         self._lastError = None
 
         self._before_request_render = None
@@ -120,39 +120,6 @@ class WebSite(_RoutingSiteConnectors, object):
         self._errorHandler = func
         return func
 
-    @staticmethod
-    def defaultSiteErrorHandler(request: StrRequest, reason: failure.Failure):
-
-        site = request.site
-
-        template_path = (LIBRARY_TEMPLATE_PATH / "debug_error.html")  # type: pathlib.Path
-        assert template_path.exists and template_path.is_file(), f"Unable to find library template: {template_path}"
-        template = jinja2.Template(template_path.read_text())
-
-        traceback = reason.getTraceback() if site.displayTracebacks else None
-
-        if issubclass(reason.type, HTTP_Errors.HTTP3xx):
-            code = reason.value.code
-            message = "HTTP Redirect"
-            buffer = template.render(code=code, message=message, traceback=traceback)
-            request.setHeader("Location", reason.value.redirect)
-        elif traceback is not None and isinstance(reason.type, HTTP_Errors.HTTP405):
-            traceback = None
-        elif issubclass(reason.type, HTTP_Errors.HTTPCode):
-            code = reason.value.code
-            message = reason.value.message if traceback else "Error"
-            buffer = template.render(code=code, message=message, traceback=traceback)
-        else:
-            code = 500
-            message = "Processing aborted"
-            buffer = template.render(code=code, message=message, traceback=traceback)
-            reason.printDetailedTraceback()
-
-        request.setHeader(b'content-type', b"text/html")
-        request.setHeader(b'content-length', str(len(buffer)).encode("utf-8"))
-        request.setResponseCode(code)
-        request.write(buffer)
-        request.finish()
 
     def call_before_request_render(self, func):
         self._before_request_render = func
