@@ -82,7 +82,7 @@ class _RoutingSiteConnectors(server.Site):
         return vca.expose(route_str, **route_kwargs)
 
 
-class WebSite(_RoutingSiteConnectors, object):
+class WebSite(_RoutingSiteConnectors):
     """
         Public side of the web_views class collection.
 
