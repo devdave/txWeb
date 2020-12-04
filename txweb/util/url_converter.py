@@ -10,7 +10,7 @@ class DirectoryPath(BaseConverter): # pragma: no cover
     regex = r"(.*)" #  Got to catch them all
 
     def __init__(self, url_map):
-        super(DirectoryPath, self).__init__(url_map)
+        super().__init__(url_map)
 
     def to_python(self, value):
         return value.split("/")
