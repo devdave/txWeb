@@ -101,8 +101,8 @@ class WebSite(_RoutingSiteConnectors, object):
         self._errorHandler = siteErrorHandler
         self._lastError = None
 
-        self._before_request_render = None
-        self._after_request_render = None
+        # self._before_request_render = None
+        # self._after_request_render = None
 
     def processingFailed(self, request: StrRequest, reason: failure.Failure):
 
@@ -121,27 +121,27 @@ class WebSite(_RoutingSiteConnectors, object):
         return func
 
 
-    def call_before_request_render(self, func):
-        self._before_request_render = func
-        return func
-
-    def after_resource_fetch(self, func):
-        self._after_request_render = func
-        return func
-
-    def getResourceFor(self, request: StrRequest):
-        """
-        This is probably the least convoluted way to manipulate the
-        current http request.
-        """
-
-        if self._before_request_render is not None:
-            request.add_before_render(self._before_request_render)
-
-        if self._after_request_render is not None:
-            request.add_after_render(self._after_request_render)
-
-        return server.Site.getResourceFor(self, request)
+    # def call_before_request_render(self, func):
+    #     self._before_request_render = func
+    #     return func
+    #
+    # def after_resource_fetch(self, func):
+    #     self._after_request_render = func
+    #     return func
+    #
+    # def getResourceFor(self, request: StrRequest):
+    #     """
+    #     This is probably the least convoluted way to manipulate the
+    #     current http request.
+    #     """
+    #
+    #     if self._before_request_render is not None:
+    #         request.add_before_render(self._before_request_render)
+    #
+    #     if self._after_request_render is not None:
+    #         request.add_after_render(self._after_request_render)
+    #
+    #     return server.Site.getResourceFor(self, request)
 
 
 
