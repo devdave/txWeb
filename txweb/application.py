@@ -423,7 +423,6 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
         ApplicationWebsocketMixin.__init__(self)
         ApplicationRoutingHelperMixin.__init__(self)
-        # _ApplicationTemplateSupportMixin.__init__(self)
         ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
 
 
@@ -448,15 +447,6 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
         return partial
 
-
-    def __call__(self, namespace:str):
-        """
-            TODO sanity check if this is a good idea
-
-            Allows the application namespace property to be overwritten during run time.
-
-        """
-        self.name = namespace
 
     @property
     def router(self) -> RoutingResource:
