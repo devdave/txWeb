@@ -294,10 +294,10 @@ class ApplicationRoutingHelperMixin(object):
         # TODO make route_str optional somehow
         return expose_method(route_str, **kwargs)
 
-    def set_prefilter(self, func):
+    def set_view_prefilter(self, func):
         return set_prefilter(func)
 
-    def set_postfilter(self, func):
+    def set_view_postfilter(self, func):
         return set_postfilter(func)
 
 

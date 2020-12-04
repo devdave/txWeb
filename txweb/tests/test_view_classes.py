@@ -129,11 +129,11 @@ def test_find_pre_and_post_filters():
 
     class Test(object):
 
-        @app.set_prefilter
+        @app.set_view_prefilter
         def blank_prefilter(self, request, method_name):
             return None
 
-        @app.set_postfilter
+        @app.set_view_postfilter
         def blank_postfilter(self, request, method_name, response):
             return response
 
@@ -172,7 +172,7 @@ def test_setting_prefilter(dummy_request:RequestRetval):
         def stub(self, request):
             return ""
 
-        @app.set_prefilter
+        @app.set_view_prefilter
         def my_prefilter(self, request, method_name):
             raise WasCalled()
 
@@ -199,7 +199,7 @@ def test_setting_postfilter(dummy_request:RequestRetval):
         def stub(self, request):
             return ""
 
-        @app.set_postfilter
+        @app.set_view_postfilter
         def my_postfilter(self, request, method_name, response):
             raise WasCalled()
 
@@ -219,7 +219,7 @@ def test_prefilter_method_name_is_correct(dummy_request:RequestRetval):
         def stub(self, request):
             return ""
 
-        @app.set_postfilter
+        @app.set_view_postfilter
         def my_postfilter(self, request, method_name, response):
             assert method_name == self.stub.__qualname__
             assert method_name.endswith("stub")
@@ -238,7 +238,7 @@ class GlobalTestView(object):
     def exposed(self, request):
         return ""
 
-    @global_test_app.set_prefilter
+    @global_test_app.set_view_prefilter
     def my_prefilter(self, request, method_name):
         cls, method = method_name.split(".",1)
         assert cls == "GlobalTestView"
