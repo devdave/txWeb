@@ -23,7 +23,7 @@ JINJA2_ENV = None  # type: Environment
 
 class MyCache(BytecodeCache):  # pragma: no cover
     """
-        To help allievate some of the hanging/processing time for rendering templates, this
+        To help alleviate some of the hanging/processing time for rendering templates, this
          caches compiled byte cord versions of previously used templates.
 
          https://jinja.palletsprojects.com/en/2.11.x/api/#bytecode-cache
@@ -44,10 +44,15 @@ class MyCache(BytecodeCache):  # pragma: no cover
             bucket.write_bytecode(my_file)
 
 
-def initialize_jinja2(template_dir: T.Union[Path, str, T.List[T.Union[Path, str]]], cache_dir: T.Optional[str, Path] = None):  # pragma: no cover
+def initialize_jinja2(
+        template_dir: T.Union[Path,
+                              str,
+                              T.List[T.Union[Path, str]]],
+        cache_dir: T.Optional[str, Path] = None):  # pragma: no cover
     """
 
-    :param template_dir:  Can be either a string, Path object, or a list of string/path objects pointing to template directories
+    :param template_dir:  Can be either a string, Path object, or a list of string/path objects pointing
+    to template directories
     :param cache_dir: optional absolute path to a cache dir intended for storing compiled templates
     :return:
     """
@@ -63,12 +68,8 @@ def initialize_jinja2(template_dir: T.Union[Path, str, T.List[T.Union[Path, str]
     JINJA2_ENV = Environment(**env_kwargs)
 
 
-def render(template_pathname, **template_args): # pragma: no cover
+def render(template_pathname, **template_args):  # pragma: no cover
     if JINJA2_ENV is None:
         raise EnvironmentError("Jinja2 environment not initialized, call initialize_jinja2 first")
 
     return JINJA2_ENV.get_template(template_pathname).render(**template_args)
-
-
-
-

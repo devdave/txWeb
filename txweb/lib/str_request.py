@@ -19,6 +19,7 @@ from urllib.parse import parse_qs
 import typing as T
 
 from twisted.python import reflect
+# noinspection PyProtectedMember
 from twisted.web.error import UnsupportedMethod
 from twisted.web.server import Request, NOT_DONE_YET, supportedMethods
 from twisted.web.http import FOUND
@@ -88,7 +89,7 @@ class StrRequest(Request):
         return Request.write(self, data)
 
     def writeTotal(self, response_body: T.Union[bytes, str], code: T.Union[int, str, bytes] = None,
-                   message:T.Union[bytes, str] = None) -> T.NoReturn:
+                   message: T.Union[bytes, str] = None) -> T.NoReturn:
         """
         
         :param response_body: Content intended for after headers 
@@ -106,7 +107,7 @@ class StrRequest(Request):
         self.write(response_body)
         self.ensureFinished()
 
-    def writeJSON(self, data:T.Dict):
+    def writeJSON(self, data: T.Dict):
         """
             Utility to take a dictionary and convert it to a JSON string
         """
@@ -116,7 +117,7 @@ class StrRequest(Request):
         self.setHeader("Content-Length", content_length)
         return self.write(payload)
 
-    def setHeader(self, name:T.Union[str, bytes], value:T.Union[str, bytes]):
+    def setHeader(self, name: T.Union[str, bytes], value: T.Union[str, bytes]):
         """
             A quick wrapper to convert unicode inputs to utf-8 bytes
 
@@ -132,7 +133,9 @@ class StrRequest(Request):
 
         return Request.setHeader(self, name, value)
 
-    def setResponseCode(self, code: int = 500, message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
+    def setResponseCode(self,
+                        code: int = 500,
+                        message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
         if message and not isinstance(message, bytes):
             message = message.encode("utf-8")
 
@@ -192,7 +195,6 @@ class StrRequest(Request):
 
         self.process()
 
-
     @property
     def methodIsPost(self):
         return self.method == b"POST"
@@ -225,11 +227,12 @@ class StrRequest(Request):
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
 
-        if body is NOT_DONE_YET:  #TODO replace NOT_DONE_YET with a sentinel versus integer
+        if body is NOT_DONE_YET:  # TODO replace NOT_DONE_YET with a sentinel versus integer
             return
 
         if not isinstance(body, bytes):
-            log.error(f"<{type(resrc)} {resrc}> - uri={self.uri} returned {type(body)}:{len(body)} but MUST return a byte string")
+            log.error(
+                f"<{type(resrc)}{resrc!r}> - uri={self.uri} returned {type(body)}:{len(body)} but MUST return a byte string")
             raise HTTP500()
 
         if self.method == b"HEAD":
@@ -288,7 +291,7 @@ class StrRequest(Request):
 
     @property
     def json(self):
-        if self.getHeader("Content-Type") not in ["application/json", "text/json"]:
+        if self.getHeader("Content-Type") in ["application/json", "text/json"]:
             return json.loads(self.content.read())
         else:
             return None

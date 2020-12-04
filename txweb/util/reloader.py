@@ -87,6 +87,7 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
 
     :param root_dir: pathlib.Path current working dir to search
     :param watch_self: bool Watch all of txweb for changes
+    :param ignore_prefix: simple check that if provided compares file names to the prefix and skips if they match
     :return: None
     """
 
