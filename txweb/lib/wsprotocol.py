@@ -1,9 +1,18 @@
+"""
+    Bridge/interface between the client and server.
+
+    Provides a deferred to notify interested listeners if the connection closes.
+    Provides ask, tell, and respond helpers that match the same verbage/methods on the javascript ResilientSocket class.
+
+
+"""
 from __future__ import annotations
 try:
     import ujson as json
 except ImportError:
     import json
 
+import typing as T
 from uuid import uuid4
 import warnings
 
@@ -28,7 +37,7 @@ class WSProtocol(WebSocketServerProtocol):
     MAX_ASKS = 100  # Need to make this tunable
     factory: RoutedFactory
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.pending_responses = {}
 
         super(WSProtocol, self).__init__()
@@ -41,9 +50,20 @@ class WSProtocol(WebSocketServerProtocol):
 
     @property
     def application(self):
+        """
+            Utility intended mostly for unit-testing
+        :return:
+        """
         return self.factory.get_application()
 
     def getCookie(self, cookie_name, default=None):
+        """
+            Mirror's the behavior of StrRequest.getCookie
+
+        :param cookie_name:
+        :param default:
+        :return:
+        """
         raw_cookies = self.http_headers.get('cookie', "")
         for params in raw_cookies.split(";"):
             str_name, value = params.split("=")
@@ -53,21 +73,47 @@ class WSProtocol(WebSocketServerProtocol):
         return default
 
     def onConnect(self, request):
+        """
+            Set's a unique identifier for the connection.
+
+
+        :param request:
+        :return:
+        """
         self.identity = uuid4().hex
         self.my_log.debug("Client connecting: {request.peer}", request=request)
 
     def onClose(self, was_clean, code, reason):
+        """
+            Connection was lost, currently I don't care why but I likely should.
+        :param was_clean:
+        :param code:
+        :param reason:
+        :return:
+        """
         self.on_disconnect.addErrback(self.my_log.error)
         self.on_disconnect.callback(self.identity)
         del self.on_disconnect
         self.my_log.debug("WebSocket connection closed: {reason!r}", reason=reason)
 
     def sendDict(self, **values):
+        """
+            Utility used by every other method that follows
+        :param values:
+        :return:
+        """
         response = json.dumps(values)
         # Always send synchronously for now
         self.sendMessage(response.encode("utf-8"), isBinary=False, sync=True)
 
     def respond(self, original_message, result):
+        """
+            The client asked for a result/response.
+
+        :param original_message:
+        :param result:
+        :return:
+        """
         self.sendDict(caller_id=original_message['caller_id'], type="response", result=result)
 
     def tell(self, endpoint, **values):
@@ -98,6 +144,14 @@ class WSProtocol(WebSocketServerProtocol):
             raise EnvironmentError("Maximum # of pending asks reached")
 
     def onMessage(self, payload, is_binary):
+        """
+            Could be broken apart into smaller pieces perhaps but this handles routing and
+
+        :param payload:
+        :param is_binary:
+        :return:
+        """
+
         if is_binary:  # pragma: no cover
             warnings.warn("Received binary payload, don't know how to deal with this.")
             return None  # I don't know how to deal with binary
@@ -127,7 +181,8 @@ class WSProtocol(WebSocketServerProtocol):
                 del self.deferred_asks[caller_id]
             else:
                 warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
-                return
+
+            return
 
         elif "endpoint" in message:
 

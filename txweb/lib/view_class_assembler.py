@@ -26,7 +26,7 @@ import inspect
 from werkzeug.routing import Rule, Submount
 
 from ..resources import ViewFunctionResource, ViewClassResource
-from txweb.http_codes import UnrenderableException
+from txweb.http_codes import Unrenderable
 from txweb.util.basic import get_thing_name
 
 
@@ -38,6 +38,11 @@ POSTFILTER_ID = "__POSTFILTER_ID__"
 
 
 def has_exposed(obj):
+    """
+        Does the provided object have an exposed endpoint?
+    :param obj:
+    :return:
+    """
     return any([
         True
         for m in getattr(obj, "__dict__", {}).values()
@@ -46,10 +51,20 @@ def has_exposed(obj):
 
 
 def is_exposed(attribute):
+    """
+        Is the provided callable/thing set as exposed?
+    :param attribute:
+    :return:
+    """
     return has_exposed(attribute, EXPOSED_STR) and is_valid_callable
 
 
 def is_viewable(attribute):
+    """
+        Check if whatever this is, it can behave as a web endpoint when called.
+    :param attribute:
+    :return:
+    """
     is_valid_callable = inspect.ismethod(attribute) \
                         or inspect.isfunction(attribute) \
                         or inspect.isgenerator(attribute) \
@@ -60,6 +75,12 @@ def is_viewable(attribute):
 
 
 def is_renderable(kls):
+    """
+        Does a class definition have a valid render method/function
+        Generally checked if it has no exposed methods.
+    :param kls:
+    :return:
+    """
     return \
         any([
             hasattr(kls, render_name)
@@ -72,7 +93,12 @@ ExposeSubRule = namedtuple("ExposeSubRule", "method_name,route,route_kwargs")
 
 
 def expose(route, **route_kwargs):
-
+    """
+        Decorator to set the exposed method's routing url and tag it with the exposed sentinel attribute
+    :param route:
+    :param route_kwargs:
+    :return:
+    """
     def processor(func):
         setattr(func, EXPOSED_STR, True)
         setattr(func, EXPOSED_RULE, ExposeSubRule(func.__name__, route, route_kwargs))
@@ -82,11 +108,21 @@ def expose(route, **route_kwargs):
 
 
 def set_prefilter(func):
+    """
+    decorator used to mark a class method as a prefilter for the class.
+    :param func:
+    :return:
+    """
     setattr(func, PREFILTER_ID, True)
     return func
 
 
 def set_postfilter(func):
+    """
+    decorator used to mark a class method as a post filter for a class.
+    :param func:
+    :return:
+    """
     setattr(func, POSTFILTER_ID, True)
     return func
 
@@ -95,7 +131,12 @@ ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints
 
 
 def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
-
+    """
+        Utility to search every member of an object for the provided `identifier` attribute
+    :param thing:
+    :param identifier:
+    :return:
+    """
     for name, member in inspect.getmembers(thing, lambda v: hasattr(v, identifier)):
         return member
 
@@ -103,6 +144,22 @@ def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
 
 
 def view_assembler(prefix, kls, route_args):
+    """
+        Given a class definition, this instantiates the class, searches it for exposed
+        methods and pre/post filters
+
+            if it has no exposed methods,
+                and builds a ViewAssemblerResult which contains the instance, submount rules,
+                and references to the endpoints.
+            else it checks if the class def has a render/render_METHOD method.
+            else it throws UnrenderableException
+
+
+    :param prefix:
+    :param kls:
+    :param route_args:
+    :return:
+    """
     endpoints = {}
 
     rules = []
