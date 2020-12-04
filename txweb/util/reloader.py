@@ -30,6 +30,7 @@
     recopied from https://gist.github.com/devdave/05de2ed2fa2aa0a09ba931db36314e3e
 
 """
+import typing as T
 import pathlib
 import os
 import sys
@@ -48,37 +49,35 @@ except ImportError:
     except ImportError:
         try:
             import dummy_thread as thread
-        except ImportError:
-            try:
-                import _dummy_thread as thread
-            except ImportError:
-                print("Alright... so I tried importing thread, that failed, so I tried _thread, that failed too")
-                print("..so then I tried dummy_thread, then _dummy_thread.  All failed")
-                print(", at this point I am out of ideas here")
-                raise RuntimeError("Failed to import threading library")
-                sys.exit(-1)
+        except ImportError as missing_import:
+            print("Alright... so I tried importing thread, that failed, so I tried _thread, that failed too")
+            print("..so then I tried dummy_thread, then _dummy_thread.  All failed")
+            print(", at this point I am out of ideas here")
+            raise RuntimeError("Failed to import threading library") from missing_import
+
 
 RUN_RELOADER = True
 SENTINEL_CODE = 7211
 SENTINEL_NAME = "RELOADER_ACTIVE"
 SENTINEL_OS_EXIT = True
 
+"""
+   "Reason" is here https://code.djangoproject.com/ticket/2330
+   TODO - Figure out why threading needs to be imported as this feels like a problem within stdlib.
+"""
 try:
-    """
-       "Reason" is here https://code.djangoproject.com/ticket/2330
-
-       TODO - Figure out why threading needs to be imported as this feels like a problem 
-       within stdlib.
-    """
     import threading
 except ImportError:
     pass
 
-_watch_list = {}
+WATCH_LIST = {}
 _win = (sys.platform == "win32")
 
 
-def build_list(root_dir, watch_self=False, ignore_prefix=None):
+def build_list(
+        root_dir: T.Union[pathlib.Path, str],
+        watch_self: bool = False,
+        ignore_prefix: T.Optional[T.List[str]] = None):
     """
         Walk from root_dir down, collecting all files that end with ^*.py$ to watch
 
@@ -91,14 +90,15 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
     :return: None
     """
 
-    global _watch_list
+    global WATCH_LIST
 
     if watch_self is True:
         import txweb
         log.info("RELOADER: Watching self")
         build_list(pathlib.Path(txweb.__file__).parent.absolute(), ignore_prefix=ignore_prefix)
 
-    is_list = lambda obj: obj is not None and isinstance(obj, list)
+    def is_list(obj):
+        return obj is not None and isinstance(obj, list)
 
     for pathobj in root_dir.iterdir():
         if pathobj.is_dir():
@@ -106,7 +106,7 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
         elif pathobj.name.endswith(".py") and not (pathobj.name.endswith(".pyc") or pathobj.name.endswith(".pyo")):
             stat = pathobj.stat()
             if is_list(ignore_prefix) and any([pathobj.name.startswith(prefix) for prefix in ignore_prefix]) is False:
-                _watch_list[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+                WATCH_LIST[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
             else:
                 # print("Ignoring", pathobj.name)
                 pass
@@ -114,15 +114,20 @@ def build_list(root_dir, watch_self=False, ignore_prefix=None):
             pass
 
 
-def file_changed():
-    global _watch_list
+def file_changed() -> bool:
+    """
+        Scans the watched list of files for change in size, created & modified timestamps
+    :return:
+    """
+    global WATCH_LIST
     change_detected = False
-    for pathname, (st_size, st_ctime, st_mtime) in _watch_list.items():
+    for pathname, (st_size, st_ctime, st_mtime) in WATCH_LIST.items():
         pathobj = pathlib.Path(pathname)
         stat = pathobj.stat()
         if pathobj.exists() is False:
             raise Exception(f"Lost track of {pathname!r}")
-        elif stat.st_size != st_size:
+
+        if stat.st_size != st_size:
             change_detected = True
         elif stat.st_ctime != st_ctime:
             change_detected = True
@@ -136,7 +141,14 @@ def file_changed():
     return change_detected
 
 
-def watch_thread(os_exit=SENTINEL_OS_EXIT, watch_self=False, ignore_prefix=None):
+def watch_thread(os_exit: bool = SENTINEL_OS_EXIT, watch_self: bool = False, ignore_prefix=None):
+    """
+
+    :param os_exit: flag to decide whether to use sys.exit or os._exit
+    :param watch_self: Should reloader watch its own source code
+    :param ignore_prefix: Ignore files starting with this prefix
+    :return:
+    """
     exit_func = os._exit if os_exit is True else sys.exit
 
     build_list(pathlib.Path(os.getcwd()), watch_self=watch_self, ignore_prefix=ignore_prefix)
@@ -149,34 +161,49 @@ def watch_thread(os_exit=SENTINEL_OS_EXIT, watch_self=False, ignore_prefix=None)
 
 
 def run_reloader():
-    while True:
-        args = [sys.executable] + sys.argv
-        if _win:
-            args = ['"%s"' % arg for arg in args]
+    """
+        Respawns the user's program/script and hangs until it returns.
 
-        new_env = os.environ.copy()
-        new_env[SENTINEL_NAME] = "true"
-        log.info("Starting reloader process")
-        # print("Running reloader process")
+    :return:
+    """
+    args = [sys.executable] + sys.argv
+    if _win:
+        args = ['"%s"' % arg for arg in args]
+
+    new_env = os.environ.copy()
+    new_env[SENTINEL_NAME] = "true"
+    log.info("Starting reloader process")
+
+    while True:
         exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_env)
         if exit_code != SENTINEL_CODE:
             return exit_code
 
 
-def reloader_main(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
+def reloader_main(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs) -> None:
     """
 
-    :param main_func:
-    :param args:
-    :param kwargs:
+        Right...  This checks to see if it is running as a child process with the sentinel flag set in its
+        process environment and if it isn't, it spawns a child process that run's the user's provided entry point
+        "main function".
+
+        Meanwhile in the child process, a watcher thread scans the user application source code files for changes.
+
+    :param main_func:  The entry point to the user application
+    :param watch_self: Should reloader also watch it's own source code for changes?
+    :param args: arguments for the main_func
+    :param ignore_prefix: Files to ignore by their prefix/starts with.
+    :param kwargs: keyword arguments for the main func
     :return:
     """
-
 
     # If it is, start watcher thread and then run the main_func in the parent process as thread 0
     if os.environ.get(SENTINEL_NAME) == "true":
 
-        thread.start_new_thread(watch_thread, (), {"os_exit": SENTINEL_OS_EXIT, "watch_self": watch_self, "ignore_prefix": ignore_prefix})
+        thread.start_new_thread(
+            watch_thread,
+            (),
+            {"os_exit": SENTINEL_OS_EXIT, "watch_self": watch_self, "ignore_prefix": ignore_prefix})
         try:
             main_func(*args, **kwargs)
         except KeyboardInterrupt:
@@ -193,13 +220,16 @@ def reloader_main(main_func, *args, watch_self=False, ignore_prefix=None, **kwar
 
 def reloader(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
     """
-        To avoid messing with twisted as much as possible, the watcher logic is shunted into
-        a thread while the main (twisted) reactor runs in the main thread.
+        See Reloader main for how this works.
+
+        WARNING - This assumes that the cwd (current working directory) is the base directory
+        of the project to be watched.
 
     :param main_func: The function to run in the main/primary thread
     :param args: list of arguments
+    :param watch_self: Should reloader also watch it's own src code for changes?
+    :param ignore_prefix: Files to ignore based on their prefix (eg test_ files)
     :param kwargs: dictionary of arguments
-    :param more_options: var trash currently
     :return: None
     """
     if args is None:
@@ -208,14 +238,3 @@ def reloader(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
         kwargs = {}
 
     reloader_main(main_func, *args, watch_self=watch_self, ignore_prefix=ignore_prefix, **kwargs)
-
-
-"""
-
-def main():
-  #startup twisted here
-
-if __name__ == "__main__":
-  reloader(main)
-
-"""

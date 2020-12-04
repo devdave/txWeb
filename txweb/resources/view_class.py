@@ -8,7 +8,8 @@ from txweb.util.basic import sanitize_render_output
 if T.TYPE_CHECKING:  # pragma: no cover
     from txweb.lib.str_request import StrRequest
 
-NotDoneYet = T.TypeVar(int)
+NotDoneYet = int
+
 
 class ViewClassResource(resource.Resource):
 
@@ -19,7 +20,7 @@ class ViewClassResource(resource.Resource):
         self.kls_view = kls_view
         self.instance = instance
 
-    def render(self, request:StrRequest) -> T.Union[bytes, NotDoneYet]:
+    def render(self, request: StrRequest) -> T.Union[bytes, NotDoneYet]:
         """
             Relays the request to the wrapped class instance with some caveats.
 
@@ -67,7 +68,6 @@ class ViewClassResource(resource.Resource):
 
         return sanitize_render_output(result)
 
-
-    def __repr__(self): # pragma: no cover
+    def __repr__(self):  # pragma: no cover
         instance_repr = f"<{self.instance.__class__.__name__} {self.instance!r}/>"
         return f"<{self.__class__.__name__} at {id(self)!r} instance={instance_repr}/>"
