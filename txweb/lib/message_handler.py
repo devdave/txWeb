@@ -13,6 +13,8 @@ from collections.abc import Mapping
 
 
 if T.TYPE_CHECKING or False:  # pragma: no cover
+    # pylint: disable=cyclic-import
+    # used for type hinting with PyCharm but this would break the app if it was ever imported.
     # recursion import
     from .wsprotocol import WSProtocol
 
@@ -47,6 +49,7 @@ class MessageHandler(Mapping):  # pragma: no cover
     def values(self):  # pragma: no cover
         return self.raw_message.values()
 
+    # pylint: disable=redefined-builtin
     def get(self, key, default=None, type=None):
 
         try:
