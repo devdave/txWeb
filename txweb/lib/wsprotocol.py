@@ -163,6 +163,12 @@ class WSProtocol(WebSocketServerProtocol):
             warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
 
     def handleEndPoint(self, message):
+        """
+            Handles incoming ask and tell messages.
+
+        :param message:
+        :return:
+        """
         endpoint_func = self.factory.get_endpoint(message['endpoint'])
         self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
 
@@ -184,7 +190,7 @@ class WSProtocol(WebSocketServerProtocol):
 
     def onMessage(self, payload, is_binary):
         """
-            Could be broken apart into smaller pieces perhaps but this handles routing and
+            Entry point for incoming messages from the client
 
         :param payload:
         :param is_binary:
