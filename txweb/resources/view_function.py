@@ -31,6 +31,7 @@ class ViewFunctionResource(resource.Resource):
         self.func = func
         self.prefilter = prefilter
         self.postfilter = postfilter
+        super().__init__()
 
     @classmethod
     def Wrap(cls, func):

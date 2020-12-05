@@ -251,7 +251,7 @@ class ApplicationWebsocketMixin:
             kwargs = {}
 
             for name, default in arg_keys.items():
-                kwargs[name] = message.args(name, default=default) #TODO also use annotation for type-casting
+                kwargs[name] = message.args(name, default=default)
                 if name in converter_keys:
                     try:
                         kwargs[name] = converter_keys[name](kwargs[name])

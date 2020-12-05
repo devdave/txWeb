@@ -14,7 +14,7 @@
 from __future__ import annotations
 import typing as T
 from twisted.web import resource
-from twisted.web.server import NOT_DONE_YET
+# from twisted.web.server import NOT_DONE_YET
 
 from txweb.util.basic import sanitize_render_output
 

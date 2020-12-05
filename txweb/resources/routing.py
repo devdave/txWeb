@@ -96,11 +96,13 @@ class RoutingResource(resource.Resource):
         :return:
         """
 
-        assert "endpoint" not in kwargs, \
-            "Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)"
-        assert isinstance(route_str, str) is True, "add must be called with RoutingResource.add('/some/route/', **...)"
+        if "endpoint" in kwargs:
+            raise ValueError("Undefined behavior to use RoutingResource.add('/some/route/', endpoint='something', ...)")
 
-        # todo swap object for
+        if isinstance(route_str, str) is False:
+            raise ValueError(f"position 1 argument, route_str must be a str, got {route_str!r} instead")
+
+
         def processor(original_thing: T.Union[EndpointCallable, object]) -> T.Union[EndpointCallable, object]:
 
             endpoint_name = get_thing_name(original_thing)

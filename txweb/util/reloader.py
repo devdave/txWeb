@@ -58,15 +58,21 @@ except ImportError:
 
 
 RUN_RELOADER = True
-SENTINEL_CODE = 7211
+SENTINEL_CODE = 7211  # I wish I remembered why I picked this number.
 SENTINEL_NAME = "RELOADER_ACTIVE"
+#  os._exit is a hard and fast exit from a process, avoiding most cleanup handlers which makes it ideal when used
+#    in a child process.
+#  https://stackoverflow.com/a/9591397/9908
 SENTINEL_OS_EXIT = True
+
 
 """
    "Reason" is here https://code.djangoproject.com/ticket/2330
    TODO - Figure out why threading needs to be imported as this feels like a problem within stdlib.
 """
+
 try:
+    # pylint: disable=W0611
     import threading
 except ImportError:
     pass
@@ -163,9 +169,13 @@ def watch_thread(os_exit: bool = SENTINEL_OS_EXIT, watch_self: bool = False, ign
     :param ignore_prefix: Ignore files starting with this prefix
     :return:
     """
-    exit_func = os._exit if os_exit is True else sys.exit
 
-    build_list(pathlib.Path(os.getcwd()), watch_self=watch_self, ignore_prefix=ignore_prefix)
+    # pylint: disable=W0212
+    exit_func = os._exit if os_exit is True else sys.exit
+    base_path = pathlib.Path(os.getcwd())
+    print(f"RELOADER: Base is {base_path}")
+    build_list(base_path, watch_self=watch_self, ignore_prefix=ignore_prefix)
+    print(f"RELOADER: Watching {len(WATCH_LIST)} files for changes")
 
     while True:
         if file_changed():

@@ -15,7 +15,7 @@ from twisted.python import failure
 from twisted.web import server
 
 # txweb imports
-import txweb
+# import txweb
 # from txweb import resources as txw_resources
 from txweb.lib.str_request import StrRequest
 # from txweb.lib import view_class_assembler as vca
@@ -28,7 +28,7 @@ log = getLogger(__name__)
 
 ResourceView = T.Type["_ResourceThing"]
 ErrorHandler = T.NewType("ErrorHandler", T.Callable[['Website', StrRequest, failure.Failure], None])
-LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
+# LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
 
 class WebSite(server.Site):
     """

@@ -20,25 +20,16 @@ import json
 from urllib.parse import parse_qs
 import typing as T
 
-# from twisted.python import reflect
-# noinspection PyProtectedMember
-# from twisted.web.error import UnsupportedMethod
+
 from twisted.web.server import Request, NOT_DONE_YET
 # from twisted.web.server import supportedMethods
 from twisted.web.http import FOUND
 from twisted.web import resource
-# from twisted.web import http
-# noinspection PyProtectedMember
-# from twisted.web.http import _parseHeader
-# noinspection PyProtectedMember
-# from twisted.python.compat import _PY3, _PY37PLUS
-# from twisted.python.compat import nativeString
-# from twisted.python.compat import escape
 from twisted.python.compat import intToBytes
 
 from werkzeug.formparser import FormDataParser
 from werkzeug.datastructures import MultiDict
-from werkzeug import FileStorage
+from werkzeug.datastructures import FileStorage
 
 from ..log import getLogger
 from ..http_codes import HTTP500
@@ -309,11 +300,8 @@ class StrRequest(Request):
             content_type = content_type.decode("utf-8")  # type: str
 
         if ";" in content_type:
-            """
-                TODO Possible need to replace some of the header processing logic as boundary part of content-type 
-                leaks through.
-                eg "Content-type": "some/mime_type;boundary=----BLAH"
-            """
+            #  TODO Possible need to replace some of the header processing logic as boundary part of content-type
+            #   leaks through.  eg "Content-type": "some/mime_type;boundary=----BLAH"
             content_type, boundary = content_type.split(";", 1)
             if "=" in boundary:
                 _, boundary = boundary.split("=", 1)

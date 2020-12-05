@@ -211,8 +211,6 @@ class WSProtocol(WebSocketServerProtocol):
         else:
 
             message = MessageHandler(raw_message, self)
-            result = None
-            endpoint_func = None
 
             if message.get("type") == "response":
                 self.handleResponse(message)
