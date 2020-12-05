@@ -7,6 +7,7 @@
 """
 import typing as T
 
+
 class HTTPCode(RuntimeError):
     """
     Arguments:
@@ -22,76 +23,115 @@ class HTTPCode(RuntimeError):
         self.message = message
         self.exc = exc
 
+
 class HTTP3xx(HTTPCode):
     """
     Arguments:
         redirect: either an absolute or relative URL to tell the client to redirect too
     """
-    def __init__(self, code, redirect, message="3xx Choices"):
+    def __init__(self, code: int, redirect: T.Union[str, bytes], message: str = "3xx Choices"):
         self.redirect = redirect
         super().__init__(code, message=message)
 
+
 class HTTP301(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(301, redirect, "Moved Permanently")
+    CODE = 301
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, "Moved Permanently")
+
 
 class HTTP302(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(302, redirect, "FOUND")
+    CODE = 302
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, "FOUND")
+
 
 class HTTP303(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(303, redirect, message="See Other")
+    CODE = 303
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, message="See Other")
+
 
 class HTTP304(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(304, redirect, "Not Modified")
+    CODE = 304
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, "Not Modified")
+
 
 class HTTP307(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(307, redirect, "Temporary Redirect")
+    CODE = 307
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, "Temporary Redirect")
+
 
 class HTTP308(HTTP3xx):
-    def __init__(self, redirect):
-        super().__init__(308, redirect, "Permanent Redirect")
+    CODE = 308
+
+    def __init__(self, redirect: T.Union[str, bytes]):
+        super().__init__(self.CODE, redirect, "Permanent Redirect")
 
 
 class HTTP4xx(HTTPCode):
     pass
 
+
 class HTTP400(HTTP4xx):
+    CODE = 400
+
     def __init__(self):
-        super().__init__(400, "Bad Request")
+        super().__init__(self.CODE, "Bad Request")
+
 
 class HTTP401(HTTP4xx):
+    CODE = 401
+
     def __init__(self):
-        super().__init__(401, "Unauthorized")
+        super().__init__(self.CODE, "Unauthorized")
+
 
 class HTTP403(HTTP4xx):
+    CODE = 403
+
     def __init__(self):
-        super().__init__(403, "Forbidden")
+        super().__init__(self.CODE, "Forbidden")
+
 
 class HTTP404(HTTP4xx):
+    CODE = 404
+
     def __init__(self, exc=None):
-        super().__init__(404, "Resource not found", exc=exc)
+        super().__init__(self.CODE, "Resource not found", exc=exc)
+
 
 class HTTP410(HTTP4xx):
+    CODE = 410
+
     def __init__(self):
-        super().__init__(410, "Gone")
+        super().__init__(self.CODE, "Gone")
 
 
 class HTTP405(HTTP4xx):
+    CODE = 405
+
     def __init__(self, exc=None):
-        super().__init__(405, "Method not allowed", exc=exc)
+        super().__init__(self.CODE, "Method not allowed", exc=exc)
 
 
 class HTTP5xx(HTTPCode):
     pass
 
+
 class HTTP500(HTTP5xx):
+    CODE = 500
+
     def __init__(self, message="Internal Server Error"):
-        super().__init__(500, message)
+        super().__init__(self.CODE, message)
+
 
 class Unrenderable(HTTP5xx):
-    def __init__(self, message):
-        super().__init__(500, message)
+    pass
