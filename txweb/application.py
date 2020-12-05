@@ -176,6 +176,8 @@ class ApplicationWebsocketMixin:
         :param func:
         :return:
         """
+        # There is no way around using eval given how I use annotation's for type casting and conversion
+        # pylint: disable=W0123
         return statement if not isinstance(statement, str) else eval(statement, vars(sys.modules[func.__module__]))
 
 
