@@ -8,7 +8,7 @@ from __future__ import annotations
 #stdlib
 import typing as T
 import pathlib
-import copy
+# import copy
 
 # twisted imports
 from twisted.python import failure
@@ -18,9 +18,9 @@ from twisted.web import server
 import txweb
 # from txweb import resources as txw_resources
 from txweb.lib.str_request import StrRequest
-from txweb.lib import view_class_assembler as vca
+# from txweb.lib import view_class_assembler as vca
 from txweb.resources import RoutingResource
-from txweb import http_codes as HTTP_Errors
+# from txweb import http_codes as HTTP_Errors
 from txweb.log import getLogger
 
 
@@ -29,31 +29,6 @@ log = getLogger(__name__)
 ResourceView = T.Type["_ResourceThing"]
 ErrorHandler = T.NewType("ErrorHandler", T.Callable[['Website', StrRequest, failure.Failure], None])
 LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
-
-# class _RoutingSiteConnectors(server.Site):
-#     """
-#         Purpose: provide hooks to the RoutingResource assigned to self.resource
-#     """
-#     resource: RoutingResource
-#
-    # def add(self, route_str: str, **kwargs: T.Optional[T.Dict[str, T.Any]]) -> ResourceView:
-    #     """
-    #         :param route_str: A valid werkzeug routing url
-    #         :param kwargs: optional keyword arguments for werkzeug routing
-    #         :return:
-    #     """
-    #     return self.resource.add(route_str, **kwargs)
-#
-#
-#
-#     def add_resource(self, route_str: str,
-#                      rsrc: resource.Resource,
-#                      **kwargs: T.Dict[str, T.Any]) -> ResourceView:
-#         return self.resource.add(route_str, **kwargs)(rsrc)
-#
-#     def expose(self, route_str, **route_kwargs) -> T.Callable:
-#         return vca.expose(route_str, **route_kwargs)
-
 
 class WebSite(server.Site):
     """
