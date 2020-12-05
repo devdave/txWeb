@@ -100,16 +100,30 @@ def build_list(
     def is_list(obj):
         return obj is not None and isinstance(obj, list)
 
+    def is_prefixed(filepath: pathlib.Path):
+        if not filepath.is_file():
+            return False
+        elif is_list(ignore_prefix):
+            if any([filepath.name.startswith(prefix) for prefix in ignore_prefix]) is True:
+                return True
+        elif ignore_prefix is not None:
+            if filepath.name.startswith(ignore_prefix) is True:
+                return True
+
+        return False
+
+
+
+
     for pathobj in root_dir.iterdir():
         if pathobj.is_dir():
             build_list(pathobj, watch_self=False, ignore_prefix=ignore_prefix)
         elif pathobj.name.endswith(".py") and not (pathobj.name.endswith(".pyc") or pathobj.name.endswith(".pyo")):
             stat = pathobj.stat()
-            if is_list(ignore_prefix) and any([pathobj.name.startswith(prefix) for prefix in ignore_prefix]) is False:
-                WATCH_LIST[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+            if is_prefixed(pathobj):
+                continue
             else:
-                # print("Ignoring", pathobj.name)
-                pass
+                WATCH_LIST[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
         else:
             pass
 
