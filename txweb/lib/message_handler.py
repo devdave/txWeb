@@ -62,6 +62,15 @@ class MessageHandler(Mapping):  # pragma: no cover
 
         return value
 
+    @property
+    def identity(self):
+        """
+            Utility to make it quicker to access the connection's unique identifier
+        :return:
+        """
+        return self.connection.identity
+
+    # pylint: disable=redefined-builtin
     def args(self, key, default=None, type=None):
         """
             A more explicit/direct getter that looks for an `args` dictionary in the client message and
