@@ -178,13 +178,14 @@ def view_assembler(prefix, kls, route_args):
             and hasattr(getattr(instance, name), EXPOSED_STR)
         }
 
+        prefilter = find_member(instance, PREFILTER_ID)
+        postfilter = find_member(instance, POSTFILTER_ID)
+
         for name, bound_method in attributes.items():
 
             sub_rule = getattr(bound_method, EXPOSED_RULE)
             bound_endpoint = get_thing_name(bound_method)
             rule = Rule(sub_rule.route, **sub_rule.route_kwargs, endpoint=bound_endpoint)
-            prefilter = find_member(instance, PREFILTER_ID)
-            postfilter = find_member(instance, POSTFILTER_ID)
 
             endpoints[bound_endpoint] = ViewFunctionResource(bound_method, prefilter=prefilter, postfilter=postfilter)
             rules.append(rule)
