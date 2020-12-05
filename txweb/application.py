@@ -169,10 +169,19 @@ class ApplicationWebsocketMixin:
             return processor(kls, name)
 
 
-
-
     @staticmethod
-    def websocket_class_arguments_decorator(func):
+    def _eval_annotation(statement, func):
+        """
+        TODO - Figure out if there is a way to the type of an annotation without eval
+        :param statement:
+        :param func:
+        :return:
+        """
+        return statement if not isinstance(statement, str) else eval(statement, vars(sys.modules[func.__module__]))
+
+
+    @classmethod
+    def websocket_class_arguments_decorator(cls, func):
         """
             Internal method not intended for users
         :param func:
@@ -181,10 +190,6 @@ class ApplicationWebsocketMixin:
         params = inspect.signature(func).parameters
         arg_keys = {}
         converter_keys = {}
-        positional_count = 0
-
-        def eval_type(st):
-            return st if not isinstance(st, str) else eval(st, vars(sys.modules[func.__module__]))
 
         for param_name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
@@ -193,7 +198,7 @@ class ApplicationWebsocketMixin:
                 arg_keys[param.name] = param.default
 
                 if param.annotation is not inspect.Parameter.empty:
-                    converter_keys[param.name] = eval_type(param.annotation)
+                    converter_keys[param.name] = cls._eval_annotation(param.annotation, func)
 
         if "message" not in params:
             raise TypeError("ws_expose convention expects (self, message, **kwargs)")
@@ -218,8 +223,8 @@ class ApplicationWebsocketMixin:
 
         return method_argument_decorator
 
-    @staticmethod
-    def websocket_function_arguments_decorator(func):
+    @classmethod
+    def websocket_function_arguments_decorator(cls, func):
         """
             Internal method not intended for users
         :param func:
@@ -229,9 +234,6 @@ class ApplicationWebsocketMixin:
         arg_keys = {}
         converter_keys= {}
 
-        def eval_type(st):
-            return st if not isinstance(st, str) else eval(st, vars(sys.modules[func.__module__]))
-
         for name, param in params.items():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
@@ -240,7 +242,7 @@ class ApplicationWebsocketMixin:
                 arg_keys[name] = param.default
 
                 if param.annotation is not inspect.Parameter.empty:
-                    converter_keys[name] = eval_type(param.annotation)
+                    converter_keys[name] = cls._eval_annotation(param.annotation, func)
 
 
         @functools.wraps(func)
