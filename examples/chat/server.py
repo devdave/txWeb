@@ -4,7 +4,7 @@ import sys
 import json
 import typing as T
 
-from txweb.web_views import WebSite, StrRequest
+from txweb.web_site import WebSite, StrRequest
 from txweb import Application
 
 from zope.interface import Interface, Attribute, implementer

@@ -1,4 +1,4 @@
-from txweb.web_views import WebSite
+from txweb.web_site import WebSite
 from txweb.util.reloader import reloader
 
 from twisted.internet import reactor

@@ -1,4 +1,4 @@
-from txweb.web_views import website
+from txweb.web_site import website
 
 from twisted.application import service, internet as app_internet
 from twisted.web import static, server

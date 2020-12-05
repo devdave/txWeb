@@ -2,7 +2,7 @@ import json
 import sys
 from pathlib import Path
 
-from txweb.web_views import WebSite
+from txweb.web_site import WebSite
 from txweb.lib.str_request import StrRequest
 
 from twisted.internet import reactor

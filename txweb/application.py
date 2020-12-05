@@ -44,7 +44,7 @@ from .log import getLogger
 from .resources import RoutingResource
 # from .resources import SimpleFile, Directory
 from .lib import StrRequest, expose_method, set_prefilter, set_postfilter
-from .web_views import WebSite
+from .web_site import WebSite
 from .http_codes import HTTPCode
 from .lib.errors.default import DefaultHandler, BaseHandler
 

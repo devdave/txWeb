@@ -1,5 +1,5 @@
 
-from txweb.web_views import WebSite
+from txweb.web_site import WebSite
 
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import File

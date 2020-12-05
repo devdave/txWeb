@@ -16,7 +16,7 @@ from twisted.web import server
 
 # txweb imports
 import txweb
-from txweb import resources as txw_resources
+# from txweb import resources as txw_resources
 from txweb.lib.str_request import StrRequest
 from txweb.lib import view_class_assembler as vca
 from txweb.resources import RoutingResource

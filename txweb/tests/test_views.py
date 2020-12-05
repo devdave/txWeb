@@ -3,7 +3,7 @@ from twisted.web import resource as tw_resource
 
 import pytest
 
-from txweb import web_views
+from txweb import web_site
 from .helper import ensureBytes, MockRequest
 
 # def getChildForRequest(resource, request):
