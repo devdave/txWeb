@@ -35,8 +35,10 @@ class Chat:
         self.users = {}
 
     def on_user_leave(self, identity):
+
         if identity in self.users:
             user = self.users[identity]
+            print(f"{user}@{identity} has disconnected")
             del self.users[identity]
 
             self.emit("SERVER", f"{user.name} has disconnected")

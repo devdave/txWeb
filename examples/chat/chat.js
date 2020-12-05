@@ -36,7 +36,7 @@ export class ChatClient {
     }
 
     render_output(who, what) {
-        const chat_line = `<span>${who}</span><span>${what}</span>`;
+        const chat_line = `<span class="who">${who}</span><span class="what">${what}</span>`;
         const div_line = document.createElement("div")
         div_line.classList.add("text-msg");
         div_line.innerHTML = chat_line;
