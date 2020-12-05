@@ -32,6 +32,7 @@ class ViewClassResource(resource.Resource):
     def __init__(self, kls_view, instance=None):
         self.kls_view = kls_view
         self.instance = instance
+        super().__init__()
 
     def render(self, request: StrRequest) -> T.Union[bytes, NotDoneYet]:
         """

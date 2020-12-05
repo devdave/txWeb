@@ -18,6 +18,9 @@ PostFilterFunc = T.NewType("PostFilterFunc", T.Callable[["StrRequest", T.Union[s
 
 
 class ViewFunctionResource(resource.Resource):
+    """
+        Given a callable, convert it into a renderable Resource instance
+    """
 
     isLeaf: T.ClassVar[T.Union[bool, int]] = True
 
@@ -31,9 +34,21 @@ class ViewFunctionResource(resource.Resource):
 
     @classmethod
     def Wrap(cls, func):
+        """
+        Utility decorator
+        :param func:
+        :return:
+        """
         return cls(func)
 
     def render(self, request) -> T.Union[int, T.ByteString]:
+        """
+        Called internally by twisted.web this executes the wrapped callable, first calling
+         assigned pre and then post filters.
+
+        :param request:
+        :return:
+        """
 
         request_view_kwargs = getattr(request, "route_args", {})
 

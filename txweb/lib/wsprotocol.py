@@ -215,9 +215,9 @@ class WSProtocol(WebSocketServerProtocol):
             endpoint_func = None
 
             if message.get("type") == "response":
-                return self.handleResponse(message)
+                self.handleResponse(message)
             elif "endpoint" in message:
-                return self.handleEndPoint(message)
+                self.handleEndPoint(message)
             else:
                 self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
 
