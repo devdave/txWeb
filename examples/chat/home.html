@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat client</title>
+    <style>
+        #container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat_window {
+            min-height: 60vh;
+            min-width: 80vw;
+            border: solid thin black;
+        }
+
+        #toolbar {
+            display: flex;
+        }
+
+        #outgoing {
+            min-width: 60vw;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="chat_window"></div>
+        <div id="toolbar">
+            <label>Chat: <input id="outgoing" type="text"></label><button type="button" id="send">Send</button>
+        </div>
+        <script type="module">
+            import {ResilientSocket} from "/lib/resilient_socket.js";
+            import {ChatClient} from "/chat.js";
+            const socket = new ResilientSocket("ws://127.0.0.1:7070/ws");
+            const client = new ChatClient(socket, "chat_window", "outgoing", "send");
+
+            client.register();
+
+        </script>
+    </div>
+</body>
+</html>
