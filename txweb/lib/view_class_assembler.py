@@ -183,7 +183,7 @@ def view_assembler(prefix, kls, route_args):
 
         for name, bound_method in attributes.items():
 
-            sub_rule = getattr(bound_method, EXPOSED_RULE)
+            sub_rule = getattr(bound_method, EXPOSED_RULE)  # type: ExposeSubRule
             bound_endpoint = get_thing_name(bound_method)
             rule = Rule(sub_rule.route, **sub_rule.route_kwargs, endpoint=bound_endpoint)
 
