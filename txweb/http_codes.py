@@ -16,6 +16,8 @@ class HTTPCode(RuntimeError):
         errors
     """
     def __init__(self, code:int, message:str, exc:T.Optional[Exception]=None):
+        super().__init__(message)
+
         self.code = code
         self.message = message
         self.exc = exc
@@ -39,7 +41,7 @@ class HTTP302(HTTP3xx):
 
 class HTTP303(HTTP3xx):
     def __init__(self, redirect):
-        super(HTTP303, self).__init__(303, redirect, message="See Other")
+        super().__init__(303, redirect, message="See Other")
 
 class HTTP304(HTTP3xx):
     def __init__(self, redirect):
@@ -88,8 +90,7 @@ class HTTP5xx(HTTPCode):
 
 class HTTP500(HTTP5xx):
     def __init__(self, message="Internal Server Error"):
-        super().__init__(message)
-
+        super().__init__(500, message)
 
 class Unrenderable(HTTP5xx):
     def __init__(self, message):

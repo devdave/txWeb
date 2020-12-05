@@ -1,21 +1,19 @@
+"""
+    Utility to provide Jinja2 support for txweb enabled applications
 
-import json
+    TODO: look into jinja2 returning bytes by default to cut down on post-processing
+"""
+# import json
 import typing as T
 from pathlib import Path
 try:  # pragma: no cover
     import jinja2
-except ImportError:  # pragma: no cover
-    raise EnvironmentError("Jinja2 is not install: pip install jinja2 to use the templating utility")
+except ImportError as failed_import:  # pragma: no cover
+    raise EnvironmentError("Jinja2 is not install: pip install jinja2 to use the templating utility") from failed_import
 
 
 from jinja2 import FileSystemLoader, Environment, BytecodeCache
 from jinja2.bccache import Bucket
-
-"""
-    Utility to provide Jinja2 support for txweb enabled applications
-    
-    TODO: look into jinja2 returning bytes by default to cut down on post-processing
-"""
 
 # pragma: no cover
 JINJA2_ENV = None  # type: Environment
@@ -69,6 +67,12 @@ def initialize_jinja2(
 
 
 def render(template_pathname, **template_args):  # pragma: no cover
+    """
+    Utility that merges fetching a Jinja2 template and rendering it into one call.
+    :param template_pathname:
+    :param template_args:
+    :return:
+    """
     if JINJA2_ENV is None:
         raise EnvironmentError("Jinja2 environment not initialized, call initialize_jinja2 first")
 

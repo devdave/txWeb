@@ -22,10 +22,9 @@ import functools
 from twisted.internet.tcp import Port
 from twisted.internet.posixbase import PosixReactorBase
 from twisted.internet import reactor  # type: PosixReactorBase
-from twisted.python.compat import intToBytes
+# from twisted.python.compat import intToBytes
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.static import File
-from twisted.web.static import File as StaticFile
 from twisted.python import failure
 
 try:
@@ -47,7 +46,7 @@ from .resources import RoutingResource
 from .lib import StrRequest, expose_method, set_prefilter, set_postfilter
 from .web_views import WebSite
 from .http_codes import HTTPCode
-from .lib.errors.handler import DefaultHandler, DebugHandler, BaseHandler
+from .lib.errors.default import DefaultHandler, BaseHandler
 
 
 HERE = Path(__file__).parent
@@ -191,7 +190,7 @@ class ApplicationWebsocketMixin:
         arg_keys = {}
         converter_keys = {}
 
-        for param_name, param in params.items():  # type: inspect.Parameter
+        for param in params.values():  # type: inspect.Parameter
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
                     raise TypeError(f"assign_args error: argument `message` cannot be a keyword argument: {param.name}")
@@ -306,7 +305,7 @@ class ApplicationRoutingHelperMixin:
     # mimic flask's API
     route = add
 
-    def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) ->CallableToResourceDecorator:
+    def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
         """
 
         example usage
@@ -328,7 +327,8 @@ class ApplicationRoutingHelperMixin:
         return self.router.add(route_str, **kwargs)
 
 
-    def expose(self, route_str, **kwargs):
+    @staticmethod
+    def expose(route_str, **kwargs):
         """
             Refer to add_class for usage
         :param route_str:
@@ -338,7 +338,8 @@ class ApplicationRoutingHelperMixin:
 
         return expose_method(route_str, **kwargs)
 
-    def set_view_prefilter(self, func):
+    @staticmethod
+    def set_view_prefilter(func):
         """
             Experimental, sets a view class method to be called before any `expose`'d method.
         :param func:
@@ -346,7 +347,8 @@ class ApplicationRoutingHelperMixin:
         """
         return set_prefilter(func)
 
-    def set_view_postfilter(self, func):
+    @staticmethod
+    def set_view_postfilter(func):
         """
             Experimental, sets a view class method to be called after any `expose`'d method.
         :param func:
@@ -367,7 +369,7 @@ class ApplicationRoutingHelperMixin:
         return self.router._add_resource(route_str, thing=resource, route_kwargs=kwargs )
 
 
-    def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> SimpleFile:
+    def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> File:
         """
         Just a simple helper for a common task of serving individual files
 
@@ -378,7 +380,7 @@ class ApplicationRoutingHelperMixin:
         """
 
         assert Path(filePath).exists()
-        file_resource = StaticFile(filePath)
+        file_resource = File(filePath, defaultType=defaultType)
         return self.router.add(route_str)(file_resource)
 
 
@@ -418,13 +420,13 @@ class ApplicationErrorHandlingMixin:
     enable_debug: bool
     site: WebSite
 
-    def __init__(self, enable_debug: bool =False,  **kwargs):
+    def __init__(self, enable_debug: bool =False):
         """
         :param enable_debug: Flag to decide if to use debugging tools
         """
-        self.error_handlers = dict(default=self.default_handler_cls(self))
         self.enable_debug = enable_debug
 
+        self.error_handlers = dict(default=self.default_handler_cls(self))
         self.site.setErrorHandler(self.processingFailed)
 
 
@@ -445,9 +447,9 @@ class ApplicationErrorHandlingMixin:
             if error_type in self.error_handlers and write_over is False:
                 old_func = self.error_handlers[error_type]
                 raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {func}")
-
-            self.error_handlers[error_type] = func
-            return func
+            else:
+                self.error_handlers[error_type] = func
+                return func
 
         return processor
 
@@ -493,8 +495,8 @@ class ApplicationErrorHandlingMixin:
         if handler(request, reason) is False:
             if handler == default_handler:
                 raise RuntimeError(f"Default error handler {handler} returned False but it should return True")
-            else:
-                default_handler(request, reason)
+
+            default_handler(request, reason)
 
         request.ensureFinished()
 
@@ -610,7 +612,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
             Convenience helper which adds the HTTP protocol factory to the reactor and set it to listen to the provided
             interface and port
         """
-        self._listening_port = self.reactor.listenTCP(port, self.site, interface=interface)
+        self._listening_port = self.reactor.listenTCP(port, self._site, interface=interface)
         return self._listening_port
 
     def before_render(self, func: T.Callable[[StrRequest], None]):

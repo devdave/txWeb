@@ -1,3 +1,16 @@
+"""
+    A wrapper that takes a vanilla class and turns it into a compatible Resource.
+        Not intended to be used directly but instead by using
+
+        ```python
+        @app.route("/my_thing")
+        class Thing:
+            def render(request):
+                return "I am thing!"
+
+        ```
+
+"""
 from __future__ import annotations
 import typing as T
 from twisted.web import resource

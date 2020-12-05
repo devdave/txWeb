@@ -13,34 +13,37 @@
     and into the twisted library.   Unfortunately this is a doozy of a sub-project as its not just Request but also
     headers logic.
 """
-import cgi
+from __future__ import annotations
+
+# import cgi
 import json
 from urllib.parse import parse_qs
 import typing as T
 
-from twisted.python import reflect
+# from twisted.python import reflect
 # noinspection PyProtectedMember
-from twisted.web.error import UnsupportedMethod
-from twisted.web.server import Request, NOT_DONE_YET, supportedMethods
+# from twisted.web.error import UnsupportedMethod
+from twisted.web.server import Request, NOT_DONE_YET
+# from twisted.web.server import supportedMethods
 from twisted.web.http import FOUND
 from twisted.web import resource
-from twisted.web import http
+# from twisted.web import http
 # noinspection PyProtectedMember
-from twisted.web.http import _parseHeader
+# from twisted.web.http import _parseHeader
 # noinspection PyProtectedMember
-from twisted.python.compat import _PY3, _PY37PLUS, nativeString, escape, intToBytes
+# from twisted.python.compat import _PY3, _PY37PLUS
+# from twisted.python.compat import nativeString
+# from twisted.python.compat import escape
+from twisted.python.compat import intToBytes
 
 from werkzeug.formparser import FormDataParser
 from werkzeug.datastructures import MultiDict
+from werkzeug import FileStorage
 
 from ..log import getLogger
 from ..http_codes import HTTP500
 
 log = getLogger(__name__)
-
-if T.TYPE_CHECKING:  # pragma: no cover
-    from werkzeug import FileStorage
-
 
 class StrRequest(Request):
 
@@ -221,7 +224,7 @@ class StrRequest(Request):
                 key = key.decode("utf-8") if isinstance(key, bytes) else key
                 for val in values:
                     val = val.decode("utf-8") if isinstance(val, bytes) else val
-                    yield key, val,
+                    yield key, val
 
         self.args = MultiDict(list(query_iter(query_args)))
 
@@ -255,16 +258,12 @@ class StrRequest(Request):
 
         @see: L{IResource.render()<twisted.web.resource.IResource.render()>}
         """
-        try:
-            if self._call_before_render is not None:
-                body = self._call_before_render(self)
-            # TODO halt rendering resource if call before render provides a response
-            body = resrc.render(self)
-            if self._call_after_render is not None:
-                self._call_after_render(self, body)
-        except:
-            # log.exception(f"While processing {self.method!r} {self.uri}")
-            raise
+        if self._call_before_render is not None:
+            body = self._call_before_render(self)
+        # TODO halt rendering resource if call before render provides a response
+        body = resrc.render(self)
+        if self._call_after_render is not None:
+            self._call_after_render(self, body)
 
         # TODO deal with HEAD requests or leave it to the Application developer to deal with?
 

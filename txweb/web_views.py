@@ -26,14 +26,8 @@ from txweb.log import getLogger
 
 log = getLogger(__name__)
 
-
-if T.TYPE_CHECKING: # pragma: no cover
-    # No executable intended for type hints only
-    import pathlib
-
 ResourceView = T.Type["_ResourceThing"]
 ErrorHandler = T.NewType("ErrorHandler", T.Callable[['Website', StrRequest, failure.Failure], None])
-
 LIBRARY_TEMPLATE_PATH = pathlib.Path(txweb.__file__).parent / "templates"
 
 # class _RoutingSiteConnectors(server.Site):
@@ -101,7 +95,7 @@ class WebSite(server.Site):
             self._errorHandler(request, reason)
         except Exception as exc:
             #Dear god wtf went wrong?
-            self.my_log.error(f"Exception occurred while handling {reason!r}")
+            self.my_log.error("Exception {exc!r} occurred while handling {reason!r}", exc=exc, reason=reason)
             raise
 
     def setErrorHandler(self, func: ErrorHandler):

@@ -26,7 +26,7 @@ import inspect
 from werkzeug.routing import Rule, Submount
 
 from ..resources import ViewFunctionResource, ViewClassResource
-from txweb.http_codes import Unrenderable
+# from txweb.http_codes import Unrenderable
 from txweb.util.basic import get_thing_name
 
 
@@ -197,4 +197,4 @@ def view_assembler(prefix, kls, route_args):
         return ViewAssemblerResult(instance, rule, endpoints)
 
     else:
-        raise Unrenderable(f"{kls.__name__!r} is missing exposed method(s) or a render method")
+        raise EnvironmentError(f"{kls.__name__!r} is missing exposed method(s) or a render method")

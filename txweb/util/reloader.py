@@ -36,8 +36,8 @@ import os
 import sys
 import time
 
-import txweb
 from logging import getLogger
+import txweb
 
 log = getLogger(__name__)
 

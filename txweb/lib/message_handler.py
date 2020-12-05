@@ -7,10 +7,10 @@
 """
 from __future__ import annotations
 import typing as T
-
-from twisted.web.server import NOT_DONE_YET
-
 from collections.abc import Mapping
+
+# from twisted.web.server import NOT_DONE_YET
+
 
 if T.TYPE_CHECKING or False:  # pragma: no cover
     # recursion import
@@ -19,7 +19,7 @@ if T.TYPE_CHECKING or False:  # pragma: no cover
 
 class MessageHandler(Mapping):  # pragma: no cover
 
-    raw_message: T.Dict[T.str, T.Any]
+    raw_message: T.Dict[T.AnyStr, T.Any]
     connection: WSProtocol
 
     def __init__(self, raw_message: dict, connection: WSProtocol):
@@ -39,7 +39,7 @@ class MessageHandler(Mapping):  # pragma: no cover
         return item in self.raw_message
 
     def keys(self):  # pragma: no cover
-        return self.raw_message1.keys()
+        return self.raw_message.keys()
 
     def items(self):  # pragma: no cover
         return self.raw_message.items()

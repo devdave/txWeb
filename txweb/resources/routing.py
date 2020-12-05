@@ -1,3 +1,7 @@
+"""
+    The centerpiece of TxWeb is the Routing Resource which wraps around werkzeug's routing system.
+
+"""
 from collections import OrderedDict
 import typing as T
 import inspect
@@ -12,7 +16,7 @@ from twisted.python import compat
 from werkzeug import routing as wz_routing
 
 
-from txweb.http_codes import UnrenderableException
+from txweb.http_codes import Unrenderable
 from txweb.util.url_converter import DirectoryPath
 from txweb.util.basic import get_thing_name
 from txweb.lib.str_request import StrRequest
@@ -21,10 +25,8 @@ from .view_function import ViewFunctionResource
 from .view_class import ViewClassResource
 # from .directory import Directory
 
-from ..lib import view_class_assembler as vca
 from txweb import http_codes as HTTP_Errors
-
-
+from ..lib import view_class_assembler as vca
 from ..log import getLogger
 
 
@@ -105,9 +107,8 @@ class RoutingResource(resource.Resource):
 
             common_kwargs = {"endpoint": endpoint_name, "thing": original_thing, "route_kwargs": kwargs}
 
-            """
-                Is the thing to be added to the router a twisted Resource class?
-            """
+
+            # Is the thing to be added to the router a twisted Resource class?
             if inspect.isclass(original_thing) and issubclass(original_thing, resource.Resource):
 
                 self._add_resource_cls(route_str, **common_kwargs)
@@ -164,7 +165,7 @@ class RoutingResource(resource.Resource):
         """
 
         if vca.is_renderable(thing) is False:
-            raise UnrenderableException(f"{thing.__name__!r} is missing exposed methods or a render method")
+            raise Unrenderable(f"{thing.__name__!r} is missing exposed methods or a render method")
 
         if vca.has_exposed(thing):
             result = vca.view_assembler(route_str, thing, route_kwargs)
@@ -238,7 +239,7 @@ class RoutingResource(resource.Resource):
 
         return directory_resource
 
-    def _build_map(self, path_element, request):
+    def _build_map(self, request):
         """
             Takes all of the information provided by the request object and adapts them to match the wsgi environment
             dictionary so that werkzeug can provide a routing map.
@@ -281,24 +282,23 @@ class RoutingResource(resource.Resource):
             returns a resource OR it throws up an errors.HTTPCode
         """
 
-        routing = self._build_map(path_element, request)
+        routing = self._build_map(request)
 
         try:
             # TODO refactor to handle HEAD requests when the only valid match support GET
             # - one bad idea is to hack on werkzeug to append the URI matching rule to MethodNotAllowed
             (rule, kwargs) = routing.match(return_rule=True)
         except wz_routing.RequestRedirect as redirect:
-            log.debug(f"Werkzeug threw a redirect")
-            raise HTTP_Errors.HTTP3xx(redirect.code, redirect.new_url, redirect.name)
+            log.debug("Werkzeug threw a redirect")
+            raise HTTP_Errors.HTTP3xx(redirect.code, redirect.new_url, redirect.name) from redirect
         except wz_routing.NotFound as exc:
-            # TODO remove print
             log.debug(f"Failed to find match for: {request.path!r}")
-            raise HTTP_Errors.HTTP404(exc)
+            raise HTTP_Errors.HTTP404(exc) from exc
 
         except wz_routing.MethodNotAllowed as exc:
             # TODO finish error handling
             log.debug(f"Unable to find a valid match for {request.path!r} with {request.method!r}")
-            raise HTTP_Errors.HTTP405(exc)
+            raise HTTP_Errors.HTTP405(exc) from exc
 
         request.rule = rule
         request.route_args = kwargs

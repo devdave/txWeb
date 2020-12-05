@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from txweb import Application
-from txweb.lib.errors.handler import DebugHandler
+from txweb.lib.errors import DebugHandler
 from txweb.lib.str_request import StrRequest
 
 from .helper import MockRequest

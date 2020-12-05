@@ -4,7 +4,7 @@ from twisted.web.resource import NoResource
 
 from txweb.resources import RoutingResource
 from txweb import App
-from txweb.http_codes import UnrenderableException
+from txweb.http_codes import Unrenderable
 from txweb.resources import ViewClassResource
 
 from unittest.mock import sentinel
@@ -57,7 +57,7 @@ def test_ensure_blowsup_with_a_class_that_has_no_way_to_render():
 
     app = App(__name__)
 
-    with pytest.raises(UnrenderableException):
+    with pytest.raises(Unrenderable):
         @app.add("/trash")
         class BaseClass(object):
             pass

@@ -1,9 +1,11 @@
 from __future__ import annotations
+import typing as T
+
+from twisted.web import resource
+
 from txweb.util.basic import sanitize_render_output
 
 
-from twisted.web import resource
-import typing as T
 
 
 # Prefilter takes StrRequest as first argument and second argument is the actual wrapped view function

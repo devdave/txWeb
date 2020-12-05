@@ -154,56 +154,50 @@ class WSProtocol(WebSocketServerProtocol):
 
         if is_binary:  # pragma: no cover
             warnings.warn("Received binary payload, don't know how to deal with this.")
-            return None  # I don't know how to deal with binary
+            return
 
         try:  # pragma: no cover
             payload = payload.decode("utf-8")
+            raw_message = json.loads(payload)
         except UnicodeDecodeError:  # pragma: no cover
             warnings.warn(f"Failed to decode {payload}")
-            return
-
-        try:  # pragma: no cover
-            raw_message = json.loads(payload)
         except json.JSONDecodeError:  # pragma: no cover
             warnings.warn(f"Corrupt/bad payload: {payload}")
-            return
+        else:
 
-        message = MessageHandler(raw_message, self)
-        result = None
-        endpoint_func = None
 
-        if message.get("type") == "response":
-            caller_id = message.get("caller_id", None)
+            message = MessageHandler(raw_message, self)
+            result = None
+            endpoint_func = None
 
-            if caller_id is not None and caller_id in self.deferred_asks:
-                d = self.deferred_asks[caller_id]  # type: Deferred
-                d.callback(message.get("result"))
-                del self.deferred_asks[caller_id]
+            if message.get("type") == "response":
+                caller_id = message.get("caller_id", None)
+
+                if caller_id is not None and caller_id in self.deferred_asks:
+                    d = self.deferred_asks[caller_id]  # type: Deferred
+                    d.callback(message.get("result"))
+                    del self.deferred_asks[caller_id]
+                else:
+                    warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
+
+            elif "endpoint" in message:
+
+                endpoint_func = self.factory.get_endpoint(message['endpoint'])
+                self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
+
+                if endpoint_func is None:
+                    self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
+                else:
+                    result = endpoint_func(message)
             else:
-                warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
+                self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
 
-            return
-
-        elif "endpoint" in message:
-
-            endpoint_func = self.factory.get_endpoint(message['endpoint'])
-            self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
-
-            if endpoint_func is None:
-                self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
+            if result in [NOT_DONE_YET, None]:
                 return
+            elif isinstance(result, Deferred):
+                return
+            elif message.get("type", default=None) == "ask":
+                self.respond(message, result=result)
             else:
-                result = endpoint_func(message)
-        else:
-            self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
-            # raise Exception("Got message without a endpoint")
-
-        if result in [NOT_DONE_YET, None]:
-            return
-        elif isinstance(result, Deferred):
-            return
-        elif message.get("type", default=None) == "ask":
-            self.respond(message, result=result)
-        else:
-            warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
-            pass
+                warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
+                pass
