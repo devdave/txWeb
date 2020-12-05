@@ -25,9 +25,9 @@ import inspect
 
 from werkzeug.routing import Rule, Submount
 
-from ..resources import ViewFunctionResource, ViewClassResource
-# from txweb.http_codes import Unrenderable
 from txweb.util.basic import get_thing_name
+from ..resources import ViewFunctionResource, ViewClassResource
+
 
 
 EXPOSED_STR = "__exposed__"
@@ -50,13 +50,13 @@ def has_exposed(obj):
     ])
 
 
-def is_exposed(attribute):
-    """
-        Is the provided callable/thing set as exposed?
-    :param attribute:
-    :return:
-    """
-    return has_exposed(attribute, EXPOSED_STR) and is_valid_callable
+# def is_exposed(attribute):
+#     """
+#         Is the provided callable/thing set as exposed?
+#     :param attribute:
+#     :return:
+#     """
+#     return has_exposed(attribute)
 
 
 def is_viewable(attribute):
@@ -71,7 +71,7 @@ def is_viewable(attribute):
                         or inspect.iscoroutine(attribute) \
                         or inspect.iscoroutinefunction(attribute)
 
-    return is_exposed(attribute) and is_valid_callable
+    return has_exposed(attribute) and is_valid_callable
 
 
 def is_renderable(kls):
@@ -137,7 +137,7 @@ def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
     :param identifier:
     :return:
     """
-    for name, member in inspect.getmembers(thing, lambda v: hasattr(v, identifier)):
+    for _, member in inspect.getmembers(thing, lambda v: hasattr(v, identifier)):
         return member
 
     return False
@@ -160,6 +160,7 @@ def view_assembler(prefix, kls, route_args):
     :param route_args:
     :return:
     """
+    # pylint: disable=R0914
     endpoints = {}
 
     rules = []

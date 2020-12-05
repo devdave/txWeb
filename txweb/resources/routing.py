@@ -5,7 +5,7 @@
 from collections import OrderedDict
 import typing as T
 import inspect
-import warnings
+# import warnings
 
 from twisted.web.static import File
 
@@ -21,11 +21,11 @@ from txweb.util.url_converter import DirectoryPath
 from txweb.util.basic import get_thing_name
 from txweb.lib.str_request import StrRequest
 
+from txweb import http_codes as HTTP_Errors
+
 from .view_function import ViewFunctionResource
 from .view_class import ViewClassResource
 # from .directory import Directory
-
-from txweb import http_codes as HTTP_Errors
 from ..lib import view_class_assembler as vca
 from ..log import getLogger
 
@@ -115,7 +115,7 @@ class RoutingResource(resource.Resource):
 
             elif isinstance(original_thing, resource.Resource):
 
-                self._add_resource(route_str, **common_kwargs)
+                self.add_resource(route_str, **common_kwargs)
 
             elif inspect.isclass(original_thing):
                 self._add_class(route_str, **common_kwargs)
@@ -192,9 +192,9 @@ class RoutingResource(resource.Resource):
         route_kwargs = route_kwargs if route_kwargs is not None else {}
         if endpoint not in self._instances:
             self._instances[endpoint] = thing()
-        self._add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_kwargs=route_kwargs)
+        self.add_resource(route_str, endpoint=endpoint, thing=self._instances[endpoint], route_kwargs=route_kwargs)
 
-    def _add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
+    def add_resource(self, route_str, endpoint=None, thing=None, route_kwargs=None):
         """
 
         :param self:
@@ -276,7 +276,7 @@ class RoutingResource(resource.Resource):
 
         return self._route_map.bind(**map_bind_kwargs)
 
-    def getChildWithDefault(self, path_element: T.Union[bytes, str], request: StrRequest):
+    def getChildWithDefault(self, _, request: StrRequest):
         """
             Routing resource is mostly ignorant of the larger ecosystem so it either
             returns a resource OR it throws up an errors.HTTPCode

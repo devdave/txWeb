@@ -11,6 +11,7 @@ from txweb.lib.str_request import StrRequest
 
 log = getLogger(__name__)
 
+
 class BaseHandler:
     """
 

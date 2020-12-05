@@ -22,9 +22,11 @@ from twisted.internet.defer import Deferred
 
 from autobahn.twisted.websocket import WebSocketServerProtocol
 
+from txweb.log import getLogger
+
 from .message_handler import MessageHandler
 
-from txweb.log import getLogger
+
 
 
 class WSProtocol(WebSocketServerProtocol):
@@ -40,7 +42,7 @@ class WSProtocol(WebSocketServerProtocol):
     def __init__(self):
         self.pending_responses = {}
 
-        super(WSProtocol, self).__init__()
+        super().__init__()
         # WebSocketServerProtocol.__init__(self, *args, **kwargs)
 
         self.identity = None
@@ -143,6 +145,43 @@ class WSProtocol(WebSocketServerProtocol):
         else:
             raise EnvironmentError("Maximum # of pending asks reached")
 
+    def handleResponse(self, message):
+        """
+            Server side asked client a question, shunt this message through the
+             deferred_asks collection of deferreds to the appropriate/waiting endpoint
+
+        :param message:
+        :return:
+        """
+        caller_id = message.get("caller_id", None)
+
+        if caller_id is not None and caller_id in self.deferred_asks:
+            d = self.deferred_asks[caller_id]  # type: Deferred
+            d.callback(message.get("result"))
+            del self.deferred_asks[caller_id]
+        else:
+            warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
+
+    def handleEndPoint(self, message):
+        endpoint_func = self.factory.get_endpoint(message['endpoint'])
+        self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
+
+        if endpoint_func is None:
+            self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
+        else:
+            result = endpoint_func(message)
+
+            if result in [NOT_DONE_YET, None]:
+                return
+            elif isinstance(result, Deferred):
+                return
+            elif message.get("type", default=None) == "ask":
+                self.respond(message, result=result)
+            else:
+                warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
+
+
+
     def onMessage(self, payload, is_binary):
         """
             Could be broken apart into smaller pieces perhaps but this handles routing and
@@ -165,39 +204,16 @@ class WSProtocol(WebSocketServerProtocol):
             warnings.warn(f"Corrupt/bad payload: {payload}")
         else:
 
-
             message = MessageHandler(raw_message, self)
             result = None
             endpoint_func = None
 
             if message.get("type") == "response":
-                caller_id = message.get("caller_id", None)
-
-                if caller_id is not None and caller_id in self.deferred_asks:
-                    d = self.deferred_asks[caller_id]  # type: Deferred
-                    d.callback(message.get("result"))
-                    del self.deferred_asks[caller_id]
-                else:
-                    warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
-
+                return self.handleResponse(message)
             elif "endpoint" in message:
-
-                endpoint_func = self.factory.get_endpoint(message['endpoint'])
-                self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
-
-                if endpoint_func is None:
-                    self.my_log.error("Bad endpoint {endpoint}", endpoint=message['endpoint'])
-                else:
-                    result = endpoint_func(message)
+                return self.handleEndPoint(message)
             else:
                 self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
 
-            if result in [NOT_DONE_YET, None]:
-                return
-            elif isinstance(result, Deferred):
-                return
-            elif message.get("type", default=None) == "ask":
-                self.respond(message, result=result)
-            else:
-                warnings.warn(f"{endpoint_func} returned {result} but I don't know know how to handle it.")
-                pass
+
+

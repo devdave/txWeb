@@ -5,9 +5,6 @@
 """
 from __future__ import annotations
 import typing as T
-from pathlib import Path
-import linecache
-from dataclasses import dataclass
 
 from twisted.python.failure import Failure
 from twisted.python.compat import intToBytes

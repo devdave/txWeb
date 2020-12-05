@@ -70,7 +70,7 @@ class DebugHandler(BaseHandler):  # pragma: no cover
         content = html.ERROR_CONTENT.format(digest=repr(reason.value), error_list=error_list)
         body = html.ERROR_BODY.format(content=content)
 
-        if issubclass(reason.type, HTTPCode):
+        if issubclass(reason.type, http_codes.HTTPCode):
             request.setResponseCode(reason.value.code, reason.value.message)
         else:
             request.setResponseCode(500, "Internal server error")

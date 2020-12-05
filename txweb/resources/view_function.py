@@ -1,3 +1,6 @@
+"""
+    Convert a simple function into a Resource.
+"""
 from __future__ import annotations
 import typing as T
 

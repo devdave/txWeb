@@ -7,13 +7,13 @@
 import typing as T
 from pathlib import Path
 try:  # pragma: no cover
-    import jinja2
+    from jinja2 import FileSystemLoader, Environment, BytecodeCache
+    from jinja2.bccache import Bucket
 except ImportError as failed_import:  # pragma: no cover
     raise EnvironmentError("Jinja2 is not install: pip install jinja2 to use the templating utility") from failed_import
 
 
-from jinja2 import FileSystemLoader, Environment, BytecodeCache
-from jinja2.bccache import Bucket
+
 
 # pragma: no cover
 JINJA2_ENV = None  # type: Environment

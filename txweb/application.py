@@ -28,16 +28,16 @@ from twisted.web.static import File
 from twisted.python import failure
 
 try:
-    import autobahn
+    from autobahn.twisted.resource import WebSocketResource
 except ImportError:
     AUTOBAHN_MISSING = True
     print("Unable to support websockets:  `pip install autobahn` to enable")
 else:
     AUTOBAHN_MISSING = False
-    from .lib.wsprotocol import WSProtocol
+    # from .lib.wsprotocol import WSProtocol
     from .lib.message_handler import MessageHandler
     from .lib.routed_factory import RoutedWSFactory
-    from autobahn.twisted.resource import WebSocketResource
+
 
 # Application
 from .log import getLogger
@@ -143,7 +143,7 @@ class ApplicationWebsocketMixin:
         :return:
         """
 
-        def processor(kls, name = None):
+        def processor(kls, name=None):
             kls_name = name if name is not None else kls.__name__.lower()
             if kls_name in self.ws_instances:
                 raise ValueError(
@@ -366,7 +366,7 @@ class ApplicationRoutingHelperMixin:
         :param kwargs:
         :return:
         """
-        return self.router._add_resource(route_str, thing=resource, route_kwargs=kwargs )
+        return self.router.add_resource(route_str, thing=resource, route_kwargs=kwargs )
 
 
     def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> File:
@@ -384,7 +384,7 @@ class ApplicationRoutingHelperMixin:
         return self.router.add(route_str)(file_resource)
 
 
-    def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path], recurse = False) -> File:
+    def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path]) -> File:
         """
         TODO - remove calls to `add_staticdir2` and just use `add_staticdir`
         :param route_str:
@@ -447,13 +447,13 @@ class ApplicationErrorHandlingMixin:
             if error_type in self.error_handlers and write_over is False:
                 old_func = self.error_handlers[error_type]
                 raise ValueError(f"handle_error called twice to handle {error_type} with old {old_func} vs {func}")
-            else:
-                self.error_handlers[error_type] = func
-                return func
+
+            self.error_handlers[error_type] = func
+            return func
 
         return processor
 
-    def add_error_handler(self, handler:T.Callable, error_type: T.Union[HTTPCode, int, Exception, str], override=False):
+    def add_error_handler(self, handler: T.Callable, error_type: T.Union[HTTPCode, int, Exception, str], override=False):
         """
         TODO cull this out or justify it's existence.
 
@@ -563,13 +563,14 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
 
     @staticmethod
-    def request_factory_partial(app:'Application', request_kls:StrRequest):
+    def request_factory_partial(app: Application, request_kls: StrRequest):
         """
             A hack to intercept when a new http Request is created deep inside of twisted.web's protocol factory
 
         """
 
         def partial(*args, **kwargs):
+            # pylint: disable=W0212
             request = request_kls(*args, **kwargs)
             request.add_before_render(app._call_before_render)
             request.add_after_render(app._call_after_render)
@@ -642,6 +643,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         :param request:
         :return:
         """
+        # pylint: disable=W0703
         for func in self._before_render_handlers:
             try:
                 func(request)
@@ -656,6 +658,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         :param body:
         :return:
         """
+        # pylint: disable=W0703
         for func in self._after_render_handlers:
             try:
                 body = func(request, body)
