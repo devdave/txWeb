@@ -563,6 +563,17 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         self._before_render_handlers = []
         self._after_render_handlers = []
 
+        self.__post_init__()
+
+
+    def __post_init__(self) -> None:
+        """
+        Just a stub to make it easier for subclasses that don't want to mess with
+          overloading __init__.
+
+        :return:
+        """
+
 
     @staticmethod
     def request_factory_partial(app: Application, request_kls: StrRequest):
