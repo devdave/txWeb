@@ -1,6 +1,7 @@
 from pathlib import Path
 from dataclasses import dataclass
 import sys
+import typing as T
 
 from twisted.internet import reactor
 from twisted.python.log import startLogging
@@ -18,10 +19,16 @@ app = Texas(__name__)
 
 # Serve home.html from http://{HOST}:{PORT}/
 app.add_file("/", HERE / "home.html")
+# Serve chat.js from http://{HOST}:{PORT}/chat.js
 app.add_file("/chat.js", HERE / "chat.js")
+
 
 @dataclass(frozen=True)
 class User:
+    """
+        House keeping aid, keep track of user names to their connection ID's as well as
+         hold a reference to their connection.
+    """
     name: str
     identity: str
     emitter: WSProtocol
@@ -29,12 +36,21 @@ class User:
 
 @app.ws_class
 class Chat:
+    """
+        A working example of a very simple chat client.
+
+        This is fragile code as it doesn't make any effort to catch potential exceptions/errors
+         and instead just manages registering new users and then forwarding their messages to all
+         other registered users
+    """
+
+    users: T.Dict[str, User]
 
     def __init__(self, application: Texas):
         self.app = application
         self.users = {}
 
-    def on_user_leave(self, identity):
+    def on_user_leave(self, identity: str):
 
         if identity in self.users:
             user = self.users[identity]
@@ -49,7 +65,7 @@ class Chat:
             user: User  # No magic here, just a typehint
             user.emitter.tell("client.hear", who=who, what=what)
 
-
+    # creates an endpoint `chat.register`
     @app.ws_expose(assign_args=True)
     def register(self, message:MessageHandler, username:str = None):
         """
@@ -66,6 +82,7 @@ class Chat:
 
         return True
 
+    # endpoint chat.speak
     @app.ws_expose(assign_args=True)
     def speak(self, message: MessageHandler, text:str = None):
         user = self.users[message.connection.identity]

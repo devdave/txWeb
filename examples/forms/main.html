@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Texas forms</title>
+    <style type="text/css">
+        #result {
+            min-width: 80vw;
+            min-height: 35vh;
+        }
+    </style>
+</head>
+<body>
+    <fieldset>
+        <legend>A simple form</legend>
+        <form target="result" action="/simple">
+            <label>Text field
+            <input type="text" name="text_field"></label>
+            <br>
+            <h2>Radio</h2>
+            <label>1
+                <input type="radio" name="radio_field" value="1" checked></label>
+            <label>2
+                <input type="radio" name="radio_field" value="2"></label>
+            <label>3
+                <input type="radio" name="radio_field" value="3"></label>
+            <br>
+            <fieldset>
+                <legend>Checkboxs</legend>
+                <label>A</label><input type="checkbox" name="check_field" value="a" checked>
+                <label>B</label><input type="checkbox" name="check_field" value="b" checked>
+                <label>C</label><input type="checkbox" name="check_field" value="c">
+                <label>D</label><input type="checkbox" name="check_field" value="d">
+                <label>E</label><input type="checkbox" name="check_field" value="e">
+            </fieldset>
+
+            <button id="submit1" type="submit">Submit</button>
+        </form>
+    </fieldset>
+
+    <fieldset>
+        <legend>A POST form</legend>
+        <form target="result" action="/simple_posted_form" method="post">
+            <label>Text field
+            <input type="text" name="text_field"></label>
+            <br>
+            <h2>Radio</h2>
+            <label>1
+                <input type="radio" name="radio_field" value="1" checked></label>
+            <label>2
+                <input type="radio" name="radio_field" value="2"></label>
+            <label>3
+                <input type="radio" name="radio_field" value="3"></label>
+            <br>
+            <fieldset>
+                <legend>Checkboxs</legend>
+                <label>A</label><input type="checkbox" name="check_field" value="a" checked>
+                <label>B</label><input type="checkbox" name="check_field" value="b" checked>
+                <label>C</label><input type="checkbox" name="check_field" value="c">
+                <label>D</label><input type="checkbox" name="check_field" value="d">
+                <label>E</label><input type="checkbox" name="check_field" value="e">
+            </fieldset>
+
+            <button id="submit1" type="submit">Submit</button>
+        </form>
+    </fieldset>
+
+    <fieldset>
+        <legend>A file upload form</legend>
+        <form target="result" action="/file_upload" enctype="multipart/form-data" method="post">
+            <label>Text field
+            <input type="text" name="text_field"></label>
+            <br>
+
+            <label>Upload a file</label>
+            <input type="file" name="upload"><br>
+
+            <button id="submit1" type="submit">Submit</button>
+        </form>
+    </fieldset>
+
+    <h2>Form result</h2>
+    <iframe id="result" name="result"></iframe>
+
+    <script type="text/javascript">
+
+    </script>
+</body>
+</html>
