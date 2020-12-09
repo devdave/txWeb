@@ -24,9 +24,19 @@ class BaseHandler:
     def __call__(self, request: StrRequest, error: Failure) -> T.Union[None, bool]:
         """
 
-        :param request:  Provided to allow managing the connection (writing, http code, etc).
-        :param reason:
-        :return: Return False if the handler was unable to handle the error
+        Parameters
+        ----------
+        request: StrRequest
+        The request and current response to a failed transaction.
+
+        error: Failure
+
+
+        Returns
+        -------
+        False signals the errorhandler failed to properly handle the error.
+        None or True signals the errorhandler was successfull
+
         """
         # noinspection PyBroadException
         try:
@@ -40,8 +50,13 @@ class BaseHandler:
         """
         Just a stub
 
-        :param request:
-        :param error:
-        :return:
+        Parameters
+        ----------
+        request
+        error
+
+        Returns
+        -------
+
         """
         raise NotImplementedError("Attempting to use Base error handler")

@@ -8,7 +8,6 @@
     3. Websocket support
     4. General utilities and resources ( website, router, reactor, etc) `Application`
 
-
 """
 from __future__ import annotations
 
@@ -69,19 +68,36 @@ class ApplicationWebsocketMixin:
     WS_EXPOSED_FUNC = "WS_EXPOSED_FUNC"
 
     def __init__(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        args
+        kwargs
+        """
         super().__init__(*args, **kwargs)
         self.ws_endpoints = {}
         self.ws_factory = None
         self.ws_resource = None
         self.ws_instances = {}
 
-    def enable_websockets(self, url, route):
+    def enable_websockets(self, url: str, route: str):
         """
-            Setup websocket support for txweb
+            Enables a websocket, undefined behavior to have multiple sockets, resource be added to
+            the URL router.
 
-        :param url:
-        :param route:
-        :return:
+            The first argument should be something like `ws://host:port/` while the second argument just a URL
+
+        Parameters
+        ----------
+        url : str
+            ws://host:port/
+        route : str
+            The URL endpoint to connect the http side of the server to websocket - /ws
+
+        Returns
+        -------
+        None
         """
         if AUTOBAHN_MISSING is True:
             raise EnvironmentError("Unable to provide websocket support without autobahn installed/present")
@@ -90,19 +106,28 @@ class ApplicationWebsocketMixin:
         self.ws_resource = WebSocketResource(self.ws_factory)
         self.add_resource(route, self.ws_resource)
 
-    def ws_add(self, name, assign_args=False) -> T.Callable[[WSEndpoint], WSEndpoint]:
+    def ws_add(self, name: str, assign_args: bool = False) -> T.Callable[[WSEndpoint], WSEndpoint]:
         """
         Add a new endpoint for use with the connected websocket.
 
-        Example usage
-        ```
-            @ws_add
+        Example
+        -------
+
+            @ws_add("some.endpoint")
             def my_websocket_endpoint(message):
                 ...
-        ```
-        :param name:
-        :param assign_args:
-        :return:
+
+        Parameters
+        ----------
+        name : str
+            The name the function or method should be accessed via ResilientSocket
+
+        assign_args : bool
+
+
+        Returns
+        -------
+            callable: A decorator which adds the added function to the ws_endpoints map
         """
 
         def processor(func: WSEndpoint) -> WSEndpoint:
@@ -118,9 +143,15 @@ class ApplicationWebsocketMixin:
     # noinspection SpellCheckingInspection
     def ws_sharelib(self, route_str="/lib"):
         """
-            Adds utility libraries to the provided route str for use by client facing html javascript.
-        :param route_str:
-        :return:
+            Exposes Texas web's built in javascript libraries under the `route_str` argument
+
+        Parameters
+        ----------
+        route_str
+
+        Returns
+        -------
+
         """
         self.add_staticdir2(route_str, WS_STATIC_LIB)
 
@@ -129,25 +160,34 @@ class ApplicationWebsocketMixin:
         Add an entire class of @ws_expose'd class methods as endpoints for the websocket.
 
         Example
-        ```
+        -------
             @app.ws_class
             class Foo:
                 @app.expose
                 def bar(message):
+                    # accessible at the endpoint `foo.bar`
                     ...
-        ```
-            That will create a "foo.bar" endpoint
 
-        :param kls:
-        :param name: Override the default behavior of using the class.__name__ property for the base endpoint.
-        :return:
+        Parameters
+        ----------
+        kls: object
+            The class to be registered as a endpoint
+        name: str
+            Optional override so in the case of the example above, providing `name=Bob` would create `Bob.bar` endpoint
+            instead.
+
+        Returns
+        -------
+            Either a processor decorator or the original class
+
         """
 
         def processor(kls, name=None):
             kls_name = name if name is not None else kls.__name__.lower()
             if kls_name in self.ws_instances:
                 raise ValueError(
-                    f"Websocket ws_class: a class with {kls_name} is already registered!  Use ws_class(name=NewName) to override.")
+                    f"Websocket ws_class: a class with {kls_name}"
+                    f" is already registered!  Use ws_class(name=NewName) to override.")
 
             self.ws_instances[kls_name] = kls(self)
 
@@ -161,25 +201,28 @@ class ApplicationWebsocketMixin:
 
             return kls
 
-
         if kls is None:
             return functools.partial(processor, name=name)
         else:
             return processor(kls, name)
 
-
     @staticmethod
     def _eval_annotation(statement, func):
         """
-        TODO - Figure out if there is a way to the type of an annotation without eval
-        :param statement:
-        :param func:
-        :return:
+        TODO - Figure out if there is a way to get the type of an annotation without eval
+
+        Parameters
+        ----------
+            A string to be evaluated into a callable or type object.
+
+        Returns
+        -------
+            type or callable
+
         """
         # There is no way around using eval given how I use annotation's for type casting and conversion
         # pylint: disable=W0123
         return statement if not isinstance(statement, str) else eval(statement, vars(sys.modules[func.__module__]))
-
 
     @classmethod
     def websocket_class_arguments_decorator(cls, func):
@@ -187,6 +230,7 @@ class ApplicationWebsocketMixin:
             Internal method not intended for users
         :param func:
         :return:
+
         """
         params = inspect.signature(func).parameters
         arg_keys = {}
@@ -203,7 +247,6 @@ class ApplicationWebsocketMixin:
 
         if "message" not in params:
             raise TypeError("ws_expose convention expects (self, message, **kwargs)")
-
 
         @functools.wraps(func)
         def method_argument_decorator(parent, message):
@@ -230,12 +273,14 @@ class ApplicationWebsocketMixin:
             Internal method not intended for users
         :param func:
         :return:
+
         """
         params = inspect.signature(func).parameters
         arg_keys = {}
-        converter_keys= {}
+        converter_keys = {}
 
         for name, param in params.items():  # type: inspect.Parameter
+            name: str
             if param.default is not inspect.Parameter.empty:
                 if param.name in ["message"]:
                     raise TypeError(
@@ -244,7 +289,6 @@ class ApplicationWebsocketMixin:
 
                 if param.annotation is not inspect.Parameter.empty:
                     converter_keys[name] = cls._eval_annotation(param.annotation, func)
-
 
         @functools.wraps(func)
         def argument_decorator(message: MessageHandler):
@@ -267,13 +311,14 @@ class ApplicationWebsocketMixin:
 
         return argument_decorator
 
-
     def ws_expose(self, func: callable = None, assign_args=False):
         """
         See ws_class for use
+
         :param func:
         :param assign_args:
         :return:
+
         """
 
         if func is None and assign_args is True:
@@ -293,38 +338,43 @@ class ApplicationRoutingHelperMixin:
         Provides a wrapping interface around :ref: `RoutingResource`
 
     """
-    router:RoutingResource
+    router: RoutingResource
 
     def add(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
         """
 
         :param route_str: A valid URI (starts with a forward slash and no spaces)
         :param kwargs:
+
         :return:
+
         """
         return self.router.add(route_str, **kwargs)
 
     # mimic flask's API
     route = add
 
-    def add_class(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+    def add_class(self, route_str: str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
         """
+        Expose a class and all @app.expose'd method/functions as URL endpoints.
 
-        example usage
+
+        example
+        -------
         ```
-        @app.add_class("/my_foo")
-        class Foo:
-            @app.expose("/bar")
-            def some_endpoint(self, request):
-                ...
-
+            @app.add_class("/my_foo")
+            class Foo:
+                @app.expose("/bar")
+                def some_endpoint(self, request):
+                    ...
         ```
-        would connect an instance of Foo and it's method `some_endpoint` to the url `/my_foo/bar`
+
+        Parameters
+        ----------
+        route_str : str
+            The base URI for all exposed methods of the class.
 
 
-        :param route_str:
-        :param kwargs:
-        :return:
         """
         return self.router.add(route_str, **kwargs)
 
@@ -336,6 +386,7 @@ class ApplicationRoutingHelperMixin:
         :param route_str:
         :param kwargs:
         :return:
+
         """
 
         return expose_method(route_str, **kwargs)
@@ -344,8 +395,12 @@ class ApplicationRoutingHelperMixin:
     def set_view_prefilter(func):
         """
             Experimental, sets a view class method to be called before any `expose`'d method.
-        :param func:
-        :return:
+
+        Parameters
+        ----------
+        func: callable
+            A valid callable to be marked as a prefilter.
+
         """
         return set_prefilter(func)
 
@@ -353,8 +408,12 @@ class ApplicationRoutingHelperMixin:
     def set_view_postfilter(func):
         """
             Experimental, sets a view class method to be called after any `expose`'d method.
-        :param func:
-        :return:
+
+        Parameters
+        ----------
+        func: callable
+            A valid callable to be marked as a psot filter on a class.
+
         """
         return set_postfilter(func)
 
@@ -367,6 +426,7 @@ class ApplicationRoutingHelperMixin:
         :param resource:
         :param kwargs:
         :return:
+
         """
         return self.router.add_resource(route_str, thing=resource, route_kwargs=kwargs )
 
@@ -379,6 +439,7 @@ class ApplicationRoutingHelperMixin:
         :param filepath: An absolute or relative path to a file to be served over HTTP
         :param default_type: What content type should a file be served as
         :return: twisted.web.static.File
+
         """
 
         assert Path(filePath).exists()
@@ -393,6 +454,7 @@ class ApplicationRoutingHelperMixin:
         :param dirPath:
         :param recurse:
         :return:
+
         """
 
         if route_str.endswith("/") is False:
@@ -425,6 +487,7 @@ class ApplicationErrorHandlingMixin:
     def __init__(self, enable_debug: bool =False):
         """
         :param enable_debug: Flag to decide if to use debugging tools
+
         """
         self.enable_debug = enable_debug
 
@@ -438,11 +501,12 @@ class ApplicationErrorHandlingMixin:
         Acceptable types currently is a subclass of Exception (eg error.HTTP404) or
         a numeric HTTP error code (eg 404,500, etc).
 
-
         :param error_type:  The error to catch, either the thrown exception or a numeric HTTP CODE
         :param write_over:  Used to over ride or replace a currently set error handler.   Currently the only error
-        handler set is the catch all 'default" handler which I don't recommend replacing.
-        :return:
+            handler set is the catch all 'default" handler which I don't recommend replacing.
+
+        :return:  T.Callable
+
         """
 
         def processor(func: ErrorHandler) -> ErrorHandler:
@@ -464,6 +528,7 @@ class ApplicationErrorHandlingMixin:
         :param error_type:
         :param override:
         :return:
+
         """
 
         if error_type in self.error_handlers and override is False:
@@ -483,6 +548,7 @@ class ApplicationErrorHandlingMixin:
         :param request:
         :param reason:
         :return:
+
         """
 
         default_handler = self.error_handlers['default']
@@ -513,7 +579,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     """
         Grand unified god module of txweb.
 
-        TODO rename to TXWeb versus application to avoid confusion.
+        TODO rename to TXWeb or Texas versus application to avoid confusion with `txweb` on pypi
+
     """
 
     NOT_DONE_YET = NOT_DONE_YET
@@ -525,17 +592,16 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
                  enable_debug:bool=False
                  ):
         """
-            Similar to Klein and its influence Flask, the goal is to consolidate
+        Similar to Klein and its influence Flask, the goal is to consolidate
             technical debt into one God module antipattern class.
 
             Purposes:
                 Provides a public API to Site, HTTPErrors, RoutingResource, and additional helpers.
 
-            Arguments:
-                namespace: the base module/package name of the application, currently intended to assist logging and debugging
-                twisted_reactor: currently unused
-                request_factory: currently unused
-                enable_debug: Not implemented yet, switches on extra debugging tools
+        :param namespace:
+        :param twisted_reactor:
+        :param request_factory:
+        :param enable_debug:
         """
 
 
@@ -572,6 +638,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
           overloading __init__.
 
         :return:
+
         """
 
 
@@ -584,6 +651,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
         def partial(*args, **kwargs):
             # pylint: disable=W0212
+            # noinspection PyCallingNonCallable
             request = request_kls(*args, **kwargs)
             request.add_before_render(app._call_before_render)
             request.add_after_render(app._call_after_render)
@@ -597,7 +665,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     def router(self) -> RoutingResource:
         """
         Provide access to the routing resource object.
-        :return:
+
+
         """
         return self._router
 
@@ -605,7 +674,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     def site(self) -> WebSite:
         """
         Provides access to the server.Site instance
-        :return:
+
+
         """
         return self._site
 
@@ -613,7 +683,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     def reactor(self) -> PosixReactorBase:
         """
         Provides access to the currently used reactor, used specifically to make testing easier.
-        :return:
+
+
         """
         return self._reactor
 
@@ -625,6 +696,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         """
             Convenience helper which adds the HTTP protocol factory to the reactor and set it to listen to the provided
             interface and port
+
         """
         self._listening_port = self.reactor.listenTCP(port, self._site, interface=interface)
         return self._listening_port
@@ -634,6 +706,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         Intended as a convenience decorator to set a global before render handler
         Arguments:
             func: a callable that expects to receive the current Request
+
         """
         self._before_render_handlers.append(func)
         return func
@@ -643,6 +716,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         Intended as a convenience decorator to set a global after render handler
         Arguments:
             func: a callable that expects to receive the current Request
+
         """
         self._after_render_handlers.append(func)
         return func
@@ -655,6 +729,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
 
         :param request:
         :return:
+
         """
         # pylint: disable=W0703
         for func in self._before_render_handlers:
@@ -670,6 +745,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         :param request:
         :param body:
         :return:
+
         """
         # pylint: disable=W0703
         for func in self._after_render_handlers:
@@ -679,6 +755,3 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
                 log.error(f"After render failed {func}")
 
         return body
-
-
-

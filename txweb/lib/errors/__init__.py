@@ -1,5 +1,5 @@
 """
-    Error handlers for the txweb
+    Error handlers for txweb
 """
 from twisted.python.failure import Failure
 from .default import DefaultHandler

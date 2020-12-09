@@ -38,10 +38,10 @@ txweb.log module
    :undoc-members:
    :show-inheritance:
 
-txweb.web\_views module
------------------------
+txweb.web\_site module
+----------------------
 
-.. automodule:: txweb.web_views
+.. automodule:: txweb.web_site
    :members:
    :undoc-members:
    :show-inheritance:

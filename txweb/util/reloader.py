@@ -4,14 +4,16 @@
 
     In user script it must follow the pattern
 
-    def main():
-        my main func that starts twisted
+    ```python
+        def main():
+            # my main func that starts twisted
 
-    if __name__ == "__main__":
-        from txweb.sugar.reloader import reloader
-        reloader(main)
-    else:
-        TAC logic goes here but isn't necessary for short term dev work
+        if __name__ == "__main__":
+            from txweb.sugar.reloader import reloader
+            reloader(main)
+        else:
+            TAC logic goes here but isn't necessary for short term dev work
+    ```
 
 
     Originally found via https://blog.elsdoerfer.name/2010/03/09/twisted-twistd-autoreload/
@@ -52,7 +54,7 @@ except ImportError:
             import dummy_thread as thread
         except ImportError as missing_import:
             print("Alright... so I tried importing thread, that failed, so I tried _thread, that failed too")
-            print("..so then I tried dummy_thread, then _dummy_thread.  All failed")
+            print("..so then I tried dummy_thread.  All failed")
             print(", at this point I am out of ideas here")
             raise RuntimeError("Failed to import threading library") from missing_import
 
@@ -69,6 +71,7 @@ SENTINEL_OS_EXIT = True
 """
    "Reason" is here https://code.djangoproject.com/ticket/2330
    TODO - Figure out why threading needs to be imported as this feels like a problem within stdlib.
+   
 """
 
 try:
@@ -95,6 +98,7 @@ def build_list(
     :param watch_self: bool Watch all of txweb for changes
     :param ignore_prefix: simple check that if provided compares file names to the prefix and skips if they match
     :return: None
+
     """
 
     global WATCH_LIST
@@ -128,8 +132,8 @@ def build_list(
             stat = pathobj.stat()
             if is_prefixed(pathobj):
                 continue
-            else:
-                WATCH_LIST[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
+
+            WATCH_LIST[pathobj] = (stat.st_size, stat.st_ctime, stat.st_mtime,)
         else:
             pass
 
@@ -137,7 +141,9 @@ def build_list(
 def file_changed() -> bool:
     """
         Scans the watched list of files for change in size, created & modified timestamps
-    :return:
+
+    :return: Returns True if a change has been detected else False
+
     """
     global WATCH_LIST
     change_detected = False
@@ -168,6 +174,7 @@ def watch_thread(os_exit: bool = SENTINEL_OS_EXIT, watch_self: bool = False, ign
     :param watch_self: Should reloader watch its own source code
     :param ignore_prefix: Ignore files starting with this prefix
     :return:
+
     """
 
     # pylint: disable=W0212
@@ -252,9 +259,10 @@ def reloader(main_func, *args, watch_self=False, ignore_prefix=None, **kwargs):
     :param main_func: The function to run in the main/primary thread
     :param args: list of arguments
     :param watch_self: Should reloader also watch it's own src code for changes?
-    :param ignore_prefix: Files to ignore based on their prefix (eg test_ files)
+    :param ignore_prefix: Files to ignore based on their prefix (eg test files)
     :param kwargs: dictionary of arguments
     :return: None
+
     """
     if args is None:
         args = ()

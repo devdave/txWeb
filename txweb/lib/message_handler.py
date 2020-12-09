@@ -9,7 +9,7 @@ from __future__ import annotations
 import typing as T
 from collections.abc import Mapping
 
-# from twisted.web.server import NOT_DONE_YET
+from twisted.internet.defer import Deferred
 
 
 if T.TYPE_CHECKING or False:  # pragma: no cover
@@ -50,38 +50,67 @@ class MessageHandler(Mapping):  # pragma: no cover
         return self.raw_message.values()
 
     # pylint: disable=redefined-builtin
-    def get(self, key, default=None, type=None):
+    def get(self, key: str, default=None, vtype: type=None):
+        """
+
+        Parameters
+        ----------
+        key
+        default
+        vtype
+
+        Returns
+        -------
+
+        """
+
+
 
         try:
             value = self[key]
         except KeyError:
             return default
 
-        if type:
+        if vtype:
             try:
-                value = type(value)
+                value = vtype(value)
             except ValueError:
                 return default
 
         return value
 
     @property
-    def identity(self):
+    def identity(self) -> str:
         """
             Utility to make it quicker to access the connection's unique identifier
-        :return:
+
+        Returns
+        -------
+        A unique identifier string
+
         """
         return self.connection.identity
 
     # pylint: disable=redefined-builtin
-    def args(self, key, default=None, type=None):
+    def args(self, key: str, default=None, vtype=None):
         """
             A more explicit/direct getter that looks for an `args` dictionary in the client message and
             if it exists, returns the requested key.
-        :param key:
-        :param default:
-        :param type:  What type to cast the arg value as.  (eg type=int would cast a str to int if possible)
-        :return:
+
+        Parameters
+        ----------
+        key: str
+            A dict key for the message's `args` subdictionary of arguments
+
+        default: str
+            TODO implement a not empty default sentinel.
+
+        vtype: type
+            Used to cast the requested key's value into.  (eg vtype=int would cast key=foo to int or try to atleast)
+
+        Returns
+        -------
+            T.Any
         """
 
         try:
@@ -96,44 +125,73 @@ class MessageHandler(Mapping):  # pragma: no cover
         except ValueError:
             return default
 
-        if type:
+        if vtype:
             try:
-                value = type(value)
+                value = vtype(value)
             except ValueError:
                 return default
 
         return value
 
-    def respond(self, result):
+    def respond(self, result) -> None:
         """
-            If the message was an request/ask for response, send back a result.
-        :param result:
-        :return:
+        For client messages that are `ask` type, send back a response to their request.
+
+        Parameters
+        ----------
+        result: T.Any
+            Anything that can be serialized by json.dumps is a valid variable type.
+
+        Returns
+        -------
+        None
+
         """
         return self.connection.respond(self.raw_message, result=result)
 
-    def tell(self, endpoint, **kwargs):
+    def tell(self, endpoint: str, **kwargs) -> None:
         """
-        Tell the client to do something if it provides the requested end point.
-        :param endpoint:
-        :param kwargs:
-        :return:
+        Tell the client to do something at the specified `endpoint`
+
+        Parameters
+        ----------
+        endpoint: str
+            Ideally a valid client side endpoint
+        kwargs: dict
+            json serializable friendly data
+
+        Returns
+        -------
+        None
         """
         return self.connection.tell(endpoint, **kwargs)
 
-    def ask(self, endpoint, **kwargs):
+    def ask(self, endpoint: str, **kwargs: T.Dict[str, T.Any]) -> Deferred:
         """
             Ask the client for information or acknowledgement of success/failure for an action.
-        :param endpoint:
-        :param kwargs:
-        :return:
+
+            Parameters
+            ----------
+            endpoint
+            kwargs
+
+            Returns
+            -------
+            A Deferred object the server side code can add a callback to.
         """
         return self.connection.ask(endpoint, type="ask", args=kwargs)
 
-    def get_session(self, get_key=None):
+    def get_session(self, get_key: str=None) -> T.Union[T.Dict, T.Any]:
         """
-            see WSProtocol's get_session
-        :param get_key:
-        :return:
+            See WSProtocol's get_session
+
+        Parameters
+        ----------
+        get_key: str
+            A shortcut to fetch a specific key of the session dictionary versus grabbing the whole dictionary.
+
+        Returns
+        -------
+
         """
         return self.connection.application.get_session(self.connection, get_key=get_key)

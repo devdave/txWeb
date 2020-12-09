@@ -4,10 +4,26 @@ txweb.lib.errors package
 Submodules
 ----------
 
-txweb.lib.errors.handler module
+txweb.lib.errors.base module
+----------------------------
+
+.. automodule:: txweb.lib.errors.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+txweb.lib.errors.debug module
+-----------------------------
+
+.. automodule:: txweb.lib.errors.debug
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+txweb.lib.errors.default module
 -------------------------------
 
-.. automodule:: txweb.lib.errors.handler
+.. automodule:: txweb.lib.errors.default
    :members:
    :undoc-members:
    :show-inheritance:

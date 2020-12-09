@@ -21,4 +21,4 @@ from txweb.application import Application
 
 App = Application
 Texas = Application
-__all__ = ['NOT_DONE_YET', "App", "Application"]
+__all__ = ['NOT_DONE_YET', "App", "Application", "Texas"]

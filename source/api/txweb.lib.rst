@@ -12,14 +12,6 @@ Subpackages
 Submodules
 ----------
 
-txweb.lib.at\_wsprotocol module
--------------------------------
-
-.. automodule:: txweb.lib.at_wsprotocol
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 txweb.lib.message\_handler module
 ---------------------------------
 
@@ -48,6 +40,14 @@ txweb.lib.view\_class\_assembler module
 ---------------------------------------
 
 .. automodule:: txweb.lib.view_class_assembler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+txweb.lib.wsprotocol module
+---------------------------
+
+.. automodule:: txweb.lib.wsprotocol
    :members:
    :undoc-members:
    :show-inheritance:

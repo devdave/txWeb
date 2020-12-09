@@ -46,13 +46,14 @@ def initialize_jinja2(
         template_dir: T.Union[Path,
                               str,
                               T.List[T.Union[Path, str]]],
-        cache_dir: T.Optional[str, Path] = None):  # pragma: no cover
+        cache_dir: T.Optional[T.Union[str, Path]] = None):  # pragma: no cover
     """
 
     :param template_dir:  Can be either a string, Path object, or a list of string/path objects pointing
     to template directories
     :param cache_dir: optional absolute path to a cache dir intended for storing compiled templates
     :return:
+
     """
     global JINJA2_ENV
 

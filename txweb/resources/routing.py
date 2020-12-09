@@ -49,9 +49,14 @@ class RoutingResource(resource.Resource):
 
     def __init__(self, script_name: bytes = None):
         """
+        The bridge between twisted's object graph routing system and werkzeug's url pattern
+        recognition routing system.
 
-        :param script_name: Optional ability to add a prefix to all routed URL's in case this application
-            is nested inside another web app.   See CGI's SCRIPT_NAME variable.
+        Parameters
+        ----------
+        script_name: bytes
+            Optional ability to add a prefix to all routed URL's in case this application
+                is nested inside another web app.   See CGI's SCRIPT_NAME variable.
         """
 
         resource.Resource.__init__(self)
@@ -67,7 +72,11 @@ class RoutingResource(resource.Resource):
     def site(self):   # pragma: no cover
         """
             Return a reference to the parent site of this resource
-        :return:
+
+        Returns
+        -------
+        web_site instance
+
         """
         return self._site
 
@@ -83,7 +92,7 @@ class RoutingResource(resource.Resource):
     def iter_rules(self) -> T.Generator:
         """
         Debug method for iterating over all of the currently set URL Rule's for the werkzeug routing map.
-        :return:
+
         """
         return self._route_map.iter_rules()
 
@@ -91,9 +100,8 @@ class RoutingResource(resource.Resource):
         """
             Possibly super overloaded
 
-        :param route_str:
-        :param kwargs:
-        :return:
+
+
         """
 
         if "endpoint" in kwargs:

@@ -30,12 +30,34 @@ from .message_handler import MessageHandler
 
 
 class WSProtocol(WebSocketServerProtocol):
+    """
+        Handles new websocket connections by routing them to the requested endpoint.
 
+        All incoming requests from the client match one of two JSON formats
+
+        1. The message has an `endpoint` key and `type` set to either "ask" or "tell"
+            If type is set to ask, a caller_id key MUST be present so the response can be properly routed back.
+
+        2. The message has a `type` key set to "response"
+
+
+        Attributes
+        ----------
+        my_log: Logger
+        MAX_ASKS: int
+            The maximum number of pending asks to wait for from the client
+        factory:
+            Reference to the factory which spawned this protocol/connection
+        identity: str
+            A unique identifier for this connection which MUST be different than what is used for cookies
+        on_disconnect: Deferred
+            A deferred to allow for parts of the server application to be notified when the connection closes
+        deferred_asks: T.Dict[str, Deferred]
+            All pending deferred asks to the client.
+
+
+    """
     my_log = getLogger()
-    """
-        To prevent an OOM/out of memory event, limit the number of 
-        pending asks to 100
-    """
     MAX_ASKS = 100  # Need to make this tunable
     factory: RoutedFactory
 
@@ -43,7 +65,6 @@ class WSProtocol(WebSocketServerProtocol):
         self.pending_responses = {}
 
         super().__init__()
-        # WebSocketServerProtocol.__init__(self, *args, **kwargs)
 
         self.identity = None
         self.on_disconnect = Deferred()
@@ -54,17 +75,26 @@ class WSProtocol(WebSocketServerProtocol):
     def application(self):
         """
             Utility intended mostly for unit-testing
-        :return:
+
+        Returns
+        -------
+        The current instance of Texas
+
         """
         return self.factory.get_application()
 
-    def getCookie(self, cookie_name, default=None):
+    def getCookie(self, cookie_name: str, default=None) -> str:
         """
             Mirror's the behavior of StrRequest.getCookie
 
-        :param cookie_name:
-        :param default:
-        :return:
+        Parameters
+        ----------
+        cookie_name: str
+        default: str
+
+        Returns
+        -------
+        If the cookie exists, it returnx the cookie value ELSE returns `default` which is set to None by default
         """
         raw_cookies = self.http_headers.get('cookie', "")
         for params in raw_cookies.split(";"):
@@ -74,67 +104,92 @@ class WSProtocol(WebSocketServerProtocol):
 
         return default
 
-    def onConnect(self, request):
+    def onConnect(self, request) -> T.NoReturn:
         """
-            Set's a unique identifier for the connection.
+            Hook to the underlying websocket protocol so a unique identifier for the connection can be set.
+            Called externally by the protocol factory class.
 
 
-        :param request:
-        :return:
         """
         self.identity = uuid4().hex
         self.my_log.debug("Client connecting: {request.peer}", request=request)
 
-    def onClose(self, was_clean, code, reason):
+    def onClose(self, was_clean: bool, code: int, reason) -> T.NoReturn:
         """
             Connection was lost, currently I don't care why but I likely should.
-        :param was_clean:
-        :param code:
-        :param reason:
-        :return:
+
+        Parameters
+        ----------
+
+        was_clean: bool
+        code: int
+        reason: unknown
+
         """
         self.on_disconnect.addErrback(self.my_log.error)
         self.on_disconnect.callback(self.identity)
+        # Delete the Deferred to force it to be garbage collected and emit any unhandled errors as soon as possible
         del self.on_disconnect
         self.my_log.debug("WebSocket connection closed: {reason!r}", reason=reason)
 
-    def sendDict(self, **values):
+    def sendDict(self, **values) -> T.NoReturn:
         """
             Utility used by every other method that follows
-        :param values:
-        :return:
+
+        Raises
+        ------
+        TypeError
+            Throws this if a key/value in values cannot be encoded to JSON (eg. Enum)
+
+        Parameters:
+        -----------
+        values: dict
+            A valid dictionary view of arguments that can be serialized by JSON
+
         """
         response = json.dumps(values)
         # Always send synchronously for now
         self.sendMessage(response.encode("utf-8"), isBinary=False, sync=True)
 
-    def respond(self, original_message, result):
+    def respond(self, original_message, result) -> T.NoReturn:
         """
             The client asked for a result/response.
 
-        :param original_message:
-        :param result:
-        :return:
+        Parameters
+        ----------
+        original_message: MessageHandler or dict
+            The original request message so caller_id can be retrieved
+
+
+
         """
         self.sendDict(caller_id=original_message['caller_id'], type="response", result=result)
 
-    def tell(self, endpoint, **values):
+    def tell(self, endpoint: str, **values) -> T.NoReturn:
         """
             Tell the client to do something and don't expect a response
 
-        :param endpoint:
-        :param values:
-        :return:
+        Parameters
+        ----------
+        endpoint: str
+            The remote client side endpoint to be told to do something.
+
         """
         self.sendDict(endpoint=endpoint, type="tell", args=values)
 
-    def ask(self, endpoint, **values):
+    def ask(self, endpoint, **values) -> Deferred:
         """
             Ask the client to do something and I should get a response back.
 
-        :param endpoint:
-        :param values:
-        :return:
+            Creates a Deferred object so the server side application can be notified of a response
+
+        Parameters
+        ----------
+        endpoint: str
+        values: dict
+            dictionary of keyname arguments to be serialized and sent to the client.
+
+
         """
         if len(self.deferred_asks) < self.MAX_ASKS:
             request_token = uuid4().hex
@@ -145,13 +200,16 @@ class WSProtocol(WebSocketServerProtocol):
         else:
             raise EnvironmentError("Maximum # of pending asks reached")
 
-    def handleResponse(self, message):
+    def handleResponse(self, message: MessageHandler) -> T.NoReturn:
         """
             Server side asked client a question, shunt this message through the
              deferred_asks collection of deferreds to the appropriate/waiting endpoint
 
-        :param message:
-        :return:
+        Parameters
+        ----------
+        message: MessageHandler
+            The client request with the response to a server ask
+
         """
         caller_id = message.get("caller_id", None)
 
@@ -162,12 +220,12 @@ class WSProtocol(WebSocketServerProtocol):
         else:
             warnings.warn(f"Response to ask {caller_id} arrived but was not found in deferred_asks")
 
-    def handleEndPoint(self, message):
+    def handleEndPoint(self, message: MessageHandler) -> T.NoReturn:
         """
             Handles incoming ask and tell messages.
 
         :param message:
-        :return:
+
         """
         endpoint_func = self.factory.get_endpoint(message['endpoint'])
         self.my_log.debug("Processing {endpoint!r}", endpoint=message['endpoint'])
@@ -188,13 +246,13 @@ class WSProtocol(WebSocketServerProtocol):
 
 
 
-    def onMessage(self, payload, is_binary):
+    def onMessage(self, payload, is_binary) -> T.NoReturn:
         """
             Entry point for incoming messages from the client
 
         :param payload:
         :param is_binary:
-        :return:
+
         """
 
         if is_binary:  # pragma: no cover

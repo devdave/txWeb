@@ -37,6 +37,16 @@ from ..http_codes import HTTP500
 log = getLogger(__name__)
 
 class StrRequest(Request):
+    """
+        Request is actually a merger of three different topics.
+
+        1. StrRequest contains all of the request data: headers & request body.
+        2. StrRequest holds the connection API.
+        3. StrRequest holds the response headers, http code, and response body until finalization.
+
+
+
+    """
 
     NOT_DONE_YET: T.Union[int, bool] = NOT_DONE_YET
 
@@ -51,13 +61,18 @@ class StrRequest(Request):
         self._call_before_render = None
         self._call_after_render = None
 
-    def getCookie(self, cookie_name: T.Union[str, bytes]):
+    def getCookie(self, cookie_name: T.Union[str, bytes]) -> T.Union[str, bytes]:
         """
         Wrapper around Request's getCookie to convert to and from byte strings
         to unicode/str's
 
-        :param cookie_name:
-        :return:
+        Parameters
+        ----------
+        cookie_name: str
+
+        Returns
+        -------
+        If cookie_name argument is bytes, returns a byte string else returns str/unicode string
         """
         expect_bytes = isinstance(cookie_name, bytes)
 
@@ -74,8 +89,7 @@ class StrRequest(Request):
     def add_before_render(self, func):
         """
         Utility intended solely to make testing easier
-        :param func:
-        :return:
+
         """
         self._call_before_render = func
         return func
@@ -83,8 +97,7 @@ class StrRequest(Request):
     def add_after_render(self, func):
         """
         Utility intended solely to make testing easier
-        :param func:
-        :return:
+
         """
         self._call_after_render = func
         return func
@@ -107,11 +120,15 @@ class StrRequest(Request):
             Utility to write and then close the connection in one go.
             Especially useful for error handling events.
 
+        Parameters
+        ----------
+        response_body:
+            Content intended to be sent to the client browser
+        code:
+            Optional HTTP Code to use
+        message:
+            Optional HTTP response message to use
 
-        :param response_body: Content intended for after headers 
-        :param code: Optional HTTP Code to use
-        :param message: Optional HTTP response message to use
-        :return: 
         """
 
         content_length = intToBytes(len(response_body))
@@ -136,10 +153,14 @@ class StrRequest(Request):
     def setHeader(self, name: T.Union[str, bytes], value: T.Union[str, bytes]):
         """
             A quick wrapper to convert unicode inputs to utf-8 bytes
+            Set's a header for the RESPONSE
 
-            Arguments:
-                name: A valid HTTP header
-                value: Syntactically correct value for the header name
+            Parameters
+            ----------
+            name:
+                A valid HTTP header
+            value
+                Syntactically correct value for the provided header name
         """
         if isinstance(name, str):
             name = name.encode("utf-8")
@@ -151,22 +172,28 @@ class StrRequest(Request):
 
     def setResponseCode(self,
                         code: int = 500,
-                        message: T.Optional[T.Union[str, bytes]] = b"Failure processing request"):
+                        message: T.Optional[T.Union[str, bytes]] = b"Failure processing request") -> T.NoReturn:
         """
-            Str wrapper
-        :param code:
-        :param message:
-        :return:
+        Str to unicode wrapper around twisted.web's Request class.
+
+        Parameters
+        ----------
+        code
+        message
+
+        Returns
+        -------
+
         """
         if message and not isinstance(message, bytes):
             message = message.encode("utf-8")
 
-        return Request.setResponseCode(self, code, message)
+        Request.setResponseCode(self, code, message)
 
-    def ensureFinished(self):
+    def ensureFinished(self) -> None:
         """
             Ensure's the connection has been flushed and closed without throwing an error.
-        :return:
+
         """
         if self.finished not in [1, True]:
             self.finish()
@@ -176,7 +203,6 @@ class StrRequest(Request):
             Looks for POST'd arguments in form format (eg multipart).
             Allows for file uploads and adds them to .args
 
-            TODO add a files attribute to StrRequest?
         """
         self.content.seek(0, 0)
 
@@ -224,8 +250,11 @@ class StrRequest(Request):
     @property
     def methodIsPost(self) -> bool:
         """
-            Utility method
-        :return:
+        Utility method
+
+        Returns
+        -------
+        bool - Is the current request a POST request
         """
         return self.method == b"POST"
 
@@ -233,26 +262,34 @@ class StrRequest(Request):
     def methodIsGet(self) -> bool:
         """
             Utility method
-        :return:
+
+        Returns
+        -------
+        True if the current request is a HTTP GET request.
         """
         return self.method == b"GET"
 
     def render(self, resrc: resource.Resource) -> None:
         """
-        Ask a resource to render itself.
+        Ask a resource to render itself unless a prefilter returns a string/bytes
+         body which will be rendered instead.
 
-        If the resource does not support the requested method,
-        generate a C{NOT IMPLEMENTED} or C{NOT ALLOWED} response.
+        Parameters
+        ----------
+        resrc: Resource
+            The resource to be rendered.
 
-        @param resrc: The resource to render.
-        @type resrc: L{twisted.web.resource.IResource}
-
-        @see: L{IResource.render()<twisted.web.resource.IResource.render()>}
+        Returns
+        -------
+        None, output is written directly to the underlying HTTP channel.
         """
+        body = None
         if self._call_before_render is not None:
             body = self._call_before_render(self)
-        # TODO halt rendering resource if call before render provides a response
-        body = resrc.render(self)
+
+        if body is None:
+            body = resrc.render(self)
+
         if self._call_after_render is not None:
             self._call_after_render(self, body)
 
@@ -291,7 +328,7 @@ class StrRequest(Request):
 
         Thank you Cristina - http://www.cristinagreen.com/uploading-files-using-twisted-web.html
 
-        TODO this can be problematic if a binary file is being uploaded
+        TODO this can be problematic if a large binary file is being uploaded
         TODO verify Twisted HTTP channel/transport blows up if file upload size is "too big"
         """
         options = {}
@@ -324,17 +361,32 @@ class StrRequest(Request):
         self.site.processingFailed(self, reason)
 
     @property
-    def json(self) -> bool:
+    def json(self) -> T.Any:
         """
         Is this a JSON posted request?
-        :return:
+
+        Returns
+        -------
+        Ideally returns a dict object as I cannot think of what else a sane client would send in JSON format.
+
         """
         if self.getHeader("Content-Type") in ["application/json", "text/json"]:
             return json.loads(self.content.read())
         else:
             return None
 
-    def redirect(self, url: T.Union[str, bytes], code=FOUND):
+    def get_json(self) -> T.Any:
+        """
+            Intended to mimic Flask api
+
+        Returns
+        -------
+        dict - a json decoded object
+        """
+        return self.json
+
+
+    def redirect(self, url: T.Union[str, bytes], code=FOUND) -> T.NoReturn:
         """
         Utility function that does a redirect.
 
@@ -343,9 +395,14 @@ class StrRequest(Request):
 
         The request should have C{finish()} called after this.
 
-        @param url: I{Location} header value.
-        @param code: {int} http response code to use
-        @type url: L{bytes} or L{str}
+        Parameters
+        ----------
+        url: bytes
+            What to set the LOCATION http response header to
+        code: int
+            What to set the HTTP response code to (eg 3xx)
+
         """
         self.setResponseCode(code)
         self.setHeader(b"location", url)
+        self.ensureFinished()

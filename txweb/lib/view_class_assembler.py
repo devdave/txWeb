@@ -37,11 +37,17 @@ PREFILTER_ID = "__PREFILTER_ID__"
 POSTFILTER_ID = "__POSTFILTER_ID__"
 
 
-def has_exposed(obj):
+def has_exposed(obj) -> bool:
     """
         Does the provided object have an exposed endpoint?
-    :param obj:
-    :return:
+
+    Parameters
+    ----------
+    obj: An instance of a View class with exposed members OR a render method
+
+    Returns
+    -------
+    True if any method/function has been decorated with @texas.expose
     """
     return any([
         True
@@ -59,11 +65,18 @@ def has_exposed(obj):
 #     return has_exposed(attribute)
 
 
-def is_viewable(attribute):
+def is_viewable(attribute) -> bool:
     """
-        Check if whatever this is, it can behave as a web endpoint when called.
-    :param attribute:
-    :return:
+        Check if whatever this is, it is callable and has been marked as expose'd
+
+    Parameters
+    ----------
+    A callable that has been expose'd
+
+    Returns
+    -------
+    True if conditions have been met.
+
     """
     is_valid_callable = inspect.ismethod(attribute) \
                         or inspect.isfunction(attribute) \
@@ -78,8 +91,14 @@ def is_renderable(kls):
     """
         Does a class definition have a valid render method/function
         Generally checked if it has no exposed methods.
-    :param kls:
-    :return:
+
+    Parameters
+    ----------
+    A potential view class
+
+    Returns
+    -------
+    True if it has a renderable method (render or render_{HTTP REQUEST METHOD[POST, GET, HEAD, PUT, etc])
     """
     return \
         any([
@@ -95,9 +114,15 @@ ExposeSubRule = namedtuple("ExposeSubRule", "method_name,route,route_kwargs")
 def expose(route, **route_kwargs):
     """
         Decorator to set the exposed method's routing url and tag it with the exposed sentinel attribute
-    :param route:
-    :param route_kwargs:
-    :return:
+
+    Parameters
+    ----------
+    route: str
+    route_kwargs: arguments intended to be passed on to werkzeug routing logic
+
+    Returns
+    -------
+    T.Callable[[func], func] - a decorating function to set the exposed attribute and append routing arguments
     """
     def processor(func):
         setattr(func, EXPOSED_STR, True)
@@ -110,8 +135,14 @@ def expose(route, **route_kwargs):
 def set_prefilter(func):
     """
     decorator used to mark a class method as a prefilter for the class.
-    :param func:
-    :return:
+
+    Parameters
+    ----------
+    func: a valid prefilter callable
+
+    Returns
+    -------
+    The same callable as was passed in as an argument
     """
     setattr(func, PREFILTER_ID, True)
     return func
@@ -120,8 +151,15 @@ def set_prefilter(func):
 def set_postfilter(func):
     """
     decorator used to mark a class method as a post filter for a class.
-    :param func:
-    :return:
+
+    Parameters
+    ----------
+    func - a valid postfilter callable
+
+    Returns
+    -------
+    callable - the same function that was passed in as an argument
+
     """
     setattr(func, POSTFILTER_ID, True)
     return func
@@ -130,12 +168,17 @@ def set_postfilter(func):
 ViewAssemblerResult = namedtuple("ViewAssemblerResult", "instance,rule,endpoints")
 
 
-def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
+def find_member(thing, identifier: str) -> T.Union[T.Callable, bool]:
     """
         Utility to search every member of an object for the provided `identifier` attribute
-    :param thing:
-    :param identifier:
-    :return:
+
+    Parameters
+    ----------
+    thing: an instance of a view class
+
+    Returns
+    -------
+    The first matching instance method or attribute to have the `identifier` attribute
     """
     for _, member in inspect.getmembers(thing, lambda v: hasattr(v, identifier)):
         return member
@@ -143,7 +186,9 @@ def find_member(thing, identifier) -> T.Union[T.Callable, bool]:
     return False
 
 
-def view_assembler(prefix, kls, route_args):
+def view_assembler(prefix: str,
+                   kls,
+                   route_args: T.Dict[str, T.Union[str, T.List[str]]]) -> T.Union[ViewAssemblerResult, None]:
     """
         Given a class definition, this instantiates the class, searches it for exposed
         methods and pre/post filters
@@ -154,11 +199,23 @@ def view_assembler(prefix, kls, route_args):
             else it checks if the class def has a render/render_METHOD method.
             else it throws UnrenderableException
 
+    Parameters
+    ----------
+    prefix: str
+        The view classes' URL prefix
+    kls: claasdef
+        A view class definition
+    route_args: dict
+        a dictionary of arguments intended for the werkzeug URL routing library
 
-    :param prefix:
-    :param kls:
-    :param route_args:
-    :return:
+    Raises
+    ------
+    EnvironmentError
+        Throws this error if the class defintion is not a valid View class
+
+    Returns
+    -------
+    A ViewAssemblerResult if `kls` is a view class or has a valid render method function.
     """
     # pylint: disable=R0914
     endpoints = {}

@@ -133,5 +133,5 @@ class HTTP500(HTTP5xx):
         super().__init__(self.CODE, message)
 
 
-class Unrenderable(HTTP5xx):
+class Unrenderable(EnvironmentError):
     pass

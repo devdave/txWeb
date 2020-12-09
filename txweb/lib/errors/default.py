@@ -43,9 +43,14 @@ class DefaultHandler(BaseHandler):
 
             else it sends a 500 HTTP response and then raises the exception back into the user application.
 
-        :param request:
-        :param reason:
-        :return:
+        Parameters
+        ----------
+        request: StrRequest
+        reason: Failure
+
+        Returns
+        -------
+        False on failure to handle error
         """
 
         if request.startedWriting not in [0, False]:
