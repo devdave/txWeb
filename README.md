@@ -9,10 +9,8 @@ Super beta
 
 Major issues
 ============
-Error handling needs to be drastically improved/refactored
+Error handling still needs to be improved/refactored
 
-TODO - support for SCRIPT_NAME so the app could theoretically run in a sub directory of a
-another application.
 
 Purpose & History
 ======
@@ -53,8 +51,9 @@ def handle_form(request):
 
 app.listenTCP(8080)
 reactor.run() 
-
-
-    
+ 
 ```
+
+Also, please refer to the example's directory (but not to_replace or to_update sub-dirs) for slightly
+more filled out examples of use.
 
