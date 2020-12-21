@@ -37,7 +37,6 @@ else:
     from .lib.message_handler import MessageHandler
     from .lib.routed_factory import RoutedWSFactory
 
-
 # Application
 from .log import getLogger
 from .resources import RoutingResource
@@ -47,12 +46,10 @@ from .web_site import WebSite
 from .http_codes import HTTPCode
 from .lib.errors.default import DefaultHandler, BaseHandler
 
-
 HERE = Path(__file__).parent
 WS_STATIC_LIB = HERE / "websocket_static_libraries"
 
 log = getLogger(__name__)
-
 
 ArbitraryListArg = T.NewType("ArbitraryListArg", T.List[T.Any])
 ArbitraryKWArguments = T.NewType("ArbitraryKWArguments", T.Optional[T.Dict[str, T.Any]])
@@ -64,6 +61,10 @@ ErrorHandler = T.NewType("ErrorHandler", T.Callable[[StrRequest, failure.Failure
 
 
 class ApplicationWebsocketMixin:
+    """
+    Collection of functions and utilities specific to websocket support with Texas applications.
+
+    """
 
     WS_EXPOSED_FUNC = "WS_EXPOSED_FUNC"
 
@@ -131,7 +132,6 @@ class ApplicationWebsocketMixin:
         """
 
         def processor(func: WSEndpoint) -> WSEndpoint:
-
             if assign_args is True:
                 func = self.websocket_function_arguments_decorator(func)
 
@@ -153,7 +153,7 @@ class ApplicationWebsocketMixin:
         -------
 
         """
-        self.add_staticdir2(route_str, WS_STATIC_LIB)
+        self.route_directory(route_str, WS_STATIC_LIB)
 
     def ws_class(self, kls=None, name: str = None):
         """
@@ -203,8 +203,8 @@ class ApplicationWebsocketMixin:
 
         if kls is None:
             return functools.partial(processor, name=name)
-        else:
-            return processor(kls, name)
+
+        return processor(kls, name)
 
     @staticmethod
     def _eval_annotation(statement, func):
@@ -326,11 +326,11 @@ class ApplicationWebsocketMixin:
                 setattr(real_func, self.WS_EXPOSED_FUNC, True)
                 magic_func = self.websocket_class_arguments_decorator(real_func)
                 return magic_func
+
             return processor
 
-        else:
-            setattr(func, self.WS_EXPOSED_FUNC, True)
-            return func
+        setattr(func, self.WS_EXPOSED_FUNC, True)
+        return func
 
 
 class ApplicationRoutingHelperMixin:
@@ -340,7 +340,7 @@ class ApplicationRoutingHelperMixin:
     """
     router: RoutingResource
 
-    def add(self, route_str:str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+    def route(self, route_str: str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
         """
 
         :param route_str: A valid URI (starts with a forward slash and no spaces)
@@ -351,10 +351,9 @@ class ApplicationRoutingHelperMixin:
         """
         return self.router.add(route_str, **kwargs)
 
-    # mimic flask's API
-    route = add
+    add = route
 
-    def add_class(self, route_str: str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
+    def route_class(self, route_str: str, **kwargs: ArbitraryKWArguments) -> CallableToResourceDecorator:
         """
         Expose a class and all @app.expose'd method/functions as URL endpoints.
 
@@ -378,7 +377,7 @@ class ApplicationRoutingHelperMixin:
         """
         return self.router.add(route_str, **kwargs)
 
-
+    add_class = route_class
     @staticmethod
     def expose(route_str, **kwargs):
         """
@@ -417,8 +416,7 @@ class ApplicationRoutingHelperMixin:
         """
         return set_postfilter(func)
 
-
-    def add_resource(self, route_str:str, resource, **kwargs):
+    def route_resource(self, route_str: str, resource, **kwargs):
         """
         Add's a native/vanilla twisted.web.Resource object to the provided route_str
 
@@ -428,10 +426,11 @@ class ApplicationRoutingHelperMixin:
         :return:
 
         """
-        return self.router.add_resource(route_str, thing=resource, route_kwargs=kwargs )
+        return self.router.add_resource(route_str, thing=resource, route_kwargs=kwargs)
 
+    add_resource = route_resource
 
-    def add_file(self, route_str: str, filePath: str, defaultType="text/html") -> File:
+    def route_file(self, route_str: str, filePath: str, defaultType="text/html") -> File:
         """
         Just a simple helper for a common task of serving individual files
 
@@ -443,11 +442,13 @@ class ApplicationRoutingHelperMixin:
         """
 
         assert Path(filePath).exists()
+        assert Path(filePath).is_file()
         file_resource = File(filePath, defaultType=defaultType)
         return self.router.add(route_str)(file_resource)
 
+    add_file = route_file
 
-    def add_staticdir2(self, route_str: str, dirPath: T.Union[str, Path]) -> File:
+    def route_directory(self, route_str: str, dirPath: T.Union[str, Path]) -> File:
         """
         TODO - remove calls to `add_staticdir2` and just use `add_staticdir`
         :param route_str:
@@ -466,10 +467,8 @@ class ApplicationRoutingHelperMixin:
 
         return directory_resource
 
-    add_staticdir = add_staticdir2
-
-
-
+    add_staticdir = route_directory
+    add_staticdir2 = route_directory
 
 
 class ApplicationErrorHandlingMixin:
@@ -478,13 +477,12 @@ class ApplicationErrorHandlingMixin:
 
     """
 
-
     error_handlers: T.Dict[str, ErrorHandler]
-    default_handler_cls:BaseHandler = DefaultHandler
+    default_handler_cls: BaseHandler = DefaultHandler
     enable_debug: bool
     site: WebSite
 
-    def __init__(self, enable_debug: bool =False):
+    def __init__(self, enable_debug: bool = False):
         """
         :param enable_debug: Flag to decide if to use debugging tools
 
@@ -493,7 +491,6 @@ class ApplicationErrorHandlingMixin:
 
         self.error_handlers = dict(default=self.default_handler_cls(self))
         self.site.setErrorHandler(self.processingFailed)
-
 
     def handle_error(self, error_type: T.Union[HTTPCode, int, Exception, str], write_over=False) -> T.Callable:
         """
@@ -519,7 +516,8 @@ class ApplicationErrorHandlingMixin:
 
         return processor
 
-    def add_error_handler(self, handler: T.Callable, error_type: T.Union[HTTPCode, int, Exception, str], override=False):
+    def add_error_handler(self, handler: T.Callable, error_type: T.Union[HTTPCode, int, Exception, str],
+                          override=False):
         """
         TODO cull this out or justify it's existence.
 
@@ -537,7 +535,7 @@ class ApplicationErrorHandlingMixin:
 
         self.error_handlers[error_type] = handler
 
-    def processingFailed(self, request:StrRequest, reason: failure.Failure):
+    def processingFailed(self, request: StrRequest, reason: failure.Failure):
         """
         Internal method
 
@@ -571,10 +569,6 @@ class ApplicationErrorHandlingMixin:
         return True
 
 
-
-
-
-
 class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, ApplicationWebsocketMixin):
     """
         Grand unified god module of txweb.
@@ -588,8 +582,8 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     def __init__(self,
                  namespace: str = None,
                  twisted_reactor: T.Optional[PosixReactorBase] = None,
-                 request_factory:StrRequest=StrRequest,
-                 enable_debug:bool=False
+                 request_factory: StrRequest = StrRequest,
+                 enable_debug: bool = False
                  ):
         """
         Similar to Klein and its influence Flask, the goal is to consolidate
@@ -603,7 +597,6 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         :param request_factory:
         :param enable_debug:
         """
-
 
         self._router = RoutingResource()
         self._site = WebSite(self._router, request_factory=Application.request_factory_partial(self, request_factory))
@@ -619,18 +612,15 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         else:
             self.__owner_module = None
 
-
         ApplicationWebsocketMixin.__init__(self)
         ApplicationRoutingHelperMixin.__init__(self)
         ApplicationErrorHandlingMixin.__init__(self, enable_debug=enable_debug)
 
-
-        #Hooks
+        # Hooks
         self._before_render_handlers = []
         self._after_render_handlers = []
 
         self.__post_init__()
-
 
     def __post_init__(self) -> None:
         """
@@ -640,7 +630,6 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
         :return:
 
         """
-
 
     @staticmethod
     def request_factory_partial(app: Application, request_kls: StrRequest):
@@ -659,7 +648,6 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
             return request
 
         return partial
-
 
     @property
     def router(self) -> RoutingResource:
@@ -692,7 +680,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
     def reactor(self, active_reactor: PosixReactorBase):
         self._reactor = active_reactor
 
-    def listenTCP(self, port:int, interface:str= "127.0.0.1") -> Port:
+    def listenTCP(self, port: int, interface: str = "127.0.0.1") -> Port:
         """
             Convenience helper which adds the HTTP protocol factory to the reactor and set it to listen to the provided
             interface and port
@@ -738,7 +726,7 @@ class Application(ApplicationRoutingHelperMixin, ApplicationErrorHandlingMixin, 
             except Exception:
                 log.error(f"Before render failed {func}")
 
-    def _call_after_render(self, request: StrRequest, body:T.Union[bytes,str,int]):
+    def _call_after_render(self, request: StrRequest, body: T.Union[bytes, str, int]):
         """
             Internal method that iterates over all post filters.
 
