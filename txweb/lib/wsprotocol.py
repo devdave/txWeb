@@ -191,14 +191,15 @@ class WSProtocol(WebSocketServerProtocol):
 
 
         """
-        if len(self.deferred_asks) < self.MAX_ASKS:
-            request_token = uuid4().hex
-            d = Deferred()
-            self.deferred_asks[request_token] = d
-            self.sendDict(endpoint=endpoint, type="ask", caller_id=request_token, args=values)
-            return d
-        else:
+        if len(self.deferred_asks) > self.MAX_ASKS:
             raise EnvironmentError("Maximum # of pending asks reached")
+
+        request_token = uuid4().hex
+        d = Deferred()
+        self.deferred_asks[request_token] = d
+        self.sendDict(endpoint=endpoint, type="ask", caller_id=request_token, args=values)
+        return d
+
 
     def handleResponse(self, message: MessageHandler) -> T.NoReturn:
         """
@@ -224,7 +225,7 @@ class WSProtocol(WebSocketServerProtocol):
         """
             Handles incoming ask and tell messages.
 
-        :param message:
+
 
         """
         endpoint_func = self.factory.get_endpoint(message['endpoint'])
@@ -276,6 +277,3 @@ class WSProtocol(WebSocketServerProtocol):
                 self.handleEndPoint(message)
             else:
                 self.my_log.error("Got message without an endpoint or caller_id: {raw!r}", raw=message.raw_message)
-
-
-
