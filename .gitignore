@@ -1,7 +1,7 @@
 *.pyc
 .komodotools
 *.komodoproject
-build/
+docs/
 dist/
 MANIFEST
 htmlcov

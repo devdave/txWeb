@@ -7,15 +7,14 @@ Welcome to Texas web's documentation!
 =====================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    manual/quick_start
    manual/error_handling
+   manual/http_view_classes
+   manual/static_routing
    api/txweb
-
-
-
 
 
 
