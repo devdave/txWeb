@@ -405,4 +405,4 @@ class StrRequest(Request):
         """
         self.setResponseCode(code)
         self.setHeader(b"location", url)
-        self.ensureFinished()
+        #self.ensureFinished()
