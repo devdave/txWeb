@@ -43,6 +43,24 @@ Above would add two new URLS to the map.
 
 Both endpoints default to only accept GET and HEAD requests.
 
+Motivation/purpose for design
+-----------------------------
+
+Can be used for rapidly building out an HTTP based API where
+the `add_class` is provided a noun and all of the `exposed` methods are verbs against
+that noun (eg CRUD ).   Additionally all of the API endpoints are consolidated into
+one place instead of spread out across multiple module level functions.
+
+
+Mechanism
+---------
+
+As demonstrated with the `Widget` example class, the class is instantiated internally
+by Texas and a hard reference is stored internally to ensure the objects persistence for
+the life of the process.
+
+
+
 Warning
 -------
 
