@@ -30,7 +30,7 @@ from txweb import Application
 
 app = Application(__name__)
 
-@app,route("/hello")
+@app.route("/hello")
 def provide_hello(request):
     return "Hello World"
 
