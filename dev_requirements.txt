@@ -28,7 +28,7 @@ pytest==3.2.3
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytz==2019.3
-PyYAML==5.3
+PyYAML==5.4
 pyzmq==17.1.2
 recommonmark==0.6.0
 requests==2.22.0
