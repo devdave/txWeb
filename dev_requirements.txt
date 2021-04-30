@@ -46,7 +46,7 @@ sphinxcontrib-serializinghtml==1.1.3
 Twisted==20.3.0
 txweb==0.11.2019
 txZMQ==0.8.0
-urllib3==1.25.7
+urllib3==1.25.8
 -e git+https://github.com/devdave/watchdog.git@5ee9a387e71547f09d0fe88f9087e59c3458b797#egg=watchdog
 Werkzeug==0.16.0
 zope.interface==4.4.3
