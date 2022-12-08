@@ -3,7 +3,7 @@ argh==0.26.2
 attrs==20.2.0
 Automat==0.6.0
 Babel==2.8.0
-certifi==2019.11.28
+certifi==2022.12.7
 chardet==3.0.4
 colorama==0.3.9
 commonmark==0.9.1
